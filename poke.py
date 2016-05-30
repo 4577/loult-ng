@@ -118,7 +118,7 @@ class LoultServer(WebSocketServerProtocol):
         if msg['type'] == 'msg':
             text = msg['msg'][:500]
             text = text.replace('#', 'hashtag')
-            text = sub('(https?://[^ ]*[^.,?! :;])', 'lien', text)
+            text = sub('(https?://[^ ]*[^.,?! :;])', 'cliquez bande de salopes', text)
             text = quote(text.strip(' -"\'`$();:.'))
             
             wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
