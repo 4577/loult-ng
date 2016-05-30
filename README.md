@@ -1,4 +1,4 @@
-Clone de Lou.lt, le célèbre t'chat pokemon avec une partie client en HTML/CSS/JS statique et une partie serveur en Python.
+La partie client est en HTML/CSS/JS statique et la partie serveur en Python.
 
 # Mise en place
 
