@@ -125,12 +125,12 @@ window.onload = function() {
         }
     };
     
-    var refocus = function() {
+    var refocus = function(evt) {
         setTimeout(function() {
             if(!window.getSelection().toString()) {
                 input.focus()
             }
-        }, 10);
+        }, evt.target.tagName === 'INPUT' ? 500 : 10);
     };
     document.body.addEventListener('mouseup', refocus, false);
     input.addEventListener('blur', refocus, false);
