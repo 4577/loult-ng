@@ -126,11 +126,13 @@ window.onload = function() {
     };
     
     var refocus = function() {
-        if(!window.getSelection().toString()) {
-            setTimeout(function() { input.focus() }, 10);
-        }
+        setTimeout(function() {
+            if(!window.getSelection().toString()) {
+                input.focus()
+            }
+        }, 10);
     };
-    document.body.addEventListener('click', refocus, false);
+    document.body.addEventListener('mouseup', refocus, false);
     input.addEventListener('blur', refocus, false);
     
     // WebSocket-related functions
