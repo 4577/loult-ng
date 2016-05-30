@@ -19,12 +19,12 @@ window.onload = function() {
         var td = document.createElement('td');
         var img = document.createElement('img');
         img.src = params.img;
-        td.appendChild(img);
-        td.appendChild(document.createTextNode(' '));
         var label = document.createElement('label');
         label.appendChild(document.createTextNode(params.name));
         label.style.color = params.color;
         td.appendChild(label);
+        td.appendChild(document.createTextNode(' '));
+        td.appendChild(img);
         tr.appendChild(td);
         
         td = document.createElement('td');
