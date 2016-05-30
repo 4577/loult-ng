@@ -56,11 +56,13 @@ main {
 }
 
 #chatentry {
-    display: flex;
+    display: block;
 }
 
 #input {
-    flex: 1;
+    width: 100%;
+    border: 0;
+    border-top: 1px solid #666;
     font-size: 30px;
     padding: 6px 0px;
 }
