@@ -57,6 +57,7 @@ main {
 
 #chatentry {
     display: flex;
+    min-height: 50px;
 }
 
 #input {
