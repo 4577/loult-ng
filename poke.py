@@ -46,6 +46,7 @@ class LoultServer(WebSocketServerProtocol):
         
         ck = md5((ck + SALT).encode('utf8')).digest()
         
+        self.speed = (ck[5] % 50) + 100
         self.pitch = ck[0] % 100
         self.voice = (1, 2, 3, 4, 6, 7)[ck[1] % 6]
         self.sex = 4 if self.voice in (2, 4) else 1
@@ -119,7 +120,7 @@ class LoultServer(WebSocketServerProtocol):
             text = text.replace('#', 'hashtag')
             text = quote(text.strip(' -"\'`$();:.'))
             
-            wav = run('MALLOC_CHECK_=0 espeak -s 150 -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
+            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
             wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
             
             info = {
