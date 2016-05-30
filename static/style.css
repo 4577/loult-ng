@@ -42,13 +42,15 @@ main {
     
     display: flex;
     flex-direction: column;
+    
+    min-width: 0;
 }
 
 #chatbox {
     flex: 1;
     overflow-y: auto;
     text-overflow: ellipsis;
-    min-width: 0;
+    
     overflow-x: hidden;
     word-wrap: break-word;
 }
@@ -99,6 +101,7 @@ td:nth-child(2) {
 
 #userlist {
     border-left: 1px solid #666;
+    overflow-y: auto;
 }
 
 #userlist > div {
