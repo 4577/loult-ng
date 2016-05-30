@@ -165,6 +165,10 @@ label + img {
     color: limegreen;
 }
 
+.part {
+    color: #318BFF;
+}
+
 .backlog td {
     opacity: 0.4;
 }

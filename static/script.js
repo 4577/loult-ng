@@ -40,9 +40,9 @@ window.onload = function() {
         keepScroll(tr);
     }
     
-    var log = function(msg) {
+    var log = function(msg, part) {
         var tr = document.createElement('tr');
-        tr.className = 'log';
+        tr.className = 'log' + (part ? ' part' : '');
         
         var td = document.createElement('td');
         td.appendChild(document.createTextNode('[Info]'));
@@ -155,7 +155,7 @@ window.onload = function() {
                         break;
                     
                     case 'disconnect':
-                        log('Un ' + users[msg.userid].name + " sauvage s'enfuit !");
+                        log('Un ' + users[msg.userid].name + " sauvage s'enfuit !", true);
                         delUser(msg.userid);
                         break;
                     
