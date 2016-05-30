@@ -115,7 +115,7 @@ class LoultServer(WebSocketServerProtocol):
         msg = loads(payload.decode('utf8'))
         
         if msg['type'] == 'msg':
-            text = msg['msg']
+            text = msg['msg'][:1000]
             text = text.replace('#', 'hashtag')
             text = quote(text.strip(' -"\'`$();:.'))
             
