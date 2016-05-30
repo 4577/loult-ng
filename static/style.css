@@ -1,0 +1,166 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
+    font-size: 16px;
+    
+    display: flex;
+    flex-direction: column;
+    
+    height: 100%;
+    width: 100%;
+}
+
+@media screen and (max-width: 610px) {
+    #userlist {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    td:last-child {
+        display: none;
+    }
+}
+
+header {
+    font-size: 24px;
+    padding: 20px;
+    border-bottom: 1px solid #666;
+    /*background: url(https://s-media-cache-ak0.pinimg.com/736x/bc/5a/cc/bc5acc408011acf4e67be22002ad55ad.jpg);*/
+}
+
+main {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+}
+
+#chat {
+    flex: 1;
+    background: #f5f5f5;
+    
+    display: flex;
+    flex-direction: column;
+}
+
+#chatbox {
+    flex: 1;
+    overflow-y: auto;
+    text-overflow: ellipsis;
+    min-width: 0;
+    overflow-x: hidden;
+    word-wrap: break-word;
+}
+
+#chatentry {
+    display: flex;
+}
+
+#input {
+    flex: 1;
+    font-size: 30px;
+    padding: 6px 0px;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+td {
+    height: 34px;
+}
+
+tr:nth-child(odd) {
+    background: #eeeeee;
+}
+
+td:not(:last-child) {
+    border-right: 1px dotted #666;
+}
+
+td:not(:nth-child(2)) {
+    /*white-space: nowrap;*/
+    padding: 0 5px;
+    padding-bottom: 2px;
+    text-align: right;
+}
+
+td:first-child {
+    padding-left: 15px;
+    min-width: 150px;
+}
+
+td:nth-child(2) {
+    width: 99%;
+    padding: 0 6px;
+    white-space: pre-line;
+}
+
+#userlist {
+    border-left: 1px solid #666;
+}
+
+#userlist > div {
+    padding: 0 5px;
+    padding-bottom: 2px;
+    width: 175px;
+    border-bottom: 1px solid #666;
+}
+
+.sound {
+    float: right;
+    font-size: 24px;
+    padding: 0 10px;
+    padding-left: 0;
+    position: relative;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #333;
+    top: 3px;
+}
+
+.mute > * {
+    opacity: 0.4;
+}
+
+a {
+    color: #0046A6;
+    text-decoration: none;
+}
+
+a:hover, .sound:hover {
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.mute .sound:hover {
+    opacity: 0.28;
+}
+
+img {
+    margin-top: -2px;
+}
+
+label {
+    position: relative;
+    top: -6px;
+}
+
+img + label {
+    /*left: -2px;*/
+}
+
+label + img {
+    margin-left: -2px;
+}
+
+.log {
+    color: limegreen;
+}
+
+.backlog td {
+    opacity: 0.4;
+}
