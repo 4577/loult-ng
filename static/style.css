@@ -11,13 +11,17 @@ html, body {
     width: 100%;
 }
 
-@media screen and (max-width: 610px) {
+@media screen and (max-width: 650px) {
     #userlist {
         display: none;
     }
+
+    td:first-child {
+        min-width: 120px !important;
+    }
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 900px) {
     td:last-child {
         display: none;
     }
