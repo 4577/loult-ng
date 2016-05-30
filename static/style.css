@@ -11,7 +11,7 @@ html, body {
     width: 100%;
 }
 
-@media screen and (max-width: 650px) {
+@media screen and (max-width: 680px) {
     #userlist {
         display: none;
     }
@@ -169,9 +169,9 @@ label + img {
     color: limegreen;
 }
 
-.part {
+/*.part {
     color: #0DC0E5;
-}
+}*/
 
 .backlog td {
     opacity: 0.4;
