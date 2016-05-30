@@ -125,6 +125,14 @@ window.onload = function() {
         }
     };
     
+    var refocus = function() {
+        if(!window.getSelection().toString()) {
+            setTimeout(function() { input.focus() }, 10);
+        }
+    };
+    document.body.addEventListener('click', refocus, false);
+    input.addEventListener('blur', refocus, false);
+    
     // WebSocket-related functions
     
     var wsConnect = function() {
