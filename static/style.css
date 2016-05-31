@@ -63,10 +63,6 @@ main {
 #chatbox {
     flex: 1;
     overflow-y: auto;
-    text-overflow: ellipsis;
-    
-    overflow-x: hidden;
-    word-wrap: break-word;
 }
 
 #chatentry {
@@ -83,6 +79,7 @@ main {
 
 table {
     border-collapse: collapse;
+    word-break: break-all;
 }
 
 td {
@@ -112,7 +109,6 @@ td:first-child {
 td:nth-child(2) {
     width: 99%;
     padding: 0 6px;
-    white-space: pre-line;
 }
 
 #userlist {
