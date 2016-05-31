@@ -89,7 +89,7 @@ class LoultServer(WebSocketServerProtocol):
                 i.sendMessage(json({
                     'type': 'connect',
                     **info
-                }), sync=True)
+                }))
             refcnts[self.channel][self.userid] = 1
             users[self.channel][self.userid] = info
         
@@ -105,12 +105,12 @@ class LoultServer(WebSocketServerProtocol):
         self.sendMessage(json({
             'type': 'userlist',
             'users': list(myUsers[self.channel].values())
-        }), sync=True)
+        }))
         
         self.sendMessage(json({
             'type': 'backlog',
             'msgs': backlog[self.channel]
-        }), sync=True)
+        }))
 
     def onMessage(self, payload, isBinary):
         msg = loads(payload.decode('utf8'))
@@ -137,9 +137,9 @@ class LoultServer(WebSocketServerProtocol):
                     'type': 'msg',
                     'userid': self.userid,
                     'msg': info['msg']
-                }), sync=True)
+                }))
                 
-                i.sendMessage(wav, True, sync=True)
+                i.sendMessage(wav, True)
 
     def onClose(self, wasClean, code, reason):
         if hasattr(self, 'cnx') and self.cnx:
@@ -155,7 +155,7 @@ class LoultServer(WebSocketServerProtocol):
                         i.sendMessage(json({
                             'type': 'disconnect',
                             'userid': self.userid
-                        }), sync=True)
+                        }))
                     
                     if not clients[self.channel]:
                         del clients[self.channel]
