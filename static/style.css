@@ -29,9 +29,19 @@ html, body {
 
 header {
     font-size: 24px;
-    padding: 20px;
     border-bottom: 1px solid #666;
     /*background: url(https://s-media-cache-ak0.pinimg.com/736x/bc/5a/cc/bc5acc408011acf4e67be22002ad55ad.jpg);*/
+}
+
+#nom {
+    padding: 20px;
+}
+
+#gear {
+    float: right;
+    font-size: 32px;
+    padding: 15px;
+    margin-right: 5px;
 }
 
 main {
@@ -139,7 +149,8 @@ a {
     text-decoration: none;
 }
 
-a:hover, .sound:hover {
+a:hover, .sound:hover, #gear:hover, label:hover, input[type=button]:hover,
+input[type=checkbox]:hover, input[type=checkbox]:hover + label, #close:hover {
     opacity: 0.7;
     cursor: pointer;
 }
@@ -152,7 +163,7 @@ img {
     margin-top: -2px;
 }
 
-label {
+main label {
     position: relative;
     top: -6px;
 }
@@ -176,4 +187,68 @@ label + img {
 
 .backlog td {
     opacity: 0.4;
+}
+
+#prefs {
+    display: none;
+    flex: 0;
+}
+
+#prefsoverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#prefswindow {
+    position: absolute;
+    
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    
+    max-width: 720px;
+    max-height: 480px;
+    
+    margin: auto;
+    padding: 50px;
+    background: white;
+    box-shadow: 0 0 15px #666;
+    color: black;
+    
+    line-height: 1.5em;
+    
+    width: auto;
+    height: auto;
+}
+
+@media screen and (max-width: 720px) {
+    #prefswindow {
+        padding: 40px;
+        max-height: none;
+    }
+}
+
+#prefswindow > div {
+    margin-bottom: 24px;
+}
+
+#prefswindow, #prefswindow input {
+    font-size: 24px;
+}
+
+#prefswindow a {
+    text-decoration: underline;
+}
+
+#close {
+    float: right;
+    margin-top: -32px;
+    margin-right: -30px;
+    padding: 2px 10px;
+    background: #eee;
 }

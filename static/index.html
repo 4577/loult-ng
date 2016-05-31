@@ -5,9 +5,10 @@
         <meta charset="utf-8">
         <link rel="stylesheet" href="style.css">
         <script src="script.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <header>Lou.lt</header>
+        <header><div id="gear">⚙</div><div id="nom">Lou.lt</div></header>
         <main>
             <div id="chat">
                 <div id="chatbox">
@@ -20,5 +21,14 @@
             </div>
             <div id="userlist"></div>
         </main>
+        <div id="prefs">
+            <div id="prefsoverlay"></div>
+            <div id="prefswindow">
+                <div id="close">×</div>
+                <div><input type="checkbox" id="droite"><label for="droite"> Mettre le Pokémon à droite du pseudo</label></div>
+                <div><a href="#" id="wipeck">Supprimer mon cookie</a></div>
+                <div><a href="https://github.com/4577/loult-ng" target="_blank">Code source du site</a></div>
+            </div>
+        </div>
     </body>
 </html>

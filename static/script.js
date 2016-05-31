@@ -6,6 +6,7 @@ window.onload = function() {
     var context = new AudioContext();
     var users = {};
     var muted = [];
+    var droite = localStorage.droite == 'true';
     var waitTime = 1000;
     
     // DOM-related functions
@@ -22,13 +23,19 @@ window.onload = function() {
         var label = document.createElement('label');
         label.appendChild(document.createTextNode(params.name));
         label.style.color = params.color;
-        td.appendChild(label);
-        td.appendChild(document.createTextNode(' '));
-        td.appendChild(img);
+        if(droite) {
+            td.appendChild(label);
+            td.appendChild(document.createTextNode(' '));
+            td.appendChild(img);
+        }
+        else {
+            td.appendChild(img);
+            td.appendChild(document.createTextNode(' '));
+            td.appendChild(label);
+        }
         tr.appendChild(td);
         
         td = document.createElement('td');
-        //td.appendChild(document.createTextNode(msg));
         td.innerHTML = msg;
         tr.appendChild(td);
         
@@ -134,6 +141,42 @@ window.onload = function() {
     };
     document.body.addEventListener('mouseup', refocus, false);
     input.addEventListener('blur', refocus, false);
+    
+    // Preferences
+    
+    var gear = document.getElementById('gear');
+    var prefs = document.getElementById('prefs');
+    var prefsoverlay = document.getElementById('prefsoverlay');
+    var close = document.getElementById('close');
+    var droitebtn = document.getElementById('droite');
+    var wipeck = document.getElementById('wipeck');
+    
+    var switchGear = function() {
+        prefs.style.display = prefs.style.display !== 'block' ? 'block' : 'none';
+    };
+    gear.onclick = switchGear;
+    prefsoverlay.onclick = switchGear;
+    close.onclick = switchGear;
+    
+    wipeck.onclick = function(evt) {
+        evt.preventDefault();
+        document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
+        location.reload();
+    };
+    
+    droitebtn.checked = droite;
+    droitebtn.onchange = function(evt) {
+        droite = droitebtn.checked;
+        localStorage.droite = droite;
+        
+        var rows = document.querySelectorAll('td:first-child');
+        for(var i = 0; i < rows.length; i++) {
+            var j = rows[i].childNodes.length;
+            while(j--) {
+                rows[i].appendChild(rows[i].childNodes[j]);
+            }
+        }
+    };
     
     // WebSocket-related functions
     
