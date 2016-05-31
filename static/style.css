@@ -188,6 +188,7 @@ label + img {
 
 #prefs {
     display: none;
+    color: #111;
     flex: 0;
 }
 
