@@ -1,3 +1,5 @@
+var ws;
+
 window.onload = function() {
     var chatbox = document.getElementById('chatbox');
     var chattbl = document.getElementById('chattbl');
@@ -181,7 +183,7 @@ window.onload = function() {
     // WebSocket-related functions
     
     var wsConnect = function() {
-        var ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+        ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
         
         var lastMuted = false;
         ws.binaryType = 'arraybuffer';
