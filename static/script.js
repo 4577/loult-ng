@@ -162,8 +162,10 @@ window.onload = function() {
     
     wipeck.onclick = function(evt) {
         evt.preventDefault();
-        document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
-        location.reload();
+        if(confirm('Supprimer le cookie ?')) {
+            document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
+            location.reload();
+        }
     };
     
     droitebtn.checked = droite;
