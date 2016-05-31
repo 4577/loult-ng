@@ -96,7 +96,8 @@ td:not(:last-child) {
 
 td:not(:nth-child(2)) {
     white-space: nowrap;
-    padding: 0 5px;
+    padding: 1px 5px;
+    line-height: 1.5em;
     padding-bottom: 2px;
     text-align: right;
 }
