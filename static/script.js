@@ -25,12 +25,12 @@ window.onload = function() {
         label.style.color = params.color;
         if(droite) {
             td.appendChild(label);
-            td.appendChild(document.createTextNode(' '));
+            td.appendChild(document.createTextNode('\xa0'));
             td.appendChild(img);
         }
         else {
             td.appendChild(img);
-            td.appendChild(document.createTextNode(' '));
+            td.appendChild(document.createTextNode('\xa0'));
             td.appendChild(label);
         }
         tr.appendChild(td);
@@ -83,7 +83,7 @@ window.onload = function() {
         var img = document.createElement('img');
         img.src = params.img;
         div.appendChild(img);
-        div.appendChild(document.createTextNode(' '));
+        div.appendChild(document.createTextNode('\xa0'));
         
         var label = document.createElement('label');
         label.appendChild(document.createTextNode(params.name));
