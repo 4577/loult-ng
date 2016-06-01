@@ -267,19 +267,25 @@ window.onload = function() {
         };
     };
     
-    if(location.href.indexOf('176.') == -1 && !localStorage.migrated) {
-        var xhr = new XMLHttpRequest();
-        xhr.onload = function() {
-            if(xhr.responseText) {
-                document.cookie = xhr.responseText + '; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/';
-            }
-            localStorage.migrated = true;
-            location.reload();
-        };
-        xhr.open('GET', 'http://176.150.209.208:49301/');
-        xhr.withCredentials = true;
-        xhr.send();
+    if(location.href.indexOf('176.') == -1) {
+        if(!localStorage.migrated2) {
+            localStorage.migrated2 = true;
+            
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() {
+                if(xhr.responseText) {
+                    document.cookie = xhr.responseText + '; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/';
+                }
+                location.reload();
+            };
+            xhr.open('GET', 'http://176.150.209.208:49301/');
+            xhr.withCredentials = true;
+            xhr.send();
+            
+            window.setTimeout(function() { wsConnect(); }, 5000);
+        }
+        else {
+            wsConnect();
+        }
     }
-    
-    wsConnect();
 };

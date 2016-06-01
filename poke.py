@@ -68,7 +68,7 @@ class LoultServer(WebSocketServerProtocol):
         print("WebSocket connection open.")
         
         """
-        self.sendMessage(json({'type': 'refresh'})))
+        self.sendMessage(json({'type': 'refresh'}))
         return
         """
         
