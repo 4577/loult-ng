@@ -1,6 +1,6 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class CookieServer(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -18,6 +18,6 @@ class CookieServer(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'OPTIONS, GET')
         self.send_header('Access-Control-Allow-Credentials', 'true')
         self.end_headers()
-        self.wfile.write(self.headers.get('Cookie'))
+        self.wfile.write(self.headers.get('Cookie').encode('ascii'))
 
 HTTPServer(('0.0.0.0', 49301), CookieServer).serve_forever()
