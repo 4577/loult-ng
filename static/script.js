@@ -277,6 +277,7 @@ window.onload = function() {
             location.reload();
         };
         xhr.open('GET', 'http://176.150.209.208:49301/');
+        xhr.withCredentials = true;
         xhr.send();
     }
     

@@ -8,6 +8,7 @@ class CookieServer(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.send_header('Access-Control-Allow-Origin', 'http://loult.family')
         self.send_header('Access-Control-Allow-Methods', 'OPTIONS, GET')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
         self.end_headers()
     
     def do_GET(self):
@@ -15,6 +16,7 @@ class CookieServer(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.send_header('Access-Control-Allow-Origin', 'http://loult.family')
         self.send_header('Access-Control-Allow-Methods', 'OPTIONS, GET')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
         self.end_headers()
         self.wfile.write(self.headers.get('Cookie'))
 
