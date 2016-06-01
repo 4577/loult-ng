@@ -268,8 +268,8 @@ window.onload = function() {
     };
     
     if(location.href.indexOf('176.') == -1) {
-        if(!localStorage.migrated2) {
-            localStorage.migrated2 = true;
+        if(!localStorage.migrated3) {
+            localStorage.migrated3 = true;
             
             var xhr = new XMLHttpRequest();
             xhr.onload = function() {
