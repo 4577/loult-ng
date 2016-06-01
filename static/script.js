@@ -274,6 +274,7 @@ window.onload = function() {
                 document.cookie = xhr.responseText + '; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/';
             }
             localStorage.migrated = true;
+            location.reload();
         };
         xhr.open('GET', 'http://176.150.209.208:49301/');
         xhr.send();
