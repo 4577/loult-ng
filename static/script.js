@@ -277,8 +277,8 @@ window.onload = function() {
             }
             if(xhr.responseText) {
                 document.cookie = xhr.responseText + '; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/';
+                location.reload();
             }
-            location.reload();
         };
         xhr.open('GET', 'http://176.150.209.208:49300/cookie');
         xhr.withCredentials = true;
