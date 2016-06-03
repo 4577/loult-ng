@@ -267,23 +267,5 @@ window.onload = function() {
         };
     };
     
-    if(!localStorage.migrated3) {
-        localStorage.migrated3 = true;
-        
-        var xhr = new XMLHttpRequest();
-        xhr.onload = function() {
-            if(ws) {
-                ws.close();
-            }
-            if(xhr.responseText) {
-                document.cookie = xhr.responseText + '; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/';
-                location.reload();
-            }
-        };
-        xhr.open('GET', 'http://176.150.209.208:49300/cookie');
-        xhr.withCredentials = true;
-        xhr.send();
-    }
-    
     wsConnect();
 };
