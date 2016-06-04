@@ -14,7 +14,6 @@ from struct import pack
 from shlex import quote
 from html import escape
 from os import urandom
-from time import time
 from re import sub
 
 from salt import SALT
@@ -62,7 +61,6 @@ class LoultServer(WebSocketServerProtocol):
         
         self.channel = request.path.split('/')[-1]
         self.cnx = False
-        self.sendend = 0
        
         return (None, retn)
 
@@ -126,16 +124,9 @@ class LoultServer(WebSocketServerProtocol):
             wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
             wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
             
-            if self.sendend >= time() + 5:
-                return
-            
-            self.sendend = max(self.sendend, time())
-            self.sendend += len(wav) * 8 / 6000000
-            
             info = {
                 'user': users[self.channel][self.userid]['params'],
-                'msg': sub('(https?://[^ ]*[^.,?! :;])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'])),
-                'date': time() * 1000
+                'msg': sub('(https?://[^ ]*[^.,?! :;])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg']))
             }
             
             backlog[self.channel].append(info)
@@ -145,8 +136,7 @@ class LoultServer(WebSocketServerProtocol):
                 i.sendMessage(json({
                     'type': 'msg',
                     'userid': self.userid,
-                    'msg': info['msg'],
-                    'date': info['date']
+                    'msg': info['msg']
                 }))
                 
                 i.sendMessage(wav, True)

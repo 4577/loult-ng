@@ -189,13 +189,13 @@ label + img {
     opacity: 0.4;
 }
 
-#prefs {
+#overlay {
     display: none;
     color: #111;
     flex: 0;
 }
 
-#prefsoverlay {
+#cover {
     position: absolute;
     top: 0;
     left: 0;
@@ -204,7 +204,7 @@ label + img {
     background: rgba(0, 0, 0, 0.5);
 }
 
-#prefswindow {
+#window {
     position: absolute;
     
     top: 0;
@@ -228,21 +228,21 @@ label + img {
 }
 
 @media screen and (max-width: 720px) {
-    #prefswindow {
+    #window {
         padding: 40px;
         max-height: none;
     }
 }
 
-#prefswindow > div {
+#window > * > div {
     margin-bottom: 24px;
 }
 
-#prefswindow, #prefswindow input {
+#window, #window input {
     font-size: 24px;
 }
 
-#prefswindow a {
+#window a {
     text-decoration: underline;
 }
 

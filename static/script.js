@@ -1,6 +1,6 @@
-var ws;
-
 window.onload = function() {
+    var ws;
+    
     var chatbox = document.getElementById('chatbox');
     var chattbl = document.getElementById('chattbl');
     var userlist = document.getElementById('userlist');
@@ -8,7 +8,7 @@ window.onload = function() {
     var context = new AudioContext();
     var users = {};
     var muted = [];
-    var droite = localStorage.droite == 'true';
+    var right = localStorage.right == 'true';
     var waitTime = 1000;
     
     // DOM-related functions
@@ -25,7 +25,7 @@ window.onload = function() {
         var label = document.createElement('label');
         label.appendChild(document.createTextNode(params.name));
         label.style.color = params.color;
-        if(droite) {
+        if(right) {
             td.appendChild(label);
             td.appendChild(document.createTextNode('\xa0'));
             td.appendChild(img);
@@ -38,11 +38,11 @@ window.onload = function() {
         tr.appendChild(td);
         
         td = document.createElement('td');
-        td.innerHTML = msg;
+        td.innerHTML = msg.msg;
         tr.appendChild(td);
         
         td = document.createElement('td');
-        var dt = (new Date).toLocaleString().replace(' à', '').replace(/ /, '\xa0');
+        var dt = new Date(msg.date).toLocaleString().replace(' à', '').replace(/ /, '\xa0');
         td.appendChild(document.createTextNode(dt));
         tr.appendChild(td);
         
@@ -51,7 +51,7 @@ window.onload = function() {
     
     var log = function(msg, part) {
         var tr = document.createElement('tr');
-        tr.className = 'log' + (part ? ' part' : '');
+        tr.className = 'log' + ['', ' part', ' kick'][part | 0];
         
         var td = document.createElement('td');
         td.appendChild(document.createTextNode('[Info]'));
@@ -147,20 +147,29 @@ window.onload = function() {
     // Preferences
     
     var gear = document.getElementById('gear');
-    var prefs = document.getElementById('prefs');
-    var prefsoverlay = document.getElementById('prefsoverlay');
+    var overlay = document.getElementById('overlay');
+    var cover = document.getElementById('cover');
+    var windows = document.getElementById('window').children;
     var close = document.getElementById('close');
-    var droitebtn = document.getElementById('droite');
-    var wipeck = document.getElementById('wipeck');
     
-    var switchGear = function() {
-        prefs.style.display = prefs.style.display !== 'block' ? 'block' : 'none';
+    var rightbtn = document.getElementById('right');
+    var ckwipe = document.getElementById('ckwipe');
+    
+    var openWindow = function(panel) {
+        /*for(var i = 0; i < windows.length; i++) {
+            var show = windows[i].id === (panel || 'prefs');
+            windows[i].style.display = show ? 'block' : 'none';
+        }*/
+        overlay.style.display = 'block';
     };
-    gear.onclick = switchGear;
-    prefsoverlay.onclick = switchGear;
-    close.onclick = switchGear;
+    var closeWindow = function() {
+        overlay.style.display = 'none';
+    };
+    gear.onclick = openWindow;
+    cover.onclick = closeWindow;
+    close.onclick = closeWindow;
     
-    wipeck.onclick = function(evt) {
+    ckwipe.onclick = function(evt) {
         evt.preventDefault();
         if(confirm('Supprimer le cookie ?')) {
             document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
@@ -168,10 +177,10 @@ window.onload = function() {
         }
     };
     
-    droitebtn.checked = droite;
-    droitebtn.onchange = function(evt) {
-        droite = droitebtn.checked;
-        localStorage.droite = droite;
+    rightbtn.checked = right;
+    rightbtn.onchange = function(evt) {
+        right = rightbtn.checked;
+        localStorage.right = right;
         
         var rows = document.querySelectorAll('td:first-child');
         for(var i = 0; i < rows.length; i++) {
@@ -224,7 +233,7 @@ window.onload = function() {
                     
                     case 'backlog':
                         for(var i = 0; i < msg.msgs.length; i++) {
-                            addline(msg.msgs[i].user, msg.msgs[i].msg, true);
+                            addline(msg.msgs[i].user, msg.msgs[i], true);
                         }
                         log('Vous êtes connecté');
                         break;
@@ -232,12 +241,8 @@ window.onload = function() {
                     case 'msg':
                         lastMuted = muted.indexOf(msg.userid) !== -1;
                         if(!lastMuted) {
-                            addline(users[msg.userid], msg.msg, false);
+                            addline(users[msg.userid], msg, false);
                         }
-                        break;
-                    
-                    case 'refresh':
-                        location.reload();
                         break;
                 }
             }
