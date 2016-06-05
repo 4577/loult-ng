@@ -129,7 +129,7 @@ class LoultServer(WebSocketServerProtocol):
                 return
             self.lasttxt = time()
             
-            synth = self.sendend >= self.lasttxt + 5
+            synth = self.sendend < self.lasttxt + 5
             
             if synth:
                 wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
