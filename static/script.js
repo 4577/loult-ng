@@ -148,6 +148,9 @@ window.onload = function() {
     
     var gear = document.getElementById('gear');
     var overlay = document.getElementById('overlay');
+    if(!overlay) {
+        location.reload();
+    }
     var cover = document.getElementById('cover');
     var windows = document.getElementById('window').children;
     var close = document.getElementById('close');
@@ -237,6 +240,10 @@ window.onload = function() {
                         }
                         log('Vous êtes connecté');
                         break;
+                    
+                    /*case 'ratelimit':
+                        log('Floode moins peuchère', 2);
+                        break;*/
                     
                     case 'msg':
                         lastMuted = muted.indexOf(msg.userid) !== -1;

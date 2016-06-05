@@ -127,6 +127,7 @@ class LoultServer(WebSocketServerProtocol):
             wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
             
             if self.sendend >= time() + 5:
+                self.sendMessage(json({'type': 'ratelimit'}))
                 return
             
             self.sendend = max(self.sendend, time())

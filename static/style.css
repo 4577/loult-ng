@@ -185,6 +185,10 @@ label + img {
     /*color: #0DC0E5;*/
 }
 
+.kick {
+    color: #FF3635; /* #CD0E0D; */
+}
+
 .backlog td {
     opacity: 0.4;
 }
