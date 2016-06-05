@@ -241,10 +241,6 @@ window.onload = function() {
                         log('Vous êtes connecté');
                         break;
                     
-                    case 'ratelimit':
-                        log('Floode moins peuchère', 2);
-                        break;
-                    
                     case 'msg':
                         lastMuted = muted.indexOf(msg.userid) !== -1;
                         if(!lastMuted) {

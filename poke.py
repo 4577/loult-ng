@@ -127,7 +127,6 @@ class LoultServer(WebSocketServerProtocol):
             now = time()
             
             if now - self.lasttxt <= 0.1:
-                self.sendMessage(json({'type': 'ratelimit'}))
                 return
             self.lasttxt = now
             
