@@ -63,6 +63,7 @@ class LoultServer(WebSocketServerProtocol):
         self.channel = request.path.split('/')[-1]
         self.cnx = False
         self.sendend = 0
+        self.lasttxt = 0
        
         return (None, retn)
 
@@ -123,15 +124,19 @@ class LoultServer(WebSocketServerProtocol):
             text = sub('(https?://[^ ]*[^.,?! :;])', 'cliquez bande de salopes', text)
             text = quote(text.strip(' -"\'`$();:.'))
             
-            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
-            wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
-            
-            if self.sendend >= time() + 5:
+            if time() - self.lasttxt <= 0.1:
                 self.sendMessage(json({'type': 'ratelimit'}))
                 return
+            self.lasttxt = time()
             
-            self.sendend = max(self.sendend, time())
-            self.sendend += len(wav) * 8 / 6000000
+            synth = self.sendend >= self.lasttxt + 5
+            
+            if synth:
+                wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
+                wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
+                
+                self.sendend = max(self.sendend, time())
+                self.sendend += len(wav) * 8 / 6000000
             
             info = {
                 'user': users[self.channel][self.userid]['params'],
@@ -150,7 +155,8 @@ class LoultServer(WebSocketServerProtocol):
                     'date': info['date']
                 }))
                 
-                i.sendMessage(wav, True)
+                if synth:
+                    i.sendMessage(wav, True)
 
     def onClose(self, wasClean, code, reason):
         if hasattr(self, 'cnx') and self.cnx:
