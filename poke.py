@@ -124,25 +124,27 @@ class LoultServer(WebSocketServerProtocol):
             text = sub('(https?://[^ ]*[^.,?! :;])', 'cliquez bande de salopes', text)
             text = quote(text.strip(' -"\'`$();:.'))
             
-            if time() - self.lasttxt <= 0.1:
+            now = time()
+            
+            if now - self.lasttxt <= 0.1:
                 self.sendMessage(json({'type': 'ratelimit'}))
                 return
-            self.lasttxt = time()
+            self.lasttxt = now
             
             wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
             wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
                 
-            calc_sendend = max(self.sendend, time())
+            calc_sendend = max(self.sendend, now)
             calc_sendend += len(wav) * 8 / 6000000
             
-            synth = calc_sendend < time() + 5
+            synth = calc_sendend < now + 5
             if synth:
                 self.sendend = calc_sendend
         
             info = {
                 'user': users[self.channel][self.userid]['params'],
                 'msg': sub('(https?://[^ ]*[^.,?! :;])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'])),
-                'date': time() * 1000
+                'date': now * 1000
             }
             
             backlog[self.channel].append(info)
