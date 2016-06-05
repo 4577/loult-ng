@@ -131,7 +131,7 @@ class LoultServer(WebSocketServerProtocol):
                 return
             
             self.sendend = max(self.sendend, time())
-            self.sendend += len(wav) * 8 / 6000000
+            self.sendend += len(wav) * 8 / 12000000
             
             info = {
                 'user': users[self.channel][self.userid]['params'],
