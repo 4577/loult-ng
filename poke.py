@@ -129,15 +129,16 @@ class LoultServer(WebSocketServerProtocol):
                 return
             self.lasttxt = time()
             
-            synth = self.sendend < self.lasttxt + 5
-            
-            if synth:
-                wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
-                wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
+            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
+            wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
                 
-                self.sendend = max(self.sendend, time())
-                self.sendend += len(wav) * 8 / 6000000
+            calc_sendend = max(self.sendend, time())
+            calc_sendend += len(wav) * 8 / 6000000
             
+            synth = calc_sendend < time() + 5
+            if synth:
+                self.sendend = calc_sendend
+        
             info = {
                 'user': users[self.channel][self.userid]['params'],
                 'msg': sub('(https?://[^ ]*[^.,?! :;])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'])),
