@@ -46,6 +46,14 @@ header {
     margin-right: 5px;
 }
 
+#mutebtn {
+    float: right;
+    font-size: 32px;
+    padding: 17px;
+    padding-top: 16px;
+    padding-bottom: 14px;
+}
+
 main {
     display: flex;
     height: 100%;

@@ -5,11 +5,13 @@ window.onload = function() {
     var chattbl = document.getElementById('chattbl');
     var userlist = document.getElementById('userlist');
     var input = document.getElementById('input');
+    var mutebtn = document.getElementById('mutebtn');
     var context = new AudioContext();
     var users = {};
     var muted = [];
     var right = localStorage.right == 'true';
     var waitTime = 1000;
+    var silentMode = false;
     
     // DOM-related functions
     
@@ -123,6 +125,13 @@ window.onload = function() {
         delete users[userid];
     };
     
+    var muteAll = function () {
+         silentMode = !silentMode;
+         mutebtn.innerHTML = (silentMode) ? "🔇" : "🔊";
+         mutebtn.style.opacity = (silentMode)? .5 : 1;
+    }
+
+
     // Scroll-related functions
     
     var keepScroll = function(tr) {
@@ -171,6 +180,7 @@ window.onload = function() {
     gear.onclick = openWindow;
     cover.onclick = closeWindow;
     close.onclick = closeWindow;
+    mutebtn.onclick = muteAll;
     
     ckwipe.onclick = function(evt) {
         evt.preventDefault();
@@ -249,7 +259,7 @@ window.onload = function() {
                         break;
                 }
             }
-            else if(!lastMuted) {
+            else if(!lastMuted && !silentMode) {
                 context.decodeAudioData(msg.data, function(buf) {
                     var source = context.createBufferSource();
                     source.buffer = buf;
