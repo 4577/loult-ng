@@ -5,7 +5,6 @@ window.onload = function() {
     var chattbl = document.getElementById('chattbl');
     var userlist = document.getElementById('userlist');
     var input = document.getElementById('input');
-    var context = new AudioContext();
     var users = {};
     var muted = [];
     var right = localStorage.right == 'true';
@@ -156,7 +155,6 @@ window.onload = function() {
     var close = document.getElementById('close');
     
     var rightbtn = document.getElementById('right');
-    var ckwipe = document.getElementById('ckwipe');
     
     var openWindow = function(panel) {
         /*for(var i = 0; i < windows.length; i++) {
@@ -172,14 +170,6 @@ window.onload = function() {
     cover.onclick = closeWindow;
     close.onclick = closeWindow;
     
-    ckwipe.onclick = function(evt) {
-        evt.preventDefault();
-        if(confirm('Supprimer le cookie ?')) {
-            document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
-            location.reload();
-        }
-    };
-    
     rightbtn.checked = right;
     rightbtn.onchange = function(evt) {
         right = rightbtn.checked;
@@ -191,6 +181,38 @@ window.onload = function() {
             while(j--) {
                 rows[i].appendChild(rows[i].childNodes[j]);
             }
+        }
+    };
+    
+    // Sound and volume
+    
+    var context = new (window.AudioContext || webkitAudioContext)();
+    
+    var volume = context.createGain ? context.createGain() : context.createGainNode();
+    volume.connect(context.destination);
+    
+    var speaker = document.getElementById('speaker');
+    var volrange = document.getElementById('volrange');
+    
+    if(localStorage.volume) {
+        volrange.value = localStorage.volume * 100;
+        volume.gain.value = localStorage.volume;
+    }
+    
+    speaker.onclick = function() {
+        if(this.src.indexOf('mute') == -1) {
+            volume.gain.value = 0;
+            this.src = '/img/mute.png';
+        }
+        else {
+            volume.gain.value = volrange.value / 100;
+            this.src = '/img/speaker.png';
+        }
+    };
+    volrange.oninput = function() {
+        if(speaker.src.indexOf('mute') == -1) {
+            volume.gain.value = volrange.value / 100;
+            localStorage.volume = volume.gain.value;
         }
     };
     
@@ -253,7 +275,7 @@ window.onload = function() {
                 context.decodeAudioData(msg.data, function(buf) {
                     var source = context.createBufferSource();
                     source.buffer = buf;
-                    source.connect(context.destination);
+                    source.connect(volume);
                     source.start();
                 });
             }

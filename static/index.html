@@ -3,12 +3,15 @@
     <head>
         <title>Lou.lt &bull; clone</title>
         <meta charset="utf-8">
-        <link rel="stylesheet" href="style.css">
-        <script src="script.js"></script>
+        <link rel="stylesheet" href="/style.css">
+        <script src="/script.js"></script>
     </head>
     <body>
         <header>
-            <div id="gear"><img src="/gear.png"></div>
+            <div id="sidebtns">
+                <img src="/img/speaker.png" id="speaker">
+                <img src="/img/gear.png" id="gear">
+            </div>
             <div id="nom">Lou.lt</div>
         </header>
         <main>
@@ -29,7 +32,7 @@
                 <div id="close">×</div>
                 <div id="prefs">
                     <div><input type="checkbox" id="right"><label for="right"> Mettre le Pokémon à droite du pseudo</label></div>
-                    <div><a href="#" id="ckwipe">Supprimer mon cookie</a></div>
+                    <div>Volume : <input type="range" value="100" id="volrange"></div>
                     <div><a href="https://github.com/4577/loult-ng" target="_blank">Code source du site</a></div>
                 </div>
             </div>

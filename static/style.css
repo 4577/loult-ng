@@ -37,13 +37,22 @@ header {
     padding: 20px;
 }
 
-#gear {
+#sidebtns {
     float: right;
     font-size: 32px;
     padding: 17px;
     padding-top: 16px;
     padding-bottom: 14px;
     margin-right: 5px;
+}
+#sidebtns img {
+    margin-left: 5px;
+}
+
+input[type=range] {
+    vertical-align: middle;
+    margin-left: 5px;
+    width: 147px;
 }
 
 main {
@@ -149,7 +158,7 @@ a {
     text-decoration: none;
 }
 
-a:hover, .sound:hover, #gear:hover, label:hover, input[type=button]:hover,
+a:hover, .sound:hover, #sidebtns > img:hover, label:hover, input[type=button]:hover,
 input[type=checkbox]:hover, input[type=checkbox]:hover + label, #close:hover {
     opacity: 0.7;
     cursor: pointer;
