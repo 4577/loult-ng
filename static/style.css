@@ -114,7 +114,7 @@ td:not(:nth-child(2)) {
 
 td:first-child {
     padding-left: 15px;
-    min-width: 150px;
+    min-width: 165px;
 }
 
 td:nth-child(2) {
