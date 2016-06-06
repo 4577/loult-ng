@@ -158,10 +158,20 @@ a {
     text-decoration: none;
 }
 
-a:hover, .sound:hover, #sidebtns > img:hover, label:hover, input[type=button]:hover,
+a:hover, .sound:hover, #sidebtns > img:hover, input[type=range]:hover, input[type=button]:hover,
 input[type=checkbox]:hover, input[type=checkbox]:hover + label, #close:hover {
     opacity: 0.7;
     cursor: pointer;
+}
+
+label {
+    cursor: inherit;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    input[type=button] {
+        padding: 5px;
+    }
 }
 
 .mute .sound:hover {

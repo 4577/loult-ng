@@ -155,6 +155,7 @@ window.onload = function() {
     var close = document.getElementById('close');
     
     var rightbtn = document.getElementById('right');
+    var ckwipe = document.getElementById('ckwipe');
     
     var openWindow = function(panel) {
         /*for(var i = 0; i < windows.length; i++) {
@@ -183,6 +184,14 @@ window.onload = function() {
             }
         }
     };
+    
+    ckwipe.onclick = function(evt) {
+        evt.preventDefault();
+        if(confirm('Supprimer le cookie ?')) {
+            document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
+            location.reload();
+        }
+    }; 
     
     // Sound and volume
     
