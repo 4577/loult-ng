@@ -1,4 +1,4 @@
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', function() {
     var ws;
     
     var chatbox = document.getElementById('chatbox');
@@ -228,7 +228,10 @@ window.onload = function() {
     // WebSocket-related functions
     
     var wsConnect = function() {
-        ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+        var host = location.origin.replace('http', 'ws');
+        host = host[2] === 's' ? 'wss://163.172.199.37' : host;
+        
+        ws = new WebSocket(host + '/socket' + location.pathname);
         
         var lastMuted = false;
         ws.binaryType = 'arraybuffer';
@@ -307,4 +310,4 @@ window.onload = function() {
     };
     
     wsConnect();
-};
+});
