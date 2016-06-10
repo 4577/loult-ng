@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     var wsConnect = function() {
         var host = location.origin.replace('http', 'ws');
-        host = host[2] === 's' ? 'wss://163.172.199.37' : host;
+        //host = host[2] === 's' ? 'wss://163.172.199.37' : host;
         
         ws = new WebSocket(host + '/socket' + location.pathname);
         
