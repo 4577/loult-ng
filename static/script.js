@@ -225,6 +225,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Users list display
+    
+    var userswitch = document.getElementById('userswitch');
+    userswitch.onclick = function() {
+        userlist.style.display = userlist.style.display == 'block' ? 'none': 'block';
+    };
+    
     // WebSocket-related functions
     
     var wsConnect = function() {

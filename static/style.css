@@ -11,9 +11,12 @@ html, body {
     width: 100%;
 }
 
-@media screen and (max-width: 575px) {
+@media screen and (max-width: 680px) {
     #userlist {
         display: none;
+    }
+    #userswitch {
+        display: inline !important;
     }
 
     td:first-child {
@@ -24,16 +27,6 @@ html, body {
 @media screen and (max-width: 900px) {
     td:last-child {
         display: none;
-    }
-    
-    #userlist > div, td:first-child {
-        width: 140px !important;
-    }
-    td:first-child {
-        min-width: 130px !important;
-    }
-    #userlist > div > label, td > label {
-        font-size: 90%;
     }
 }
 
@@ -161,6 +154,10 @@ td:nth-child(2) {
 
 .mute > * {
     opacity: 0.4;
+}
+
+#userswitch {
+    display: none;
 }
 
 a {
