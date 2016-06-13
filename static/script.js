@@ -229,7 +229,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     var userswitch = document.getElementById('userswitch');
     userswitch.onclick = function() {
+        var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
+        
         userlist.style.display = userlist.style.display == 'block' ? 'none': 'block';
+        
+        if(atBottom) {
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
     };
     
     // WebSocket-related functions
