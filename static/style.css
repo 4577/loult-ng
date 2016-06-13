@@ -11,7 +11,7 @@ html, body {
     width: 100%;
 }
 
-@media screen and (max-width: 680px) {
+@media screen and (max-width: 575px) {
     #userlist {
         display: none;
     }
@@ -24,6 +24,16 @@ html, body {
 @media screen and (max-width: 900px) {
     td:last-child {
         display: none;
+    }
+    
+    #userlist > div, td:first-child {
+        width: 140px !important;
+    }
+    td:first-child {
+        min-width: 130px !important;
+    }
+    #userlist > div > label, td > label {
+        font-size: 90%;
     }
 }
 
