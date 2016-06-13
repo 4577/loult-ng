@@ -17,6 +17,7 @@ html, body {
     }
     #userswitch {
         display: inline !important;
+        margin-right: -3px;
     }
 
     td:first-child {
