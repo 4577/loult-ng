@@ -142,7 +142,7 @@ class LoultServer(WebSocketServerProtocol):
         
             info = {
                 'user': users[self.channel][self.userid]['params'],
-                'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'])),
+                'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'][:500])),
                 'date': now * 1000
             }
             
