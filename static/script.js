@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.appendChild(td);
         
         td = document.createElement('td');
-        var dt = new Date(msg.date).toLocaleString().replace(' à', '').replace(/ /, '\xa0');
+        var dt = new Date(msg.date).toLocaleString('fr-FR', {hour: '2-digit', minute:'2-digit'});
         td.appendChild(document.createTextNode(dt));
         tr.appendChild(td);
         
