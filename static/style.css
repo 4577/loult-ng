@@ -99,6 +99,7 @@ table {
 
 td {
     height: 34px;
+    overflow: hidden;
 }
 
 tr:nth-child(odd) {
