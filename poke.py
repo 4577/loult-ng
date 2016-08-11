@@ -145,13 +145,22 @@ class LoultServer(WebSocketServerProtocol):
                 sex = voice
             else:
                 sex = 4 if voice in (2, 4) else 1
-            
+
+            #volume = {'us3': 3.48104, 'fr3': 1.01283, 'fr5': 2.44384, 'es1': 3.26885, 'fr6': 1.35412, 'us2': 1.7486, 'fr2': 1.60851, 'fr1': 1.17138, 'us1': 1.658, 'es2': 1.84053, 'fr7': 1.96092, 'fr4': 1.0964}['%s%d' % (lang, voice)]
+            volume = 1
+            if lang != 'fr':
+                volume = {'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}['%s%d' % (lang, voice)] * 0.5
+
+            """
             if (lang, voice) == ('es', 1):
                 volume = 2.5
             elif (lang, voice) == ('us', 3):
                 volume = 2
+            #elif lang == 'us':
+            #    volume = 1.3
             else:
                 volume = 1
+            """
             
             # Synthesis & rate limit
             
