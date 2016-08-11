@@ -150,8 +150,6 @@ class LoultServer(WebSocketServerProtocol):
                 volume = 2.5
             elif (lang, voice) == ('us', 3):
                 volume = 2
-            elif lang == 'us':
-                volume = 1.25
             else:
                 volume = 1
             
