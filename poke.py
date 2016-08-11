@@ -133,9 +133,9 @@ class LoultServer(WebSocketServerProtocol):
             
             if 'lang' in msg and msg['lang'] in ['en', 'es']:
                 if msg['lang'] == 'en':
-                    lang, voice = 'us', (1, 2)
+                    lang, voice = 'us', (1, 2, 3)
                 elif msg['lang'] == 'es':
-                    lang, voice = 'es', (1, 2, 3)
+                    lang, voice = 'es', (1, 2)
             else:
                 lang, voice = 'fr', (1, 2, 3, 4, 6, 7)
             
