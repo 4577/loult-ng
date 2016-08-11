@@ -146,9 +146,16 @@ class LoultServer(WebSocketServerProtocol):
             else:
                 sex = 4 if voice in (2, 4) else 1
             
+            if (lang, voice) == ('es', 1):
+                volume = 2.5
+            elif (lang, voice) == ('us', 3):
+                volume = 2
+            else:
+                volume = 1
+            
             # Synthesis & rate limit
             
-            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (self.speed, self.pitch, lang, sex, text, lang, voice, lang, voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
+            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
             wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
                 
             calc_sendend = max(self.sendend, now)
