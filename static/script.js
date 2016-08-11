@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var chattbl = document.getElementById('chattbl');
     var userlist = document.getElementById('userlist');
     var input = document.getElementById('input');
+    
+    var select = document.getElementById('lang');
     var users = {};
     var muted = [];
     var right = localStorage.right == 'true';
@@ -133,15 +135,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    var dontFocus = false;
+    select.addEventListener('focus', function() {
+        dontFocus = true;
+    }, false);
+    
     var refocus = function(evt) {
         setTimeout(function() {
-            if(!window.getSelection().toString()) {
+            if(!dontFocus && !window.getSelection().toString()) {
                 input.focus()
             }
-        }, evt.target.tagName === 'INPUT' ? 500 : 10);
+            else if(dontFocus) {
+                dontFocus = false;
+            }
+        }, 10);
     };
+    window.addEventListener('focus', refocus, false);
     document.body.addEventListener('mouseup', refocus, false);
-    input.addEventListener('blur', refocus, false);
     
     // Preferences
     
@@ -158,10 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var ckwipe = document.getElementById('ckwipe');
     
     var openWindow = function(panel) {
-        /*for(var i = 0; i < windows.length; i++) {
-            var show = windows[i].id === (panel || 'prefs');
-            windows[i].style.display = show ? 'block' : 'none';
-        }*/
         overlay.style.display = 'block';
     };
     var closeWindow = function() {
@@ -192,6 +198,31 @@ document.addEventListener('DOMContentLoaded', function() {
             location.reload();
         }
     }; 
+    
+    // Languages
+    
+    var lang = document.cookie.match(/lang=(\w\w)/);
+    
+    if(!lang) {
+        switch(navigator.language.substr(0, 2)) {
+            case 'fr':
+            case 'es':
+                lang = navigator.language.substr(0, 2);
+                break;
+            default:
+                lang = 'en';
+        }
+        document.cookie = 'lang=' + lang + '; Path=/';
+    }
+    else {
+        lang = lang[1];
+    }
+    select.value = lang;
+    
+    select.onchange = function() {
+        lang = this.value;
+        document.cookie = 'lang=' + lang + '; Path=/';
+    };
     
     // Sound and volume
     
@@ -248,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         input.onkeydown = function(evt) {
             if(evt.keyCode == 13 && input.value) {
-                ws.send(JSON.stringify({type: 'msg', msg: input.value}));
+                ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
                 input.value = '';
             }
         };

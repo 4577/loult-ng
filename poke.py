@@ -49,8 +49,7 @@ class LoultServer(WebSocketServerProtocol):
         
         self.speed = (ck[5] % 50) + 100
         self.pitch = ck[0] % 100
-        self.voice = (1, 2, 3, 4, 6, 7)[ck[1] % 6]
-        self.sex = 4 if self.voice in (2, 4) else 1
+        self.voiceId = ck[1]
         
         self.pokeid = (ck[2] | (ck[3] << 8)) % len(pokemon) + 1
         self.pokename = pokemon[self.pokeid]
@@ -120,8 +119,8 @@ class LoultServer(WebSocketServerProtocol):
         
         if msg['type'] == 'msg':
             text = msg['msg'][:500]
+            text = sub('(https?://[^ ]*[^.,?! :])', 'cliquez mes petits chatons', text)
             text = text.replace('#', 'hashtag ')
-            text = sub('(https?://[^ ]*[^.,?! :])', 'cliquez bande de salopes', text)
             text = quote(text.strip(' -"\'`$();:.'))
             
             now = time()
@@ -129,8 +128,27 @@ class LoultServer(WebSocketServerProtocol):
             if now - self.lasttxt <= 0.1:
                 return
             self.lasttxt = now
+
+            # Language support
             
-            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-fr%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/fr%d/fr%d - -.wav' % (self.speed, self.pitch, self.sex, text, self.voice, self.voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
+            if 'lang' in msg and msg['lang'] in ['en', 'es']:
+                if msg['lang'] == 'en':
+                    lang, voice = 'us', (1, 2)
+                elif msg['lang'] == 'es':
+                    lang, voice = 'es', (1, 2, 3)
+            else:
+                lang, voice = 'fr', (1, 2, 3, 4, 6, 7)
+            
+            voice = voice[self.voiceId % len(voice)]
+            
+            if lang != 'fr':
+                sex = voice
+            else:
+                sex = 4 if voice in (2, 4) else 1
+            
+            # Synthesis & rate limit
+            
+            wav = run('MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (self.speed, self.pitch, lang, sex, text, lang, voice, lang, voice), shell=True, stdout=PIPE, stderr=PIPE).stdout
             wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
                 
             calc_sendend = max(self.sendend, now)
