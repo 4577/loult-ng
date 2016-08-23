@@ -207,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         switch(navigator.language.substr(0, 2)) {
             case 'fr':
             case 'es':
+            case 'de':
                 lang = navigator.language.substr(0, 2);
                 break;
             default:

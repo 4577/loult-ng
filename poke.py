@@ -131,11 +131,13 @@ class LoultServer(WebSocketServerProtocol):
 
             # Language support
             
-            if 'lang' in msg and msg['lang'] in ['en', 'es']:
+            if 'lang' in msg and msg['lang'] in ['en', 'es', 'de']:
                 if msg['lang'] == 'en':
                     lang, voice = 'us', (1, 2, 3)
                 elif msg['lang'] == 'es':
                     lang, voice = 'es', (1, 2)
+                elif msg['lang'] == 'de':
+                    lang, voice = 'de', (4, 5, 6, 7)
             else:
                 lang, voice = 'fr', (1, 2, 3, 4, 6, 7)
             
@@ -148,7 +150,7 @@ class LoultServer(WebSocketServerProtocol):
 
             #volume = {'us3': 3.48104, 'fr3': 1.01283, 'fr5': 2.44384, 'es1': 3.26885, 'fr6': 1.35412, 'us2': 1.7486, 'fr2': 1.60851, 'fr1': 1.17138, 'us1': 1.658, 'es2': 1.84053, 'fr7': 1.96092, 'fr4': 1.0964}['%s%d' % (lang, voice)]
             volume = 1
-            if lang != 'fr':
+            if lang != 'fr' and lang != 'de':
                 volume = {'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}['%s%d' % (lang, voice)] * 0.5
 
             """
