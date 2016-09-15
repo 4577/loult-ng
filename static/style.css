@@ -85,6 +85,15 @@ main {
     min-height: 50px;
 }
 
+#preview {
+    text-align: center;
+    background-image:url('img/UP.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    min-width:50px;
+    max-height:50px;
+}
+
 #input {
     flex: 1;
     font-size: 30px;
