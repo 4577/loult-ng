@@ -7,15 +7,18 @@ from collections import OrderedDict
 from asyncio import get_event_loop
 from subprocess import run, PIPE
 from colorsys import hsv_to_rgb
+from binascii import a2b_base64
 from json import loads, dumps
+from time import time, sleep
 from copy import deepcopy
 from hashlib import md5
 from struct import pack
 from shlex import quote
 from html import escape
 from os import urandom
-from time import time
 from re import sub
+import _thread
+import magic
 
 from salt import SALT
 
@@ -27,9 +30,23 @@ clients = {}
 users = {}
 refcnts = {}
 backlog = {}
+imglog = {}
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
+
+def imgPurge():
+    MAXIMGS = 100
+    while True:
+        sleep(60)
+        for room in imglog:
+            if len(imglog[room]) < MAXIMGS:
+                continue
+
+            purge = imglog[room][:-MAXIMGS]
+            imglog[room] = imglog[room][-MAXIMGS:]
+            for img in purge:
+                run("rm static/img/uploads/%s" % img).stdout
 
 
 class LoultServer(WebSocketServerProtocol):
@@ -129,6 +146,32 @@ class LoultServer(WebSocketServerProtocol):
                 return
             self.lasttxt = now
 
+            # File support
+
+            fName = False
+            if 'raw' in msg and msg['raw']:
+                allowedTypes = { "image/jpeg":"jpg", "image/png": "png" }
+                try:
+                    rawData = a2b_base64(msg['raw'].split(",")[1])
+
+                except:
+                    return
+
+                mime = magic.Magic(mime = True)
+                mime = mime.from_buffer(rawData)
+
+                if mime not in allowedTypes:
+                    return
+
+                fName = "%s%d.%s" % (self.userid, now, allowedTypes[mime])
+                fh = open('static/img/uploads/' + fName, 'wb') # Relative to script
+                fh.write(rawData)
+                fh.close()
+
+                if self.channel not in imglog:
+                    imglog[self.channel] = []
+                imglog[self.channel].append(fName)
+
             # Language support
             
             if 'lang' in msg and msg['lang'] in ['en', 'es', 'de']:
@@ -179,6 +222,7 @@ class LoultServer(WebSocketServerProtocol):
             info = {
                 'user': users[self.channel][self.userid]['params'],
                 'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'][:500])),
+                'file': fName,
                 'date': now * 1000
             }
             
@@ -190,6 +234,7 @@ class LoultServer(WebSocketServerProtocol):
                     'type': 'msg',
                     'userid': self.userid,
                     'msg': info['msg'],
+                    'file': fName,
                     'date': info['date']
                 }))
                 
@@ -228,6 +273,7 @@ class LoultServer(WebSocketServerProtocol):
 
 import asyncio
 
+_thread.start_new_thread(imgPurge, ())
 factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000', 
 factory.protocol = LoultServer
 factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)

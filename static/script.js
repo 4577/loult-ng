@@ -5,12 +5,14 @@ document.addEventListener('DOMContentLoaded', function() {
     var chattbl = document.getElementById('chattbl');
     var userlist = document.getElementById('userlist');
     var input = document.getElementById('input');
+    var preview = document.getElementById('preview');
     
     var select = document.getElementById('lang');
     var users = {};
     var muted = [];
     var right = localStorage.right == 'true';
     var waitTime = 1000;
+    var activeImage = false;
     
     // DOM-related functions
     
@@ -39,7 +41,24 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.appendChild(td);
         
         td = document.createElement('td');
-        td.innerHTML = msg.msg;
+        if(msg.file) {
+            var link = document.createElement('a');
+            link.href = 'img/uploads/' + msg.file;
+            link.target = "_blank";
+
+            var img = document.createElement('img');
+            img.src = '/img/uploads/' + msg.file;
+            img.style.height = 50 + 'px';
+            img.style.padding = 5 + 'px';
+            link.appendChild(img);
+            td.appendChild(link);
+
+            var sp = document.createElement('span');
+            sp.innerHTML = msg.msg;
+            td.appendChild(sp);
+        } else {
+            td.innerHTML = msg.msg;
+        }
         tr.appendChild(td);
         
         td = document.createElement('td');
@@ -270,6 +289,59 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // files
+    var removePreview = function() {
+        var i = preview.querySelector('img');
+        if(!i) {
+            document.getElementById('upbutton').click();
+            return;
+        }
+        preview.removeChild(i);
+        activeImage = false;
+    }
+
+    var upload = function(file) {
+        if(!(file.type == "image/jpeg" || file.type == "image/png")) {
+           alert("desole, le ficher n'est pas supporté");
+           return;
+        }
+
+        var reader = new FileReader(file);
+        reader.onload = function(e) {
+            removePreview();
+            var img = document.createElement('img');
+            img.style.height = 50 + 'px';
+            img.style.padding = 5 + 'px';
+            img.src = e.target.result;
+            preview.appendChild(img);
+            activeImage = e.target.result;
+            input.focus();
+        }
+
+        if (file.size / 1024 > 2000) {
+            alert("Desole le ficher est trop grand");
+            return;
+        }
+
+        reader.readAsDataURL(file);
+    }
+
+    preview.onclick = removePreview;
+    document.body.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+
+    document.getElementById('upbutton').onchange = function(e) {
+        if(this.files[0])
+            upload(this.files[0]);
+    }
+
+    document.body.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        upload(e.dataTransfer.files[0]);
+    });
+
     // WebSocket-related functions
     
     var wsConnect = function() {
@@ -280,8 +352,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         input.onkeydown = function(evt) {
             if(evt.keyCode == 13 && input.value) {
-                ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
+                ws.send(JSON.stringify({type: 'msg', msg: input.value, raw: activeImage, lang: lang}));
                 input.value = '';
+                if(activeImage)
+                    removePreview();
             }
         };
         
