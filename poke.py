@@ -60,6 +60,8 @@ class LoultServer(WebSocketServerProtocol):
         self.userid = ck.hex()[-5:]
         
         self.channel = request.path.lower().split('/', 2)[-1]
+        self.channel = sub("/.*", "", self.channel)
+
         self.cnx = False
         self.sendend = 0
         self.lasttxt = 0
