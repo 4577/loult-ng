@@ -39,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.appendChild(td);
         
         td = document.createElement('td');
-        td.innerHTML = msg.msg;
+        var m = msg.msg.replace(/(?:https?:\/\/)?(?:www\.)?vocaroo.com\/i\/(\w+)/gi, '<embed src="/player.swf?playMediaID=$1&autoplay=0" width="148" height="44" wmode="transparent" type="application/x-shockwave-flash"></embed>');
+        td.innerHTML = m;
         tr.appendChild(td);
         
         td = document.createElement('td');
