@@ -119,7 +119,13 @@ class LoultServer(WebSocketServerProtocol):
         
         if msg['type'] == 'msg':
             text = msg['msg'][:500]
-            text = sub('(https?://[^ ]*[^.,?! :])', 'cliquez mes petits chatons', text)
+            links = {'fr': 'cliquez mes petits chatons', 'de': 'Klick drauf, Jude!', 'es': 'Clico JAJAJAJ'}
+            if 'lang' not in msg:
+                links = links['fr']
+            else:
+                links = links[msg['lang']]
+
+            text = sub('(https?://[^ ]*[^.,?! :])', links, text)
             text = text.replace('#', 'hashtag ')
             text = quote(text.strip(' -"\'`$();:.'))
             
