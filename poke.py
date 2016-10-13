@@ -119,7 +119,7 @@ class LoultServer(WebSocketServerProtocol):
         
         if msg['type'] == 'msg':
             text = msg['msg'][:500]
-            links = {'fr': 'cliquez mes petits chatons', 'de': 'Klick drauf, Jude!', 'es': 'Clico JAJAJAJ'}
+            links = {'fr': 'cliquez mes petits chatons', 'de': 'Klick drauf, Jude!', 'es': 'Clico JAJAJAJ', 'en': "Click it mate"}
             if 'lang' not in msg:
                 links = links['fr']
             else:
