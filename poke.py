@@ -106,6 +106,60 @@ class OnlineUsersRegister:
     def __init__(self):
         self.clients, self.users, self.refcnts, self.backlog = {}, {}, {}, {}
 
+    def _signal_user_connect(self, client : LoultServer, user : User):
+        client.sendMessage(json({
+            'type': 'connect',
+            **user.info}))
+
+    def channel_connect(self, client : LoultServer, user : User, channel : str):
+        if channel not in clients:
+            self.clients[channel] = set()
+            self.users[channel] = OrderedDict()
+            self.refcnts[channel] = {}
+
+            if channel not in self.backlog:
+                backlog[channel] = []
+
+        if user.user_id not in self.refcnts[channel]:
+            for other_client in clients[channel]:
+                self._signal_user_connect(other_client, user)
+            refcnts[channel][user.user_id] = 1
+            users[channel][user.user_id] = user.info
+
+        else:
+            refcnts[channel][user.user_id] += 1
+
+        self.clients[channel].add(client)
+
+    def _signal_user_disconnect(self, client: LoultServer, user: User):
+        client.sendMessage(json({
+            'type': 'disconnect',
+            'userid': user.user_id
+        }))
+
+    def channel_leave(self, client : LoultServer, user : User, channel : str):
+        try:
+            self.refcnts[channel][user.user_id] -= 1
+
+            if refcnts[channel][user.user_id] < 1:
+                self.clients[channel].discard(client)
+                del self.users[channel][user.user_id]
+                del self.refcnts[channel][user.user_id]
+
+                for client in self.clients[channel]:
+                    self._signal_user_disconnect(client, user)
+
+                if not self.clients[channel]:
+                    del self.clients[channel]
+                    del self.users[channel]
+                    del self.refcnts[channel]
+
+                    if not self.backlog[channel]:
+                        del self.backlog[channel]
+        except KeyError:
+            pass
+        
+
 users_register = OnlineUsersRegister()
 
 class User:
@@ -192,6 +246,7 @@ class User:
 class LoultServer(WebSocketServerProtocol):
 
     def onConnect(self, request):
+        """HTTP-level request, triggered when the client opens the WSS connection"""
         print("Client connecting: {0}".format(request.peer))
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
@@ -211,35 +266,19 @@ class LoultServer(WebSocketServerProtocol):
         return None, retn
 
     def onOpen(self):
+        """Triggered once the WSS is opened. Mainly onsist of registering the user in the channel, and
+        sending the channel's information (connected users and the backlog) to the user"""
         print("WebSocket connection open.")
+
+        # telling the  connected users'register to register the current user in the current channel
+        users_register.channel_connect(self, self.user, self.channel)
         
-        if self.channel not in clients:
-            clients[self.channel] = set()
-            users[self.channel] = OrderedDict()
-            refcnts[self.channel] = {}
-            
-            if self.channel not in backlog:
-                backlog[self.channel] = []
-        
-        if self.user.user_id not in refcnts[self.channel]:
-            for i in clients[self.channel]:
-                i.sendMessage(json({
-                    'type': 'connect',
-                    **self.user.info
-                }))
-            refcnts[self.channel][self.user.user_id] = 1
-            users[self.channel][self.user.user_id] = self.user.info
-        
-        else:
-            refcnts[self.channel][self.user.user_id] += 1
-        
-        clients[self.channel].add(self)
-        
-        self.cnx = True
+        self.cnx = True # connected!
 
         # deep-copying the channel's userlist and telling the current JS client which userid is "its own"
-        my_userlist = deepcopy(users[self.channel])
+        my_userlist = deepcopy(users_register.users[self.channel])
         my_userlist[self.user.user_id]['params']['you'] = True # tells the client this is the user's pokemon
+        # sending the current user list to the client
         self.sendMessage(json({
             'type': 'userlist',
             'users': list(my_userlist.values())
@@ -251,6 +290,7 @@ class LoultServer(WebSocketServerProtocol):
         }))
 
     def onMessage(self, payload, isBinary):
+        """Triggered when a user receives a message"""
         msg = loads(payload.decode('utf8'))
         
         if msg['type'] == 'msg':
@@ -278,31 +318,9 @@ class LoultServer(WebSocketServerProtocol):
                     i.sendMessage(wav, True)
 
     def onClose(self, wasClean, code, reason):
+        """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if hasattr(self, 'cnx') and self.cnx:
-            try:
-                refcnts[self.channel][self.user.user_id] -= 1
-                
-                if refcnts[self.channel][self.user.user_id] < 1:
-                    clients[self.channel].discard(self)
-                    del users[self.channel][self.user.user_id]
-                    del refcnts[self.channel][self.user.user_id]
-                    
-                    for i in clients[self.channel]:
-                        i.sendMessage(json({
-                            'type': 'disconnect',
-                            'userid': self.user.user_id
-                        }))
-                    
-                    if not clients[self.channel]:
-                        del clients[self.channel]
-                        del users[self.channel]
-                        del refcnts[self.channel]
-                        
-                        if not backlog[self.channel]:
-                            del backlog[self.channel]
-            
-            except KeyError:
-                pass
+            users_register.channel_leave(self, self.user, self.channel)
         
         print("WebSocket connection closed: {0}".format(reason))
 
