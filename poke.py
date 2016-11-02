@@ -101,6 +101,13 @@ backlog = {}
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
 
 
+class OnlineUsersRegister:
+
+    def __init__(self):
+        self.clients, self.users, self.refcnts, self.backlog = {}, {}, {}, {}
+
+users_register = OnlineUsersRegister()
+
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
     lang_voices_mapping = {"fr" : ("fr" , (1, 2, 3, 4, 6, 7)),
