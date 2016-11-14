@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         td = document.createElement('td');
         td.innerHTML = msg.msg;
+        if(msg.msg.match(/^&gt;/)) {
+            td.className = 'greentext';
+        }
         tr.appendChild(td);
         
         td = document.createElement('td');

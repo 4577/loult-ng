@@ -208,6 +208,11 @@ label + img {
     color: limegreen;
 }
 
+.greentext {
+    color: #789922;
+    font-family: monospace;
+}
+
 .part {
     color: #0DACCD;
     /*color: #0DC0E5;*/
