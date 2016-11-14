@@ -175,7 +175,8 @@ class LoultServer(WebSocketServerProtocol):
             synth = calc_sendend < now + 2.5
             if synth:
                 self.sendend = calc_sendend
-        
+
+            msg['msg'] = sub(u'[\U0001f3fc-\U0001f3ff]', "\U0001f3fb", msg['msg'])
             info = {
                 'user': users[self.channel][self.userid]['params'],
                 'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>', escape(msg['msg'][:500])),
