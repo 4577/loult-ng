@@ -119,6 +119,17 @@ class LoultServer(WebSocketServerProtocol):
     def onMessage(self, payload, isBinary):
         msg = loads(payload.decode('utf8'))
         
+        if msg['type'] == 'move':
+            if 'x'  not in msg or 'y' not in msg or 'id' not in msg:
+               return
+
+            x = float(msg['x'])
+            y = float(msg['y'])
+            item_id = escape(msg['id'][:12])
+            cord = json({'type': 'move', 'id': item_id, 'userid': self.userid, 'x': x, 'y': y})
+            for i in clients[self.channel]:
+                i.sendMessage(cord)
+
         if msg['type'] == 'msg':
             text = msg['msg'][:500]
             links = {'fr': 'cliquez mes petits chatons', 'de': 'Klick drauf!', 'es': 'Clico JAJAJA', 'en': "Click it mate"}
