@@ -25,6 +25,17 @@ document.addEventListener('DOMContentLoaded', function() {
 		timeouts['bubble_' + msg.userid] = setTimeout(function(){ document.getElementById('bubble_' + msg.userid).style.opacity = 0; }, 5000);
     }
     
+    var move = function(msg) {
+       var upoke = document.getElementById(msg['id']);
+       if(! upoke)
+           return;
+       upoke.style.left = (msg['x'] * window.innerWidth) + 'px';
+       upoke.style.top = (msg['y'] * window.innerHeight) + 'px';
+       users[msg['userid']].lastX = msg['x'];
+       users[msg['userid']].lastY = msg['y'];
+
+    }
+
     var addUser = function(userid, params) {
         if(userid in users) {
             return;
@@ -34,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var mute = muted.indexOf(userid) !== -1;
         
         var div = document.createElement('div');
+        div.id = "user_" + userid;
         if(mute) {
             div.className = 'mute';
         }
@@ -90,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 		div.onmouseup = function(e) {
 			document.onmousemove = null;
+  			ws.send(JSON.stringify({type: 'move', id: div.id, x: parseFloat(div.style.left) / window.innerWidth, y: parseFloat(div.style.top) / window.innerHeight}));
 		};
 		
 		div.style.position = 'absolute';
@@ -219,6 +232,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         for(var i = 0; i < msg.users.length; i++) {
                             addUser(msg.users[i].userid, msg.users[i].params);
                         }
+                        break;
+
+                    case 'move':
+                        console.log(msg);
+                        move(msg);
                         break;
                     
                     case 'msg':
