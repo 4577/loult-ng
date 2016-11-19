@@ -19,6 +19,7 @@ header {
 	font-weight: bold;
 	text-align:center;
 	width: 300px;
+	z-index: 666;
 	-ms-transform: rotate(45deg); /* IE 9 */
     -webkit-transform: rotate(45deg); /* Chrome, Safari, Opera */
     transform: rotate(45deg);
@@ -32,6 +33,18 @@ header {
 #nom {
 	text-transform: uppercase;
     font-size: 24px;
+}
+
+#nom:hover {
+	-webkit-animation: tada 0.25s linear infinite;
+    animation: tada 0.25s linear infinite;
+	transform: scale3d(1.15, 1.15, 1.15)
+}
+
+@keyframes tada {
+  25% { transform: rotate3d(0, 0, 1, -3deg); }
+  50% { transform: rotate3d(0, 0, 1, 3deg); }
+  75% { transform: rotate3d(0, 0, 1, -3deg); }
 }
 
 #sidebtns {
@@ -55,24 +68,46 @@ html, body, main, #chat, #chatbox {
 	background-size: cover;
 }
 
-#chatbox > div > img {
-	max-width: 150px;
-	max-height: 150px;
+.pkmn {
+	max-width: 125px;
+	max-height: 125px;
 	margin: 0 auto;
 	display: block;
+	cursor: move;
+	-webkit-animation: pkmnloop 1s linear forwards;
+    animation: pkmnloop 1s linear forwards;
+}
+
+.mute .pkmn {
+	opacity: 0.5;
+}
+
+.pkmn:hover {
+	-webkit-animation: pkmnloop 0.5s linear infinite;
+    animation: pkmnloop 0.5s linear infinite;
+}
+
+@-webkit-keyframes pkmnloop {
+  25% { transform: scale(1.1, 0.9); }
+  75% { transform: scale(0.9, 1.1); }
+}
+
+@keyframes pkmnloop {
+  25% { transform: scale(1.1, 0.9); }
+  75% { transform: scale(0.9, 1.1); }
 }
 
 #chatbox > div > label {
 	display: block;
 	text-align: center;
-	text-shadow: 0px 0px 3px #FFF;
+	text-shadow: 0px 0px 2px #FFF;
 }
 
 .bubble {
 	position: absolute;
-	bottom: 200px;
-	left: -150px;
-	width: 400px;
+	bottom: 170px;
+	left: -100px;
+	width: 300px;
 	height: auto;
 	padding: 20px;
 	background: #FFF;
@@ -99,7 +134,7 @@ html, body, main, #chat, #chatbox {
 	width: 0;
 	z-index: 1;
 	bottom: -25px;
-	left: 205px;
+	left: 155px;
 }
 
 .bubble:before {
@@ -114,7 +149,7 @@ html, body, main, #chat, #chatbox {
 	width: 0;
 	z-index: 0;
 	bottom: -34px;
-	left: 201px;
+	left: 151px;
 }
 
 .bubble p {
@@ -173,10 +208,6 @@ html, body, main, #chat, #chatbox {
     top: -5px;
 }
 
-.mute > img, .mute > label {
-    opacity: 0.4;
-}
-
 a {
     color: #0046A6;
     text-decoration: none;
@@ -184,7 +215,6 @@ a {
 
 a:hover, .sound:hover, #sidebtns > img:hover, input[type=range]:hover, input[type=button]:hover,
 input[type=checkbox]:hover, input[type=checkbox]:hover + label, #close:hover {
-    opacity: 0.7;
     cursor: pointer;
 }
 
@@ -196,10 +226,6 @@ label {
     input[type=button] {
         padding: 5px;
     }
-}
-
-.mute .sound:hover {
-    opacity: 0.28;
 }
 
 @media screen and (max-width: 720px) {
