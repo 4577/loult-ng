@@ -25,16 +25,16 @@ document.addEventListener('DOMContentLoaded', function() {
 		timeouts['bubble_' + msg.userid] = setTimeout(function(){ document.getElementById('bubble_' + msg.userid).style.opacity = 0; }, 5000);
     }
     
-    var move = function(msg) {
-       var upoke = document.getElementById(msg['id']);
-       if(! upoke)
-           return;
-       upoke.style.left = (msg['x'] * window.innerWidth) + 'px';
-       upoke.style.top = (msg['y'] * window.innerHeight) + 'px';
-       users[msg['userid']].lastX = msg['x'];
-       users[msg['userid']].lastY = msg['y'];
-
-    }
+	var move = function(msg) {
+		var upoke = document.getElementById(msg['id']);
+		if(!upoke)
+			return;
+		upoke.style.zIndex = Math.max(1, msg['y']);
+		upoke.style.left = (msg['x'] * window.innerWidth) + 'px';
+		upoke.style.top = (msg['y'] * window.innerHeight) + 'px';
+		users[msg['userid']].lastX = msg['x'];
+		users[msg['userid']].lastY = msg['y'];
+	}
 
     var addUser = function(userid, params) {
         if(userid in users) {
@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         var img = document.createElement('img');
         img.src = '.' + params.img.replace('gif', 'png');
+		img.className = 'pkmn';
 		img.ondragstart = function() { return false; };
         div.appendChild(img);
         
@@ -69,7 +70,8 @@ document.addEventListener('DOMContentLoaded', function() {
 		
         if(!params.you) {
             var sound = document.createElement('label');
-            var soundnode = document.createTextNode(mute ? '🔇' : '🔊');
+			var soundnode = document.createElement('img');
+			soundnode.src = (mute ? 'https://loult.family/img/mute.png' : 'https://loult.family/img/speaker.png');
             sound.appendChild(soundnode);
             sound.className = 'sound';
             label.appendChild(sound);
@@ -78,18 +80,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 mute = muted.indexOf(userid) !== -1;
                 if(!mute) {
                     muted.push(userid);
-                    soundnode.nodeValue = '🔇';
+                    soundnode.src = 'https://loult.family/img/mute.png';
                     div.className = 'mute';
                 }
                 else {
                     muted.splice(muted.indexOf(userid), 1);
-                    soundnode.nodeValue = '🔊';
+                    soundnode.src = 'https://loult.family/img/speaker.png';
                     div.className = '';
                 }
             };
         }
 		
-		div.onmousedown = function(e) {
+		img.onmousedown = function(e) {
 			e = e || window.event;
 			var diffX = e.clientX - div.getBoundingClientRect().left, diffY = e.clientY - div.getBoundingClientRect().top;
 			
@@ -100,8 +102,9 @@ document.addEventListener('DOMContentLoaded', function() {
 				div.style.top = (e.clientY - diffY) + 'px';
 			}
 		};
-		div.onmouseup = function(e) {
+		img.onmouseup = function(e) {
 			document.onmousemove = null;
+			div.style.zIndex = Math.max(1, parseFloat(div.style.top));
   			ws.send(JSON.stringify({type: 'move', id: div.id, x: parseFloat(div.style.left) / window.innerWidth, y: parseFloat(div.style.top) / window.innerHeight}));
 		};
 		
@@ -182,11 +185,11 @@ document.addEventListener('DOMContentLoaded', function() {
     speaker.onclick = function() {
         if(this.src.indexOf('mute') == -1) {
             volume.gain.value = 0;
-            this.src = '../img/mute.png';
+            this.src = 'https://loult.family/img/mute.png';
         }
         else {
             volume.gain.value = volrange.value / 100;
-            this.src = '../img/speaker.png';
+            this.src = 'https://loult.family/img/speaker.png';
         }
     };
     volrange.oninput = function() {
@@ -200,6 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     var wsConnect = function() {
         ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+        // ws = new WebSocket('ws://loult.family/socket' + location.pathname);
         
         var lastMuted = false;
         ws.binaryType = 'arraybuffer';
@@ -235,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'move':
-                        console.log(msg);
                         move(msg);
                         break;
                     
