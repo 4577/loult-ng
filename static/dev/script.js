@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         var img = document.createElement('img');
         img.src = '.' + params.img.replace('gif', 'png');
+		img.ondragstart = function() { return false; };
         div.appendChild(img);
         
         var label = document.createElement('label');
@@ -76,6 +77,21 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 		
+		div.onmousedown = function(e) {
+			e = e || window.event;
+			var diffX = e.clientX - div.getBoundingClientRect().left, diffY = e.clientY - div.getBoundingClientRect().top;
+			
+			document.onmousemove = function(e) {
+				e = e || window.event;
+				
+				div.style.left = (e.clientX - diffX) + 'px';
+				div.style.top = (e.clientY - diffY) + 'px';
+			}
+		};
+		div.onmouseup = function(e) {
+			document.onmousemove = null;
+		};
+		
 		div.style.position = 'absolute';
 		div.style.left = Math.ceil(Math.random() * (window.innerWidth - 450)) + 'px';
 		div.style.top = Math.ceil(270 + (Math.random() * (window.innerHeight - 570))) + 'px';
@@ -83,12 +99,12 @@ document.addEventListener('DOMContentLoaded', function() {
         chatbox.appendChild(div);
         users[userid].dom = div;
     };
-    
+	
     var delUser = function(userid) {
         chatbox.removeChild(users[userid].dom);
         delete users[userid];
     };
-    
+	
     // Scroll-related functions
     
     var dontFocus = false;
@@ -153,11 +169,11 @@ document.addEventListener('DOMContentLoaded', function() {
     speaker.onclick = function() {
         if(this.src.indexOf('mute') == -1) {
             volume.gain.value = 0;
-            this.src = '/img/mute.png';
+            this.src = '../img/mute.png';
         }
         else {
             volume.gain.value = volrange.value / 100;
-            this.src = '/img/speaker.png';
+            this.src = '../img/speaker.png';
         }
     };
     volrange.oninput = function() {
@@ -232,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 delUser(i);
             }
             
-            // log('Déconnecté, réessai...');
+            input.placeholder = 'Déconnecté, réessai...';
             
             window.setTimeout(wsConnect, waitTime);
             waitTime = Math.min(waitTime * 2, 120000);
