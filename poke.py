@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
+import logging
 from asyncio import get_event_loop
 from collections import OrderedDict
 from colorsys import hsv_to_rgb
@@ -92,75 +93,9 @@ pokemon = {1:'Bulbizarre',2:'Herbizarre',3:'Florizarre',4:'Salamèche',5:'Reptin
            480:'Crehelf',481:'Crefollet',482:'Crefadet',483:'Dialga',484:'Palkia',485:'Heatran',486:'Regigigas',
            487:'Giratina',488:'Cresselia',489:'Phione',490:'Manaphy',491:'Darkrai',492:'Shaymin',493:'Arceus'}
 
-clients = {}
-users = {}
-refcnts = {}
-backlog = {}
-
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
 
-
-class OnlineUsersRegister:
-
-    def __init__(self):
-        self.clients, self.users, self.refcnts, self.backlog = {}, {}, {}, {}
-
-    def _signal_user_connect(self, client : LoultServer, user : User):
-        client.sendMessage(json({
-            'type': 'connect',
-            **user.info}))
-
-    def channel_connect(self, client : LoultServer, user : User, channel : str):
-        if channel not in clients:
-            self.clients[channel] = set()
-            self.users[channel] = OrderedDict()
-            self.refcnts[channel] = {}
-
-            if channel not in self.backlog:
-                backlog[channel] = []
-
-        if user.user_id not in self.refcnts[channel]:
-            for other_client in clients[channel]:
-                self._signal_user_connect(other_client, user)
-            refcnts[channel][user.user_id] = 1
-            users[channel][user.user_id] = user.info
-
-        else:
-            refcnts[channel][user.user_id] += 1
-
-        self.clients[channel].add(client)
-
-    def _signal_user_disconnect(self, client: LoultServer, user: User):
-        client.sendMessage(json({
-            'type': 'disconnect',
-            'userid': user.user_id
-        }))
-
-    def channel_leave(self, client : LoultServer, user : User, channel : str):
-        try:
-            self.refcnts[channel][user.user_id] -= 1
-
-            if refcnts[channel][user.user_id] < 1:
-                self.clients[channel].discard(client)
-                del self.users[channel][user.user_id]
-                del self.refcnts[channel][user.user_id]
-
-                for client in self.clients[channel]:
-                    self._signal_user_disconnect(client, user)
-
-                if not self.clients[channel]:
-                    del self.clients[channel]
-                    del self.users[channel]
-                    del self.refcnts[channel]
-
-                    if not self.backlog[channel]:
-                        del self.backlog[channel]
-        except KeyError:
-            pass
-        
-
-users_register = OnlineUsersRegister()
 
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
@@ -184,7 +119,6 @@ class User:
         self.user_id = cookie_hash.hex()[-5:]
 
         self.channel = channel
-        self.sendend, self.lasttxt = 0, 0
 
     def __hash__(self):
         return self.user_id.__hash__()
@@ -204,19 +138,13 @@ class User:
         }
 
     def render_message(self, text, lang):
-        text = msg['msg'][:500]
-        text = sub('(https?://[^ ]*[^.,?! :])', 'cliquez mes petits chatons', text)
-        text = text.replace('#', 'hashtag ')
-        text = quote(text.strip(' -"\'`$();:.'))
-
-        now = time()
-
-        if now - self.lasttxt <= 0.1:
-            return
-        self.lasttxt = now
+        cleaned_text = text[:500]
+        cleaned_text = sub('(https?://[^ ]*[^.,?! :])', 'cliquez mes petits chatons', cleaned_text)
+        cleaned_text = cleaned_text.replace('#', 'hashtag ')
+        cleaned_text = quote(cleaned_text.strip(' -"\'`$();:.'))
 
         # Language support : default to french if value is incorrect
-        lang, voices = self.lang_voices_mapping.get(lang, default=self.lang_voices_mapping["fr"])
+        lang, voices = self.lang_voices_mapping.get(lang, self.lang_voices_mapping["fr"])
         voice = voices[self.voice_id % len(voices)]
 
         if lang != 'fr':
@@ -229,22 +157,16 @@ class User:
             volume = self.volumes_presets['%s%d' % (lang, voice)] * 0.5
 
         # Synthesis & rate limit
-        wav = run(
-            'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (
-            self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice), shell=True, stdout=PIPE,
-            stderr=PIPE).stdout
+        synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (
+                self.speed, self.pitch, lang, sex, cleaned_text, volume, lang, voice, lang, voice)
+        logging.debug("Running synth command %s" % synth_string)
+        wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
         wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
-        calc_sendend = max(self.sendend, now)
-        calc_sendend += len(wav) * 8 / 6000000
-
-        synth = calc_sendend < now + 2.5
-        if synth:
-            self.sendend = calc_sendend
+        return text, wav
 
 
 class LoultServer(WebSocketServerProtocol):
-
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
         print("Client connecting: {0}".format(request.peer))
@@ -257,11 +179,13 @@ class LoultServer(WebSocketServerProtocol):
         except (KeyError, IndexError):
             ck = urandom(16).hex()
             retn = {'Set-Cookie': 'id=%s; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/' % ck}
-        
+
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
         self.channel = request.path.lower().split('/', 2)[-1]
         self.user = User(cookie_hash, self.channel)
         self.cnx = False
+        self.sendend = 0
+        self.lasttxt = 0
 
         return None, retn
 
@@ -271,59 +195,135 @@ class LoultServer(WebSocketServerProtocol):
         print("WebSocket connection open.")
 
         # telling the  connected users'register to register the current user in the current channel
-        users_register.channel_connect(self, self.user, self.channel)
-        
-        self.cnx = True # connected!
+        loult_state.channel_connect(self, self.user, self.channel)
+
+        self.cnx = True  # connected!
 
         # deep-copying the channel's userlist and telling the current JS client which userid is "its own"
-        my_userlist = deepcopy(users_register.users[self.channel])
-        my_userlist[self.user.user_id]['params']['you'] = True # tells the client this is the user's pokemon
+        my_userlist = deepcopy(loult_state.users[self.channel])
+        my_userlist[self.user.user_id]['params']['you'] = True  # tells the client this is the user's pokemon
         # sending the current user list to the client
         self.sendMessage(json({
             'type': 'userlist',
             'users': list(my_userlist.values())
         }))
-        
+
         self.sendMessage(json({
             'type': 'backlog',
-            'msgs': backlog[self.channel]
+            'msgs': loult_state.backlog[self.channel]
         }))
 
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         msg = loads(payload.decode('utf8'))
-        
+
         if msg['type'] == 'msg':
-            self.user.render_message(msg["msg"], msg.get("lang", default="fr"))
-        
+            text, wav = self.user.render_message(msg["msg"], msg.get("lang", "fr"))
+
+            now = time()
+
+            if now - self.lasttxt <= 0.1:
+                return
+            self.lasttxt = now
+
+            calc_sendend = max(self.sendend, now)
+            calc_sendend += len(wav) * 8 / 6000000
+
+            synth = calc_sendend < now + 2.5
+            if synth:
+                self.sendend = calc_sendend
+
             info = {
-                'user': users[self.channel][self.user.user_id]['params'],
+                'user': loult_state.users[self.channel][self.user.user_id]['params'],
                 'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
                            escape(msg['msg'][:500])),
                 'date': time() * 1000
             }
-            
-            backlog[self.channel].append(info)
-            backlog[self.channel] = backlog[self.channel][-10:]
-            
-            for i in clients[self.channel]:
+
+            loult_state.backlog[self.channel].append(info)
+            loult_state.backlog[self.channel] = loult_state.backlog[self.channel][-10:]
+
+            for i in loult_state.clients[self.channel]:
                 i.sendMessage(json({
                     'type': 'msg',
                     'userid': self.user.user_id,
                     'msg': info['msg'],
                     'date': info['date']
                 }))
-                
+
                 if synth:
                     i.sendMessage(wav, True)
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if hasattr(self, 'cnx') and self.cnx:
-            users_register.channel_leave(self, self.user, self.channel)
-        
+            loult_state.channel_leave(self, self.user, self.channel)
+
         print("WebSocket connection closed: {0}".format(reason))
 
+
+class LoultServerState:
+
+    def __init__(self):
+        self.clients, self.users, self.refcnts, self.backlog = {}, {}, {}, {}
+
+    def _signal_user_connect(self, client : LoultServer, user : User):
+        client.sendMessage(json({
+            'type': 'connect',
+            **user.info}))
+
+    def channel_connect(self, client : LoultServer, user : User, channel : str):
+        if channel not in self.clients:
+            self.clients[channel] = set()
+            self.users[channel] = OrderedDict()
+            self.refcnts[channel] = {}
+
+            if channel not in self.backlog:
+                self.backlog[channel] = []
+
+        if user.user_id not in self.refcnts[channel]:
+            for other_client in self.clients[channel]:
+                self._signal_user_connect(other_client, user)
+            self.refcnts[channel][user.user_id] = 1
+            self.users[channel][user.user_id] = user.info
+
+        else:
+            self.refcnts[channel][user.user_id] += 1
+
+        self.clients[channel].add(client)
+
+    def _signal_user_disconnect(self, client: LoultServer, user: User):
+        client.sendMessage(json({
+            'type': 'disconnect',
+            'userid': user.user_id
+        }))
+
+    def channel_leave(self, client : LoultServer, user : User, channel : str):
+        try:
+            self.refcnts[channel][user.user_id] -= 1
+
+            if self.refcnts[channel][user.user_id] < 1:
+                self.clients[channel].discard(client)
+                del self.users[channel][user.user_id]
+                del self.refcnts[channel][user.user_id]
+
+                for client in self.clients[channel]:
+                    self._signal_user_disconnect(client, user)
+
+                if not self.clients[channel]:
+                    del self.clients[channel]
+                    del self.users[channel]
+                    del self.refcnts[channel]
+
+                    if not self.backlog[channel]:
+                        del self.backlog[channel]
+        except KeyError:
+            pass
+        
+
+loult_state = LoultServerState()
+
+logging.getLogger().setLevel(logging.DEBUG)
 
 factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000', 
 factory.protocol = LoultServer
