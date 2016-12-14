@@ -14,10 +14,12 @@ from shlex import quote
 from struct import pack
 from subprocess import run, PIPE
 from time import time
+from typing import List, Dict, Set
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
+from effects.effects import Effect, BiteDePingouinEffect
 from salt import SALT
 
 pokemon = {1:'Bulbizarre',2:'Herbizarre',3:'Florizarre',4:'Salamèche',5:'Reptincel',6:'Dracaufeu',7:'Carapuce',
@@ -119,6 +121,7 @@ class User:
         self.user_id = cookie_hash.hex()[-5:]
 
         self.channel = channel
+        self.active_text_effects, self.active_sound_effects = [], []
 
     def __hash__(self):
         return self.user_id.__hash__()
@@ -138,10 +141,22 @@ class User:
         }
 
     def render_message(self, text, lang):
+
+        def apply_effects(input_obj, effect_list : List[Effect]):
+            if effect_list:
+                for effect in effect_list:
+                    if effect.is_expired():
+                        effect_list.remove(effect) # if the effect has expired, remove it
+                    else:
+                        input_obj = effect.process(input_obj)
+
+            return input_obj
+
         cleaned_text = text[:500]
+        cleaned_text = apply_effects(cleaned_text, self.active_text_effects)
         cleaned_text = sub('(https?://[^ ]*[^.,?! :])', 'cliquez mes petits chatons', cleaned_text)
         cleaned_text = cleaned_text.replace('#', 'hashtag ')
-        cleaned_text = quote(cleaned_text.strip(' -"\'`$();:.'))
+        quoted_text = quote(cleaned_text.strip(' -"\'`$();:.'))
 
         # Language support : default to french if value is incorrect
         lang, voices = self.lang_voices_mapping.get(lang, self.lang_voices_mapping["fr"])
@@ -158,12 +173,13 @@ class User:
 
         # Synthesis & rate limit
         synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (
-                self.speed, self.pitch, lang, sex, cleaned_text, volume, lang, voice, lang, voice)
+                self.speed, self.pitch, lang, sex, quoted_text, volume, lang, voice, lang, voice)
         logging.debug("Running synth command %s" % synth_string)
         wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
         wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
-        return text, wav
+        wav = apply_effects(wav, self.active_sound_effects)
+        return cleaned_text, wav
 
 
 class LoultServer(WebSocketServerProtocol):
@@ -182,7 +198,7 @@ class LoultServer(WebSocketServerProtocol):
 
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
         self.channel = request.path.lower().split('/', 2)[-1]
-        self.user = User(cookie_hash, self.channel)
+        self.cookie = cookie_hash
         self.cnx = False
         self.sendend = 0
         self.lasttxt = 0
@@ -195,13 +211,13 @@ class LoultServer(WebSocketServerProtocol):
         print("WebSocket connection open.")
 
         # telling the  connected users'register to register the current user in the current channel
-        loult_state.channel_connect(self, self.user, self.channel)
+        self.user = loult_state.channel_connect(self, self.cookie, self.channel)
 
         self.cnx = True  # connected!
 
         # deep-copying the channel's userlist and telling the current JS client which userid is "its own"
-        my_userlist = deepcopy(loult_state.users[self.channel])
-        my_userlist[self.user.user_id]['params']['you'] = True  # tells the client this is the user's pokemon
+        my_userlist = {user_id : user.info for user_id, user in loult_state.users[self.channel].items()}
+        my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.sendMessage(json({
             'type': 'userlist',
@@ -218,7 +234,7 @@ class LoultServer(WebSocketServerProtocol):
         msg = loads(payload.decode('utf8'))
 
         if msg['type'] == 'msg':
-            text, wav = self.user.render_message(msg["msg"], msg.get("lang", "fr"))
+            output_msg, wav = self.user.render_message(msg["msg"], msg.get("lang", "fr"))
 
             now = time()
 
@@ -234,9 +250,9 @@ class LoultServer(WebSocketServerProtocol):
                 self.sendend = calc_sendend
 
             info = {
-                'user': loult_state.users[self.channel][self.user.user_id]['params'],
+                'user': loult_state.users[self.channel][self.user.user_id].info['params'],
                 'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
-                           escape(msg['msg'][:500])),
+                           escape(output_msg[:500])),
                 'date': time() * 1000
             }
 
@@ -254,6 +270,18 @@ class LoultServer(WebSocketServerProtocol):
                 if synth:
                     i.sendMessage(wav, True)
 
+        elif msg["type"] == "attack":
+            adversary_id, adversary = loult_state.get_user_by_name(msg["target"], self.channel, msg.get("order", 0))
+            if adversary is not None:
+                adversary.active_text_effects.append(BiteDePingouinEffect())
+
+            for i in loult_state.clients[self.channel]:
+                i.sendMessage(json({
+                    'type': 'attack',
+                    'attacker_id': self.user.user_id,
+                    'defender_id' : adversary_id
+                }))
+
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if hasattr(self, 'cnx') and self.cnx:
@@ -265,14 +293,17 @@ class LoultServer(WebSocketServerProtocol):
 class LoultServerState:
 
     def __init__(self):
-        self.clients, self.users, self.refcnts, self.backlog = {}, {}, {}, {}
+        self.clients = {} # type:Dict[str,Set[LoultServer]]
+        self.users = {} # type:Dict[str,Dict[str, User]]
+        self.refcnts = {} # type:Dict[str, Dict[str,int]]
+        self.backlog = {} # type:Dict[str,List]
 
     def _signal_user_connect(self, client : LoultServer, user : User):
         client.sendMessage(json({
             'type': 'connect',
             **user.info}))
 
-    def channel_connect(self, client : LoultServer, user : User, channel : str):
+    def channel_connect(self, client : LoultServer, user_cookie : str, channel : str) -> User:
         if channel not in self.clients:
             self.clients[channel] = set()
             self.users[channel] = OrderedDict()
@@ -281,16 +312,19 @@ class LoultServerState:
             if channel not in self.backlog:
                 self.backlog[channel] = []
 
-        if user.user_id not in self.refcnts[channel]:
-            for other_client in self.clients[channel]:
-                self._signal_user_connect(other_client, user)
-            self.refcnts[channel][user.user_id] = 1
-            self.users[channel][user.user_id] = user.info
-
-        else:
-            self.refcnts[channel][user.user_id] += 1
-
         self.clients[channel].add(client)
+
+        new_user = User(user_cookie, channel)
+        if new_user.user_id not in self.users[channel]:
+            for other_client in self.clients[channel]:
+                self._signal_user_connect(other_client, new_user)
+            self.refcnts[channel][new_user.user_id] = 1
+            self.users[channel][new_user.user_id] = new_user
+            return new_user
+        else:
+            self.refcnts[channel][new_user.user_id] += 1
+            return self.users[new_user.user_id] # returning an already existing version of the user
+
 
     def _signal_user_disconnect(self, client: LoultServer, user: User):
         client.sendMessage(json({
@@ -319,7 +353,17 @@ class LoultServerState:
                         del self.backlog[channel]
         except KeyError:
             pass
-        
+
+    def get_user_by_name(self, pokemon_name : str, channel : str, order = 0) -> (int, User):
+
+        for user_id, user in self.users[channel].items():
+            if user.pokename.lower() == pokemon_name.lower():
+                if order == 0:
+                    return user_id, user
+                else:
+                    order -= 1
+
+        return None, None
 
 loult_state = LoultServerState()
 

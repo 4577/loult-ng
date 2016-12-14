@@ -280,7 +280,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         input.onkeydown = function(evt) {
             if(evt.keyCode == 13 && input.value) {
-                ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
+                if(input.value.substring(0,7) == "/attack"){
+                    splitted = input.value.split(" ")
+                    ws.send(JSON.stringify({
+                        type : 'attack',
+                        target : splitted[1],
+                        order : (splitted.length == 3) ? parseInt(splitted[2]) : 0
+                    }))
+                }
+                else{
+                    ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
+                    }
+
                 input.value = '';
             }
         };
@@ -302,6 +313,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     case 'disconnect':
                         log('Un ' + users[msg.userid].name + " sauvage s'enfuit !", true);
                         delUser(msg.userid);
+                        break;
+
+                    case 'attack':
+                        log(users[msg.attacker_id].name + " a attaqué " + users[msg.defender_id].name + " !");
                         break;
                     
                     case 'userlist':
