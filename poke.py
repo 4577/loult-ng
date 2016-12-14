@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 import logging
+import random
 from asyncio import get_event_loop
 from collections import OrderedDict
 from colorsys import hsv_to_rgb
@@ -15,11 +16,14 @@ from struct import pack
 from subprocess import run, PIPE
 from time import time
 from typing import List, Dict, Set
-
+from scipy.io import wavfile
+from io import BytesIO
+from datetime import datetime, timedelta
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
-from effects.effects import Effect, BiteDePingouinEffect
+from effects import get_random_effect
+from effects.effects import Effect, BiteDePingouinEffect, AudioEffect
 from salt import SALT
 
 pokemon = {1:'Bulbizarre',2:'Herbizarre',3:'Florizarre',4:'Salamèche',5:'Reptincel',6:'Dracaufeu',7:'Carapuce',
@@ -94,7 +98,7 @@ pokemon = {1:'Bulbizarre',2:'Herbizarre',3:'Florizarre',4:'Salamèche',5:'Reptin
            474:'Porygon-Z',475:'Gallame',476:'Tarinorme',477:'Noctunoir',478:'Momartik',479:'Motisma',
            480:'Crehelf',481:'Crefollet',482:'Crefadet',483:'Dialga',484:'Palkia',485:'Heatran',486:'Regigigas',
            487:'Giratina',488:'Cresselia',489:'Phione',490:'Manaphy',491:'Darkrai',492:'Shaymin',493:'Arceus'}
-
+ATTACK_RESTING_TIME = 1 # in seconds, the time a pokemon has to wait before being able to attack again
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
 
@@ -122,12 +126,13 @@ class User:
 
         self.channel = channel
         self.active_text_effects, self.active_sound_effects = [], []
+        self.last_attack = datetime.now() # any user has to wait 1 minute before attacking, after connecting
 
     def __hash__(self):
         return self.user_id.__hash__()
 
     def __eq__(self, other):
-        return self.user_id
+        return self.user_id == other.user_id
 
     @property
     def info(self):
@@ -178,7 +183,16 @@ class User:
         wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
         wav = wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
-        wav = apply_effects(wav, self.active_sound_effects)
+        if self.active_sound_effects:
+            # converting the wav to ndarray, which is much easier to manipulate for DSP
+            rate, data = wavfile.read(BytesIO(wav))
+            data = apply_effects(data, self.active_sound_effects)
+            # then, converting it back to bytes
+            bytes_obj = bytes()
+            bytes_buff = BytesIO(bytes_obj)
+            wavfile.write(bytes_buff, rate, data)
+            wav = bytes_buff.read()
+
         return cleaned_text, wav
 
 
@@ -229,58 +243,95 @@ class LoultServer(WebSocketServerProtocol):
             'msgs': loult_state.backlog[self.channel]
         }))
 
+    def _broadcast_to_channel(self, msg_dict, binary_payload=None):
+        for client in loult_state.clients[self.channel]:
+            client.sendMessage(json(msg_dict))
+            if binary_payload:
+                client.sendMessage(binary_payload, isBinary=True)
+
+    def _msg_handler(self, msg_data):
+        # user object instance renders both the output sound and output text
+        output_msg, wav = self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
+
+        # rate limit
+        now = time()
+
+        if now - self.lasttxt <= 0.1:
+            return
+        self.lasttxt = now
+
+        calc_sendend = max(self.sendend, now)
+        calc_sendend += len(wav) * 8 / 6000000
+
+        synth = calc_sendend < now + 2.5
+        if synth:
+            self.sendend = calc_sendend
+
+        info = loult_state.log_to_backlog(loult_state.users[self.channel][self.user.user_id].info['params'],
+                                          output_msg, self.channel)
+
+        # broadcast message and rendered audio to all clients in the channel
+        self._broadcast_to_channel({'type': 'msg',
+                                    'userid': self.user.user_id,
+                                    'msg': info['msg'],
+                                    'date': info['date']},
+                                   wav if synth else None)
+
+    def _attack_handler(self, msg_data):
+        adversary_id, adversary = loult_state.get_user_by_name(msg_data["target"], self.channel, msg_data.get("order", 0))
+
+        # checking if the target user is found, and if the current user has waited long enough to attack
+        if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
+            self._broadcast_to_channel({'type': 'attack',
+                                        'event' : 'attack',
+                                        'attacker_id': self.user.user_id,
+                                        'defender_id': adversary_id})
+
+            attack_dice, defend_dice = random.randint(0,100), random.randint(0,100)
+            self._broadcast_to_channel({'type': 'attack',
+                                        'event': 'dice',
+                                        'attacker_dice' : attack_dice, "defender_dice" : defend_dice,
+                                        'attacker_id': self.user.user_id, 'defender_id': adversary_id})
+
+            affected_user = None
+            if attack_dice > defend_dice:
+                affected_user = adversary
+            elif random.randint(1,3) == 1:
+                affected_user = self.user
+
+            if affected_user is not None:
+                effect = get_random_effect()
+                if isinstance(effect, AudioEffect):
+                    affected_user.active_sound_effects.append(effect)
+                else:
+                    affected_user.active_text_effects.append(effect)
+
+                self._broadcast_to_channel({'type': 'attack',
+                                            'event': 'effect',
+                                            'target_id': affected_user.user_id,
+                                            'effect': effect.name})
+            else:
+                self._broadcast_to_channel({'type': 'attack',
+                                            'event': 'nothing'})
+
+            self.user.last_attack = datetime.now()
+        else:
+            self.sendMessage(json({'type': 'attack',
+                                   'event': 'invalid'}))
+
+
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         msg = loads(payload.decode('utf8'))
 
         if msg['type'] == 'msg':
-            output_msg, wav = self.user.render_message(msg["msg"], msg.get("lang", "fr"))
-
-            now = time()
-
-            if now - self.lasttxt <= 0.1:
-                return
-            self.lasttxt = now
-
-            calc_sendend = max(self.sendend, now)
-            calc_sendend += len(wav) * 8 / 6000000
-
-            synth = calc_sendend < now + 2.5
-            if synth:
-                self.sendend = calc_sendend
-
-            info = {
-                'user': loult_state.users[self.channel][self.user.user_id].info['params'],
-                'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
-                           escape(output_msg[:500])),
-                'date': time() * 1000
-            }
-
-            loult_state.backlog[self.channel].append(info)
-            loult_state.backlog[self.channel] = loult_state.backlog[self.channel][-10:]
-
-            for i in loult_state.clients[self.channel]:
-                i.sendMessage(json({
-                    'type': 'msg',
-                    'userid': self.user.user_id,
-                    'msg': info['msg'],
-                    'date': info['date']
-                }))
-
-                if synth:
-                    i.sendMessage(wav, True)
+            # when the message is just a simple text message (regular chat)
+            self._msg_handler(msg)
 
         elif msg["type"] == "attack":
-            adversary_id, adversary = loult_state.get_user_by_name(msg["target"], self.channel, msg.get("order", 0))
-            if adversary is not None:
-                adversary.active_text_effects.append(BiteDePingouinEffect())
+            # when the current client attacks someone else
+            self._attack_handler(msg)
 
-            for i in loult_state.clients[self.channel]:
-                i.sendMessage(json({
-                    'type': 'attack',
-                    'attacker_id': self.user.user_id,
-                    'defender_id' : adversary_id
-                }))
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
@@ -354,6 +405,21 @@ class LoultServerState:
         except KeyError:
             pass
 
+    def log_to_backlog(self, user_data, msg, channel):
+        # creating new entry
+        info = {
+            'user': user_data,
+            'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
+                       escape(msg[:500])),
+            'date': time() * 1000
+        }
+
+        # adding it to list and removing oldest entry
+        self.backlog[channel].append(info)
+        self.backlog[channel] = loult_state.backlog[channel][-10:]
+        return info
+
+
     def get_user_by_name(self, pokemon_name : str, channel : str, order = 0) -> (int, User):
 
         for user_id, user in self.users[channel].items():
@@ -365,17 +431,19 @@ class LoultServerState:
 
         return None, None
 
+
 loult_state = LoultServerState()
 
-logging.getLogger().setLevel(logging.DEBUG)
+if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.DEBUG)
 
-factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000', 
-factory.protocol = LoultServer
-factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
+    factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
+    factory.protocol = LoultServer
+    factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
 
-loop = get_event_loop()
-coro = loop.create_server(factory, '127.0.0.1', 9000)
-server = loop.run_until_complete(coro)
+    loop = get_event_loop()
+    coro = loop.create_server(factory, '127.0.0.1', 9000)
+    server = loop.run_until_complete(coro)
 
-loop.run_forever()
+    loop.run_forever()
 

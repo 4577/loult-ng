@@ -1,11 +1,19 @@
 import random
 from datetime import datetime
 
+import numpy
+
 
 class Effect:
+    NAME = ""
     TIMEOUT = 0
+
     def __init__(self):
         self.creation = datetime.now()
+
+    @property
+    def name(self):
+        return self.NAME # using a property, in case it gets more fancy than just a class constant
 
     def is_expired(self):
         return (datetime.now() - self.creation).seconds > self.TIMEOUT
@@ -20,9 +28,9 @@ class TextEffect(Effect):
         pass
 
 
-class SoundEffect(Effect):
+class AudioEffect(Effect):
 
-    def process(self, wav):
+    def process(self, wave_data: numpy.ndarray):
         pass
 
 
@@ -30,8 +38,19 @@ class SoundEffect(Effect):
 
 class BiteDePingouinEffect(TextEffect):
     """Changes the text to a random number of bitedepingouin"""
-
+    NAME = "bite de pingouin"
     TIMEOUT = 60
 
     def process(self, text : str):
         return "BITEDEPINGOUIN? " * random.randint(1,6)
+
+
+#### Here are the audio effects ####
+
+class ReversedEffect(AudioEffect):
+
+    NAME = "inversion"
+    TIMEOUT = 120
+
+    def process(self, wave_data: numpy.ndarray):
+        return wave_data[::-1]

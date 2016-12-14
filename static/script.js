@@ -316,7 +316,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'attack':
-                        log(users[msg.attacker_id].name + " a attaqué " + users[msg.defender_id].name + " !");
+
+                        switch(msg['event']){
+                            case 'attack':
+                                log(users[msg.attacker_id].name + " attaque " + users[msg.defender_id].name + " !");
+                                break;
+                            case 'dice':
+                                log(users[msg.attacker_id].name + " tire un " + msg.attacker_dice + ", "
+                                + users[msg.defender_id].name + " tire un " + msg.defender_dice + "!");
+                                break;
+                            case 'effect':
+                                log(users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + " !");
+                                break;
+                            case 'invalid':
+                                log("Impossible d'attaquer pour le moment, ou pokémon invalide");
+                                break;
+                            case 'nothing':
+                                log("Il ne se passe rien...");
+                                break;
+                        }
                         break;
                     
                     case 'userlist':
