@@ -1,20 +1,42 @@
-import pyaudio
 import io
 import wave
 from hashlib import md5
 
-from effects.effects import ReversedEffect
+import numpy
+import pyaudio
+from pysndfx import AudioEffectsChain
+from scipy.io.wavfile import read, write
+
+from effects.effects import ReversedEffect, AudioEffect
 from poke import User
 from salt import SALT
+from librosa import load
+
+class TestEffect(AudioEffect):
+    NAME = "test"
+    TIMEOUT = 30
+
+    def process(self, wave_data: numpy.ndarray):
+        apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
+        return apply_audio_effects(wave_data)
+
+
+class ConvertINT16PCM(AudioEffect):
+    NAME = "convert"
+    TIMEOUT = 30
+
+    def process(self, wave_data: numpy.ndarray):
+        return (wave_data * (2. ** 15)).astype("int16")
+
 
 fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh")
-user.active_sound_effects.append(ReversedEffect())
+user.active_sound_effects += [TestEffect(), ConvertINT16PCM()]
 
 text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse", "fr")
 
-# open the file for reading.
-wf = wave.open(io.BytesIO(wav), 'rb')
+with open("/tmp/effect.wav", "wb") as wavfile:
+    wavfile.write(wav)
 
 class AudioFile:
     """A sound player"""
@@ -44,5 +66,6 @@ class AudioFile:
         self.p.terminate()
 
 a = AudioFile(io.BytesIO(wav))
+#a = AudioFile("/tmp/effect.wav")
 a.play()
 a.close()

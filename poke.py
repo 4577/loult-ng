@@ -185,8 +185,9 @@ class User:
 
         if self.active_sound_effects:
             # converting the wav to ndarray, which is much easier to manipulate for DSP
-            rate, data = wavfile.read(BytesIO(wav))
-            data = apply_effects(data, self.active_sound_effects)
+            rate, data = wavfile.read(BytesIO(wav),)
+            # casting the data array to the right format (for usage by pysndfx)
+            data = apply_effects((data / (2. ** 15)).astype('float32'), self.active_sound_effects)
             # then, converting it back to bytes
             bytes_obj = bytes()
             bytes_buff = BytesIO(bytes_obj)

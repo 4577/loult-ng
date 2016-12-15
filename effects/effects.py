@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from pysndfx import AudioEffectsChain
 
 import numpy
 
@@ -54,3 +55,11 @@ class ReversedEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         return wave_data[::-1]
+
+class ReverbManEffect(AudioEffect):
+    NAME = "reverbman"
+    TIMEOUT = 180
+
+    def process(self, wave_data: numpy.ndarray):
+        apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
+        return apply_audio_effects(wave_data)

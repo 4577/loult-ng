@@ -1,6 +1,6 @@
-from .effects import Effect, BiteDePingouinEffect, ReversedEffect
+from .effects import Effect, BiteDePingouinEffect, ReversedEffect, ReverbManEffect
 import random
-AVAILABLE_EFFECTS = [BiteDePingouinEffect, ReversedEffect]
+AVAILABLE_EFFECTS = [BiteDePingouinEffect, ReversedEffect, ReverbManEffect]
 
 
 def get_random_effect() -> Effect:
