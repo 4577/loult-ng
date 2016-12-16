@@ -82,6 +82,7 @@ main {
 	text-indent: 6px;
 	outline: 0;
 	border: 0;
+	cursor: text;
 	border-top: 1px solid #666;
 	background: transparent;
 }
@@ -187,7 +188,7 @@ a {
     text-decoration: none;
 }
 
-a:hover, .sound:hover, #sidebtns > img:hover, input:not([type='text']):hover, #prefs label:hover {
+a:hover, .sound:hover, #sidebtns > img:hover, input:hover, #prefs label:hover {
     opacity: 0.8;
     cursor: pointer;
 }
