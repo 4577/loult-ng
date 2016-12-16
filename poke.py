@@ -155,7 +155,7 @@ class LoultServer(WebSocketServerProtocol):
                 elif msg['lang'] == 'de':
                     lang, voice = 'de', (4, 5, 6, 7)
             else:
-                lang, voice = 'fr', (5) #(1, 2, 3, 4, 6, 7)
+                lang, voice = 'fr', (5, 5) #(1, 2, 3, 4, 6, 7)
             
             voice = voice[self.voiceId % len(voice)]
             
