@@ -44,7 +44,7 @@ class LoultServer(WebSocketServerProtocol):
         
         ck = md5((ck + SALT).encode('utf8')).digest()
         
-        self.speed = (ck[5] % 100) + 80
+        self.speed = (ck[5] % 90) + 90
         self.pitch = ck[0] % 100
         self.voiceId = ck[1]
         
@@ -155,7 +155,7 @@ class LoultServer(WebSocketServerProtocol):
                 elif msg['lang'] == 'de':
                     lang, voice = 'de', (4, 5, 6, 7)
             else:
-                lang, voice = 'fr', (5, 5) #(1, 2, 3, 4, 6, 7)
+                lang, voice = 'fr', (1, 2, 3, 4, 5, 6, 7)
             
             voice = voice[self.voiceId % len(voice)]
             
@@ -167,7 +167,7 @@ class LoultServer(WebSocketServerProtocol):
             #volume = {'us3': 3.48104, 'fr3': 1.01283, 'fr5': 2.44384, 'es1': 3.26885, 'fr6': 1.35412, 'us2': 1.7486, 'fr2': 1.60851, 'fr1': 1.17138, 'us1': 1.658, 'es2': 1.84053, 'fr7': 1.96092, 'fr4': 1.0964}['%s%d' % (lang, voice)]
             volume = 1
             if lang != 'de':
-                volume = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.44384, 'fr6': 1.35412, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}['%s%d' % (lang, voice)] * 0.5
+                volume = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.64384, 'fr6': 1.35412, 'fr7': 1.96092, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}['%s%d' % (lang, voice)] * 0.5
             
             # Synthesis & rate limit
             
