@@ -44,7 +44,7 @@ class LoultServer(WebSocketServerProtocol):
         
         ck = md5((ck + SALT).encode('utf8')).digest()
         
-        self.speed = (ck[5] % 90) + 90
+        self.speed = (ck[5] % 80) + 90
         self.pitch = ck[0] % 100
         self.voiceId = ck[1]
         
