@@ -277,8 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var input = document.getElementById('input');
 	
     var wsConnect = function() {
-        // ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-        ws = new WebSocket('ws://loult.family/socket' + location.pathname);
+        ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+        // ws = new WebSocket('ws://loult.family/socket' + location.pathname);
         
         var lastMuted = false;
         ws.binaryType = 'arraybuffer';
