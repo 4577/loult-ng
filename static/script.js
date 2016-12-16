@@ -344,6 +344,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             case 'nothing':
                                 addLine('info', "Il ne se passe rien...");
                                 break;
+                            case 'timeout':
+                                addLine('info', "L'effet " + msg.effect + " est terminé.");
+                                break;
                         }
                         break;
 

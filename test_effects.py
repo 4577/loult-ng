@@ -7,10 +7,10 @@ import pyaudio
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
-from effects.effects import ReversedEffect, AudioEffect
+from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, BiteDePingouinEffect
 from poke import User
 from salt import SALT
-from librosa import load
+
 
 class TestEffect(AudioEffect):
     NAME = "test"
@@ -30,10 +30,12 @@ class ConvertINT16PCM(AudioEffect):
 
 
 fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
-user = User(fake_cookie, "wesh")
-user.active_sound_effects += [TestEffect(), ConvertINT16PCM()]
+user = User(fake_cookie, "wesh", None)
+user.active_audio_effects += [ReversedEffect(), TestEffect(), ConvertINT16PCM()]
+# user.active_text_effects += [TouretteEffect()]
 
-text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse", "fr")
+text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
+print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
     wavfile.write(wav)
