@@ -51,7 +51,7 @@ class LoultServer(WebSocketServerProtocol):
         self.pokeid = (ck[2] | (ck[3] << 8)) % len(pokemon) + 1
         self.pokename = pokemon[self.pokeid]
         
-        self.color = hsv_to_rgb(ck[4] / 255, 1, 0.5)
+        self.color = hsv_to_rgb(ck[4] / 255, 1, 0.7)
         self.color = '#' + pack('3B', *(int(255 * i) for i in self.color)).hex()
         
         self.userid = ck.hex()[-5:]
