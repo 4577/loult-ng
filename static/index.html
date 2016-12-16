@@ -3,13 +3,14 @@
     <head>
         <title>Lou.lt &bull; clone</title>
         <meta charset="utf-8">
-        <link rel="stylesheet" href="/style.css">
-        <meta name="description" content="Un clone de Lou.lt, le célèbre t'chat pokémon.">
+        <meta name="description" content="Un clone de Lou.lt, le célèbre t'chat Pokémon.">
         <meta name="viewport" content="width=device-width, initial-scale=0.7">
-        <script src="/script.js"></script>
+		<link rel="icon" type="image/x-icon" href="./favicon.ico" />
+        <link rel="stylesheet" href="./style.css">
+        <script src="./script.js"></script>
     </head>
     <body>
-        <header>
+        <header id="head">
             <div id="sidebtns">
                 <select id="lang">
                     <option value="fr">FR</option>
@@ -17,13 +18,13 @@
                     <option value="es">ES</option>
                     <option value="de">DE</option>
                 </select>
-                <img src="/img/speaker.png" id="speaker">
-                <img src="/img/gear.png" id="gear">
-                <img src="/img/users.png" id="userswitch">
+                <img src="./img/speaker.png" alt="Son" id="speaker">
+                <img src="./img/gear.png" alt="Réglages" id="gear">
+                <img src="./img/users.png" alt="Utilisateurs" id="userswitch">
             </div>
-            <div id="nom">Lou.lt</div>
+            <h1>Lou.lt</h1>
         </header>
-        <main>
+        <main id="main">
             <div id="chat">
                 <div id="chatbox">
                     <table id="chattbl">
@@ -33,17 +34,26 @@
                     <input autofocus placeholder="Message..." id="input" maxlength="500">
                 </div>
             </div>
-            <div id="userlist"></div>
+            <div id="userlist">
+				<div id="wrap">
+					<table id="usertbl">
+					</table>
+				</div>
+			</div>
         </main>
         <div id="overlay">
             <div id="cover"></div>
             <div id="window">
-                <div id="close">×</div>
+				<div id="prefsttl">
+					Préférences
+					<div id="close">×</div>
+				</div>
                 <div id="prefs">
-                    <div><input type="checkbox" id="right"><label for="right"> Mettre le Pokémon à droite du pseudo</label></div>
                     <div>Volume : <input type="range" value="100" id="volrange"></div>
+					<div><input type="checkbox" id="dt"><label for="dt">Date</label><input type="checkbox" id="hr"><label for="hr">Heure</label></div>
+                    <div><input type="checkbox" id="right"><label for="right">Aligner les Pokémons à droite</label></div>
                     <div><input type="button" value="Supprimer mon cookie" id="ckwipe"></div>
-                    <div id="louspeak"><a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dictionnaire louspeak</a></div>
+                    <div><a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dictionnaire louspeak</a></div>
                     <div><a href="https://github.com/4577/loult-ng" target="_blank">Code source du site</a></div>
                 </div>
             </div>
