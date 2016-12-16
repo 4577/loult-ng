@@ -1,0 +1,248 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    font-size: 16px;
+	overflow: hidden;
+}
+
+header {
+	position: absolute;
+	right: -90px;
+	top: 30px;
+    font-size: 12px;
+    border: 2px solid #666;
+	font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
+	color: #FFF;
+    padding: 10px;
+	text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+	font-weight: bold;
+	text-align:center;
+	width: 300px;
+	z-index: 666;
+	-ms-transform: rotate(45deg); /* IE 9 */
+    -webkit-transform: rotate(45deg); /* Chrome, Safari, Opera */
+    transform: rotate(45deg);
+	background: #7A0; /* Old browsers */
+	background: -moz-linear-gradient(top, #7A0 0%, #9C3 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(top, #7A0 0%,#9C3 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to bottom, #7A0 0%,#9C3 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7A0', endColorstr='#9C3',GradientType=0 ); /* IE6-9 */
+}
+
+#nom {
+	text-transform: uppercase;
+    font-size: 24px;
+}
+
+#nom:hover {
+	-webkit-animation: tada 0.25s linear infinite;
+    animation: tada 0.25s linear infinite;
+	transform: scale3d(1.15, 1.15, 1.15)
+}
+
+@keyframes tada {
+  25% { transform: rotate3d(0, 0, 1, -3deg); }
+  50% { transform: rotate3d(0, 0, 1, 3deg); }
+  75% { transform: rotate3d(0, 0, 1, -3deg); }
+}
+
+#sidebtns {
+    float: right;
+    font-size: 32px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+#sidebtns div {
+    display: inline;
+}
+
+html, body, main, #chat, #chatbox {
+	width: 100%;
+	height: 100%;
+}
+
+#chatbox {
+	background: url('https://radiobabelek.files.wordpress.com/2015/01/zima__winter_1920x1200_062.jpg') bottom center;
+	background-size: cover;
+}
+
+.pkmn {
+	max-width: 125px;
+	max-height: 125px;
+	margin: 0 auto;
+	display: block;
+	cursor: move;
+	-webkit-animation: pkmnloop 1s linear forwards;
+    animation: pkmnloop 1s linear forwards;
+}
+
+.mute .pkmn {
+	opacity: 0.5;
+}
+
+.pkmn:hover {
+	-webkit-animation: pkmnloop 0.5s linear infinite;
+    animation: pkmnloop 0.5s linear infinite;
+}
+
+@-webkit-keyframes pkmnloop {
+  25% { transform: scale(1.1, 0.9); }
+  75% { transform: scale(0.9, 1.1); }
+}
+
+@keyframes pkmnloop {
+  25% { transform: scale(1.1, 0.9); }
+  75% { transform: scale(0.9, 1.1); }
+}
+
+#chatbox > div > label {
+	display: block;
+	text-align: center;
+	text-shadow: 0px 0px 2px #FFF;
+}
+
+.bubble {
+	position: absolute;
+	bottom: 170px;
+	left: -100px;
+	width: 300px;
+	height: auto;
+	padding: 20px;
+	background: #FFF;
+	-webkit-border-radius: 40px;
+	-moz-border-radius: 40px;
+	border-radius: 40px;
+	border-style: solid;
+	border-width: 5px;
+	text-align: center;
+	-webkit-transition: opacity 0.25s;
+	-moz-transition: opacity 0.25s;
+	transition: opacity 0.25s;
+	opacity: 0;
+	max-height: 500px;
+}
+
+.bubble:after {
+	content: '';
+	position: absolute;
+	border-style: solid;
+	border-width: 25px 15px 0;
+	border-color: #FFF transparent;
+	display: block;
+	width: 0;
+	z-index: 1;
+	bottom: -25px;
+	left: 155px;
+}
+
+.bubble:before {
+	content: '';
+	position: absolute;
+	border-style: solid;
+	border-width: 29px 19px 0;
+	border-color: transparent;
+	border-top-color: inherit;
+	border-bottom-color: inherit;
+	display: block;
+	width: 0;
+	z-index: 0;
+	bottom: -34px;
+	left: 151px;
+}
+
+.bubble p {
+	-webkit-animation: fadeinout 5s linear forwards;
+    animation: fadeinout 5s linear forwards;
+    opacity: 0;
+	word-wrap: break-word;
+	max-height: 0;
+	overflow: hidden;
+	margin: 0;
+	-webkit-transition: max-height 0.25s;
+	-moz-transition: max-height 0.25s;
+	transition: max-height 0.25s;
+}
+
+@-webkit-keyframes fadeinout {
+  2% { opacity: 1; }
+  90% { opacity: 1; }
+}
+
+@keyframes fadeinout {
+  2% { opacity: 1; }
+  90% { opacity: 1; }
+}
+
+.bubble p:nth-last-child(n+6) {
+	display: none;
+}
+
+#chatentry {
+    display: flex;
+    min-height: 50px;
+	border-top: 1px solid #666;
+}
+
+#input {
+    flex: 1;
+    font-size: 30px;
+    padding: 5px;
+    min-width: 0;
+	outline: 0;
+	border: 0;
+	border-right: 1px solid #666;
+	font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
+}
+
+.sound {
+    float: right;
+    font-size: 24px;
+    position: relative;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #333;
+    top: -5px;
+}
+
+a {
+    color: #0046A6;
+    text-decoration: none;
+}
+
+a:hover, .sound:hover, #sidebtns > img:hover, input[type=range]:hover, input[type=button]:hover,
+input[type=checkbox]:hover, input[type=checkbox]:hover + label, #close:hover {
+    cursor: pointer;
+}
+
+label {
+    cursor: inherit;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    input[type=button] {
+        padding: 5px;
+    }
+}
+
+@media screen and (max-width: 720px) {
+    #window {
+        padding: 40px;
+        max-height: none;
+    }
+}
+
+select {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    top: -4px;
+    cursor: pointer;
+    font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
+}

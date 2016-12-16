@@ -27,13 +27,14 @@ from effects import get_random_effect
 from effects.effects import Effect, AudioEffect
 from salt import SALT
 
+
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
 
 
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
-    lang_voices_mapping = {"fr" : ("fr" , (1, 2, 3, 4, 6, 7)),
+    lang_voices_mapping = {"fr" : ("fr" , (1, 2, 3, 4, 5, 6, 7)),
                            "en" : ("us" , (1, 2, 3)),
                            "es" : ("us" , (1, 2)),
                            "de" : ("de" , (4, 5, 6, 7))}
@@ -142,6 +143,7 @@ class LoultServer(WebSocketServerProtocol):
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
         self.channel = request.path.lower().split('/', 2)[-1]
         self.cookie = cookie_hash
+        self.channel = sub("/.*", "", self.channel)
         self.cnx = False
         self.sendend = 0
         self.lasttxt = 0
@@ -179,7 +181,15 @@ class LoultServer(WebSocketServerProtocol):
                 client.sendMessage(binary_payload, isBinary=True)
 
     def _msg_handler(self, msg_data):
-        # user object instance renders both the output sound and output text
+
+        links = {'fr': 'cliquez mes petits chatons', 'de': 'Klick drauf!', 'es': 'Clico JAJAJA', 'en': "Click it mate"}
+        if 'lang' not in msg:
+            links = links['fr']
+        else:
+            links = links[msg['lang']]
+
+
+            # user object instance renders both the output sound and output text
         output_msg, wav = self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
 
         # rate limit
@@ -248,6 +258,16 @@ class LoultServer(WebSocketServerProtocol):
             self.sendMessage(json({'type': 'attack',
                                    'event': 'invalid'}))
 
+    def _move_handler(self, msg_data):
+        if 'x' not in msg_data or 'y' not in msg_data or 'id' not in msg_data:
+            return
+
+        x = float(msg['x'])
+        y = float(msg['y'])
+        item_id = escape(msg['id'][:12])
+        cord = json({'type': 'move', 'id': item_id, 'userid': self.userid, 'x': x, 'y': y})
+        for i in clients[self.channel]:
+            i.sendMessage(cord)
 
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
@@ -260,6 +280,10 @@ class LoultServer(WebSocketServerProtocol):
         elif msg["type"] == "attack":
             # when the current client attacks someone else
             self._attack_handler(msg)
+
+        elif msg["type"] == "move":
+            # when a user moves
+            self._move_handler(msg)
 
 
     def onClose(self, wasClean, code, reason):
