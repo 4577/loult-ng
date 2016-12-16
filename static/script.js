@@ -171,9 +171,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 	
 	var mid = function() {
+        var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
         var rows = document.querySelectorAll('#chattbl td:last-child span:nth-child(2)');
         for(var i = 0; i < rows.length; i++)
 			rows[i].className = (dt && hr) ? 'show' : '';
+        if(atBottom)
+			for(var i = 150; i > 0; i-= 15)
+				setTimeout(function() { chatbox.scrollTop = chatbox.scrollHeight; }, i);
 	}
     
     ckwipe.onclick = function(evt) {
@@ -269,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
         userlist.style.width = userlist.style.width == '0px' ? '185px' : '0px';
         if(atBottom)
-            chatbox.scrollTop = chatbox.scrollHeight;
+			for(var i = 150; i > 0; i-= 15)
+				setTimeout(function() { chatbox.scrollTop = chatbox.scrollHeight; }, i);
     };
     
     // WebSocket-related functions
@@ -277,8 +282,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var input = document.getElementById('input');
 	
     var wsConnect = function() {
-        ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-        // ws = new WebSocket('ws://loult.family/socket' + location.pathname);
+        // ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+        ws = new WebSocket('ws://loult.family/socket' + location.pathname);
         
         var lastMuted = false;
         ws.binaryType = 'arraybuffer';

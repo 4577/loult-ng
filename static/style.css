@@ -93,7 +93,7 @@ table {
 }
 
 td {
-    height: 36px;
+    height: 20px;
 	padding: 0;
 }
 
@@ -108,7 +108,7 @@ td:first-child {
 
 #chattbl td:nth-child(2) {
     width: 99%;
-    padding: 0 8px;
+    padding: 8px;
 }
 
 #chattbl td:last-child {
@@ -158,7 +158,7 @@ td:first-child {
 label {
     cursor: inherit;
 	display: inline-block;
-	line-height: 32px;
+	line-height: 36px;
 	background-repeat: no-repeat;
 }
 
@@ -347,6 +347,10 @@ select {
         padding: 40px;
         max-height: none;
     }
+	
+	#prefs {
+		top: 80px;
+	}
 }
 
 @media screen and (max-width: 680px) {
