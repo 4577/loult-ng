@@ -233,6 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
                     
                     case 'userlist':
+						input.placeholder = 'Message...';
                         for(var i = 0; i < msg.users.length; i++) {
                             addUser(msg.users[i].userid, msg.users[i].params);
                         }
