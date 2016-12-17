@@ -53,7 +53,7 @@ class User:
         self.voice_id = cookie_hash[1]
         self.poke_id = (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemon) + 1
         self.pokename = pokemon[self.poke_id]
-        self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.5)
+        self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
         self.color = '#' + pack('3B', *(int(255 * i) for i in self.color)).hex()
 
         self.user_id = cookie_hash.hex()[-5:]
