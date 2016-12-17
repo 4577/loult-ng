@@ -226,7 +226,9 @@ class LoultServer(WebSocketServerProtocol):
                                    wav if synth else None)
 
     def _attack_handler(self, msg_data : Dict):
-        adversary_id, adversary = loult_state.get_user_by_name(msg_data["target"], self.channel, msg_data.get("order", 0))
+        adversary_id, adversary = loult_state.get_user_by_name(msg_data.get("target", self.user.pokename),
+                                                                            self.channel,
+                                                                            msg_data.get("order", 0))
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
@@ -317,9 +319,11 @@ class LoultServerState:
         self.chans = {} # type:Dict[str,Channel]
 
     def _signal_user_connect(self, client : LoultServer, user : User):
+        info = user.info
+        info["params"]["you"] = True
         client.sendMessage(json({
             'type': 'connect',
-            **user.info}))
+            **info}))
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> User:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict

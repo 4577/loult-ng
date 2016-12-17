@@ -7,7 +7,7 @@ import pyaudio
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
-from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, BiteDePingouinEffect
+from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, SnebwewEffect
 from poke import User
 from salt import SALT
 

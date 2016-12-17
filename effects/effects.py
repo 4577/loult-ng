@@ -38,14 +38,15 @@ class AudioEffect(Effect):
 
 #### Here are the text effects ####
 
-class BiteDePingouinEffect(TextEffect):
+class SnebwewEffect(TextEffect):
     """Changes the text to a random number of bitedepingouin"""
-    NAME = "bite de pingouin"
+    NAME = "snèbwèw"
     TIMEOUT = 60
 
     def process(self, displayed_text: str, rendered_text: str):
-        new_text = "BITEDEPINGOUIN? " * random.randint(1,6)
-        return new_text, new_text
+        # the variable is called splitted because it pisses off this australian cunt that mboevink is
+        space_splitted = [word for word in rede.split(" ") if word != ""]
+        return displayed_text, rendered_text
 
 
 class TouretteEffect(TextEffect):
@@ -55,6 +56,7 @@ class TouretteEffect(TextEffect):
     available_swears = ["pute", "salope", "chier", "kk", "chienne", "merde", "cul", "bite", "chatte"]
 
     def process(self, displayed_text : str, rendered_text : str):
+        # the variable is called splitted because it pisses off this australian cunt that mboevink is
         space_splitted = [word for word in rendered_text.split(" ") if word != ""]
         reconstructed = ""
         for word in space_splitted:
