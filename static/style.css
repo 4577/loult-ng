@@ -13,6 +13,7 @@ html, body {
     flex-direction: column;
     height: 100%;
     width: 100%;
+	background: #fcfcfc;
 }
 
 header {
@@ -29,9 +30,10 @@ header, #prefsttl {
 }
 
 h1 {
-    margin: 10px;
-    font-size: 24px;
-	text-shadow: 2px 3px 4px #BBB;
+    margin: 9px;
+    font-size: 25px;
+	font-weight: normal;
+	font-variant: small-caps;
 }
 
 #sidebtns {
@@ -75,11 +77,11 @@ main {
 
 #input {
     flex: 1;
-    font-size: 30px;
 	height: 50px ;
+    font-size: 30px;
     padding: 6px 0px;
-    min-width: 0;
 	text-indent: 6px;
+    min-width: 0;
 	outline: 0;
 	border: 0;
 	border-top: 1px solid #666;
@@ -89,7 +91,6 @@ main {
 table {
     border-collapse: collapse;
     word-break: break-all;
-	margin: 0 5px;
 }
 
 td {
@@ -97,13 +98,21 @@ td {
 	padding: 0;
 }
 
-#chattbl td:not(:nth-child(2)) {
-    white-space: nowrap;
-    text-align: right;
+#chattbl td:first-child {
+	padding-left: 5px;
 }
 
 td:first-child {
     min-width: 150px;
+}
+
+#chattbl tr:nth-child(odd) {
+	background: #FFF;
+}
+
+#chattbl td:not(:nth-child(2)) {
+    white-space: nowrap;
+    text-align: right;
 }
 
 #chattbl td:nth-child(2) {
@@ -112,8 +121,8 @@ td:first-child {
 }
 
 #chattbl td:last-child {
-    opacity: 0.4;
 	font-size: 11px;
+	padding-right: 5px;
 }
 
 #chattbl td:last-child span {
@@ -139,6 +148,7 @@ td:first-child {
 
 #usertbl {
     max-width: 150px;
+	margin: 0 5px;
 }
 
 #sidebtns, #userlist {
@@ -178,8 +188,9 @@ label.right {
     margin-top:4px;
 }
 
-.mute > * {
-    opacity: 0.4;
+
+.backlog td,.mute > *, #chattbl td:last-child {
+    opacity: 0.5;
 }
 
 a {
@@ -214,10 +225,6 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
     background: #F33;
 }
 
-.backlog td {
-    opacity: 0.4;
-}
-
 #overlay {
     display: none;
     flex: 0;
@@ -229,7 +236,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
     left: 0;
     right: 0;
     bottom: 0;
-	opacity: 0.4;
+	opacity: 0.3;
     background: #000;
 }
 
@@ -277,13 +284,14 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 }
 
 #window, #prefs input {
-    font-size: 24px;
+	font-size: 25px;
 }
 
 #prefsttl {
 	border-bottom: 1px solid #666;
-	padding-left: 10px;
+	padding-left: 8px;
 	height: 40px;
+	font-variant: small-caps;
 }
 
 #prefs {
