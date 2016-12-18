@@ -11,12 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var ws;
     
     // DOM-related functions
-	
+
 	var addLine = function(pkmn, txt, datemsg, trclass = null) {
 		var tr = document.createElement('tr');
         if(trclass)
             tr.className = trclass;
-		
+
 		var td = document.createElement('td');
 		if(pkmn === 'info')
 			td.appendChild(document.createTextNode('[Info]'));
@@ -30,13 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
 			td.appendChild(label);
 		}
 		tr.appendChild(td);
-		
+
 		td = document.createElement('td');
 		td.innerHTML = txt;
         if(String(txt).match(/^&gt;/))
             td.className = 'greentext';
 		tr.appendChild(td);
-		
+
 		td = document.createElement('td');
 		var dat = (new Date(datemsg)).toLocaleDateString().replace(/ /, '\xa0');
 		var sp = document.createElement('span');
@@ -44,13 +44,13 @@ document.addEventListener('DOMContentLoaded', function() {
 			sp.className = 'show';
 		sp.appendChild(document.createTextNode(dat));
 		td.appendChild(sp);
-		
+
 		sp = document.createElement('span');
         if(dt && hr)
 			sp.className = 'show';
 		sp.appendChild(document.createTextNode(',\xa0'));
 		td.appendChild(sp);
-		
+
 		dat = (new Date(datemsg)).toLocaleTimeString().replace(/ /, '\xa0');
 		sp = document.createElement('span');
         if(hr)
@@ -58,13 +58,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		sp.appendChild(document.createTextNode(dat));
 		td.appendChild(sp);
 		tr.appendChild(td);
-		
+
 		var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
 		chattbl.appendChild(tr);
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
 	};
-    
+
     var addUser = function(userid, params) {
         if(userid in users)
             return;
@@ -75,10 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
 		var tr = document.createElement('tr');
         if(mute)
             tr.className = 'mute';
-		
+
 		var td = document.createElement('td');
         var label = document.createElement('label');
-		
+
         label.appendChild(document.createTextNode(params.name));
         label.style.color = params.color;
 		label.style.backgroundImage = 'url(".' + params.img + '")';
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			sound.src = mute ? './img/mute.png' : './img/speaker.png';
             sound.className = 'sound';
 			td.appendChild(sound);
-			
+
             sound.onmousedown = function() {
                 mute = muted.indexOf(userid) !== -1;
                 if(!mute) {
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
         }
-		
+
 		tr.appendChild(td);
         usertbl.appendChild(tr);
         users[userid].dom = tr;
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
         usertbl.removeChild(users[userid].dom);
         delete users[userid];
     };
-    
+
     // Preferences
     
     var gear = document.getElementById('gear');
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var ckwipe = document.getElementById('ckwipe');
     var head = document.getElementById('head');
     var main = document.getElementById('main');
-    
+
     var openWindow = function(panel) {
         overlay.style.display = 'block';
         head.className = main.className = 'blur-in';
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.style.display = 'none';
         head.className = main.className = '';
     };
-	
+
     gear.onclick = openWindow;
     cover.onclick = closeWindow;
     close.onclick = closeWindow;
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for(var i = 0; i < rows.length; i++)
 			rows[i].className = left ? 'left' : 'right';
     };
-	
+
     dtbtn.checked = dt;
     dtbtn.onchange = function(evt) {
         localStorage.dt = dt = dtbtn.checked;
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			rows[i].className = dt ? 'show' : '';
 		mid();
     };
-	
+
     hrbtn.checked = hr;
     hrbtn.onchange = function(evt) {
         localStorage.hr = hr = hrbtn.checked;
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			rows[i].className = hr ? 'show' : '';
 		mid();
     };
-	
+
 	var mid = function() {
         var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
         var rows = document.querySelectorAll('#chattbl td:last-child span:nth-child(2)');
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			for(var i = 150; i > 0; i-= 15)
 				setTimeout(function() { chatbox.scrollTop = chatbox.scrollHeight; }, i);
 	}
-    
+
     ckwipe.onclick = function(evt) {
         evt.preventDefault();
         if(confirm('Supprimer le cookie ?')) {
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     else
         lang = lang[1];
-	
+
     select.value = lang;
     
     select.onchange = function() {
@@ -216,12 +216,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Focus-related functions
-    
+
     var dontFocus = false;
     select.addEventListener('focus', function() {
         dontFocus = true;
     }, false);
-    
+
     var refocus = function(evt) {
         setTimeout(function() {
             if(!dontFocus && !window.getSelection().toString())
@@ -230,10 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 dontFocus = false;
         }, 10);
     };
-	
+
     window.addEventListener('focus', refocus, false);
     document.body.addEventListener('mouseup', refocus, false);
-    
+
     // Sound and volume
     
     var speaker = document.getElementById('speaker');
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var context = new (window.AudioContext || webkitAudioContext)();
     var volume = context.createGain ? context.createGain() : context.createGainNode();
     volume.connect(context.destination);
-    
+
     if(localStorage.volume) {
         volrange.value = localStorage.volume * 100;
         volume.gain.value = localStorage.volume;
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     var userlist = document.getElementById('userlist');
     var userswitch = document.getElementById('userswitch');
-	
+
     userswitch.onclick = function() {
         var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
         userlist.style.width = userlist.style.width == '0px' ? '185px' : '0px';
@@ -280,17 +280,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // WebSocket-related functions
     
     var input = document.getElementById('input');
-	
+
     var wsConnect = function() {
         ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
         //ws = new WebSocket('ws://loult.family/socket' + location.pathname);
-        
+
         var lastMuted = false;
         ws.binaryType = 'arraybuffer';
         
         input.onkeydown = function(evt) {
             if(evt.keyCode == 13 && input.value) {
-                ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
+                if(input.value.substring(0,7) == "/attack"){
+                    splitted = input.value.split(" ")
+                    ws.send(JSON.stringify({
+                        type : 'attack',
+                        target : splitted[1],
+                        order : (splitted.length == 3) ? parseInt(splitted[2]) : 0
+                    }))
+                }
+                else{
+                    ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
+                    }
+
                 input.value = '';
             }
         };
@@ -313,7 +324,32 @@ document.addEventListener('DOMContentLoaded', function() {
 						addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", (new Date), 'log part');
                         delUser(msg.userid);
                         break;
-                    
+
+                    case 'attack':
+
+                        switch(msg['event']){
+                            case 'attack':
+                                addLine('info', users[msg.attacker_id].name + " attaque " + users[msg.defender_id].name + " !", (new Date), 'log');
+                                break;
+                            case 'dice':
+                                addLine('info', users[msg.attacker_id].name + " tire un " + msg.attacker_dice + ", "
+                                + users[msg.defender_id].name + " tire un " + msg.defender_dice + "!", (new Date), 'log');
+                                break;
+                            case 'effect':
+                                addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + " !", (new Date), 'log');
+                                break;
+                            case 'invalid':
+                                addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", (new Date), 'log part');
+                                break;
+                            case 'nothing':
+                                addLine('info', "Il ne se passe rien...", (new Date), 'log part');
+                                break;
+                            case 'timeout':
+                                addLine('info', "L'effet " + msg.effect + " est terminé.", (new Date), 'log part');
+                                break;
+                        }
+                        break;
+
                     case 'userlist':
                         for(var i = 0; i < msg.users.length; i++)
                             addUser(msg.users[i].userid, msg.users[i].params);
