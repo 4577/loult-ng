@@ -49,14 +49,21 @@ class SnebwewEffect(TextEffect):
         splitted = rendered_text.split(' ') # fak ye baudrive
         reconstructed = ''
         it = iter(splitted)
+        endswith_sneb = False
         for word in it:
-            reconstructed += word + ' '
-            if word in self.pronouns and random.randint(1,4) == 1:
-                reconstructed += "snèbwèw" + ' '
-                try:
-                    next(it)
-                except StopIteration:
-                    break
+            if word:
+                reconstructed += word + ' '
+                if word in self.pronouns and random.randint(1,2) == 1:
+                    reconstructed += "SNÈBWÈW" + ' '
+                    endswith_sneb = True
+                    try:
+                        next(it)
+                    except StopIteration:
+                        break
+                else:
+                    endswith_sneb = False
+        if endswith_sneb:
+            reconstructed = reconstructed[:-1] + "ENNW"
 
         return reconstructed, reconstructed
 
