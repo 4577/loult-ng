@@ -39,7 +39,7 @@ class User:
                            "es" : ("us" , (1, 2)),
                            "de" : ("de" , (4, 5, 6, 7))}
 
-    volumes_presets = {'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}
+    volumes_presets = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.64384, 'fr6': 1.35412, 'fr7': 1.96092, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}
 
     links_translation = {'fr': 'cliquez mes petits chatons',
                          'de': 'Klick drauf!',
@@ -48,7 +48,7 @@ class User:
 
     def __init__(self, cookie_hash, channel, client):
         """Initiating a user using its cookie md5 hash"""
-        self.speed = (cookie_hash[5] % 50) + 100
+        self.speed = (cookie_hash[5] % 80) + 90
         self.pitch = cookie_hash[0] % 100
         self.voice_id = cookie_hash[1]
         self.poke_id = (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemon) + 1
