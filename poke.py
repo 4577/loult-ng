@@ -227,6 +227,9 @@ class LoultServer(WebSocketServerProtocol):
                                    wav if synth else None)
 
     def _attack_handler(self, msg_data : Dict):
+        # cleaning up none values in case of fuckups
+        msg_data = {key: value for key, value in msg_data.items() if value is not None}
+
         adversary_id, adversary = loult_state.get_user_by_name(msg_data.get("target", self.user.pokename),
                                                                             self.channel,
                                                                             msg_data.get("order", 0))
