@@ -1,9 +1,11 @@
 import random
+import re
 from datetime import datetime
 from pysndfx import AudioEffectsChain
 
 import numpy
 
+# TODO : effet théatre, effet speech par adolf, effet beat, effet voix robot
 
 class Effect:
     NAME = ""
@@ -86,7 +88,7 @@ class TouretteEffect(TextEffect):
         return displayed_text, reconstructed
 
 class SpeechMasterEffect(TextEffect):
-    """Randomly inserts insults in between words"""
+    """Increases your speech abilities by 76%"""
     NAME = "maître de l'élocution"
     TIMEOUT = 120
     available_punctuation = "?,!.:'"
@@ -96,6 +98,14 @@ class SpeechMasterEffect(TextEffect):
         reconstructed = " ".join([word + random.choice(self.available_punctuation)
                                   for word in space_splitted])
         return displayed_text, reconstructed
+
+class NwwoiwwEffect(TextEffect):
+    NAME = "nwwoiww"
+    TIMEOUT = 150
+
+    def process(self, displayed_text : str, rendered_text : str):
+        replaced = re.sub("r", "ww", rendered_text)
+        return replaced, replaced
 
 #### Here are the audio effects ####
 
@@ -109,6 +119,7 @@ class ReversedEffect(AudioEffect):
 
 
 class ReverbManEffect(AudioEffect):
+    """Adds a pretty heavy reverb effect"""
     NAME = "reverbman"
     TIMEOUT = 180
 
@@ -127,6 +138,7 @@ class ReverbManEffect(AudioEffect):
 
 
 class GhostEffect(AudioEffect):
+    """Adds a ghostly effect"""
     NAME="stalker"
     TIMEOUT = 120
 
