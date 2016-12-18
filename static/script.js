@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }));
                 }
                 else {
-                    ws.send(JSON.stringify({type: 'msg', msg: input.value, lang: lang}));
+                    ws.send(JSON.stringify({type: 'msg', msg: input.value.trim(), lang: lang}));
                 }
 
                 input.value = '';
