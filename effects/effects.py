@@ -39,14 +39,25 @@ class AudioEffect(Effect):
 #### Here are the text effects ####
 
 class SnebwewEffect(TextEffect):
-    """Changes the text to a random number of bitedepingouin"""
+    """Finds, using a simple heuristic, radom nouns and changes then to snèbwèw"""
     NAME = "snèbwèw"
     TIMEOUT = 60
+    pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au"]
 
     def process(self, displayed_text: str, rendered_text: str):
-        # the variable is called splitted because it pisses off this australian cunt that mboevink is
-        space_splitted = [word for word in rede.split(" ") if word != ""]
-        return displayed_text, rendered_text
+        splitted = rendered_text.split(' ') # fak ye baudrive
+        reconstructed = ''
+        it = iter(splitted)
+        for word in it:
+            reconstructed += word + ' '
+            if word in self.pronouns and random.randint(1,4) == 1:
+                reconstructed += "snèbwèw" + ' '
+                try:
+                    next(it)
+                except StopIteration:
+                    break
+
+        return reconstructed, reconstructed
 
 
 class TouretteEffect(TextEffect):
