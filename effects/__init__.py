@@ -1,6 +1,6 @@
-from .effects import Effect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect
+from .effects import Effect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect, GhostEffect
 import random
-AVAILABLE_EFFECTS = [ReversedEffect, ReverbManEffect, TouretteEffect]
+AVAILABLE_EFFECTS = [GhostEffect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect]
 
 
 def get_random_effect() -> Effect:

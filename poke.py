@@ -179,7 +179,8 @@ class LoultServer(WebSocketServerProtocol):
         self.cnx = True  # connected!
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
-        my_userlist = {user_id : user.info for user_id, user in loult_state.chans[self.channel].users.items()}
+        my_userlist = OrderedDict([(user_id , user.info)
+                                  for user_id, user in loult_state.chans[self.channel].users.items()])
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.sendMessage(json({
@@ -319,11 +320,9 @@ class LoultServerState:
         self.chans = {} # type:Dict[str,Channel]
 
     def _signal_user_connect(self, client : LoultServer, user : User):
-        info = user.info
-        info["params"]["you"] = True
         client.sendMessage(json({
             'type': 'connect',
-            **info}))
+            **user.info}))
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> User:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
@@ -335,7 +334,8 @@ class LoultServerState:
         new_user = User(user_cookie, channel_name, client)
         if new_user.user_id not in channel_obj.users:
             for other_client in channel_obj.clients:
-                self._signal_user_connect(other_client, new_user)
+                if other_client != client:
+                    self._signal_user_connect(other_client, new_user)
             channel_obj.refcnts[new_user.user_id] = 1
             channel_obj.users[new_user.user_id] = new_user
             return new_user
