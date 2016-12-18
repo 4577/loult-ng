@@ -70,4 +70,4 @@ pokemon = {1: 'Bulbizarre', 2: 'Herbizarre', 3: 'Florizarre', 4: 'Salamèche', 5
            474:'Porygon-Z', 475:'Gallame', 476:'Tarinorme', 477:'Noctunoir', 478:'Momartik', 479:'Motisma',
            480:'Crehelf', 481:'Crefollet', 482:'Crefadet', 483:'Dialga', 484:'Palkia', 485:'Heatran', 486:'Regigigas',
            487:'Giratina', 488:'Cresselia', 489:'Phione', 490:'Manaphy', 491:'Darkrai', 492:'Shaymin', 493:'Arceus'}
-ATTACK_RESTING_TIME = 1 # in seconds, the time a pokemon has to wait before being able to attack again
+ATTACK_RESTING_TIME = 30 # in seconds, the time a pokemon has to wait before being able to attack again

@@ -43,7 +43,7 @@ class SnebwewEffect(TextEffect):
     """Finds, using a simple heuristic, radom nouns and changes then to snèbwèw"""
     NAME = "snèbwèw"
     TIMEOUT = 180
-    pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au"]
+    pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à"]
 
     def process(self, displayed_text: str, rendered_text: str):
         splitted = rendered_text.split(' ') # fak ye baudrive
@@ -85,6 +85,18 @@ class TouretteEffect(TextEffect):
                                            for i in range(random.randint(1,4))])
         return displayed_text, reconstructed
 
+class SpeechMasterEffect(TextEffect):
+    """Randomly inserts insults in between words"""
+    NAME = "maître de l'élocution"
+    TIMEOUT = 120
+    available_punctuation = "?,!.:'"
+
+    def process(self, displayed_text: str, rendered_text: str):
+        space_splitted = [word for word in rendered_text.split(" ") if word != ""]
+        reconstructed = " ".join([word + random.choice(self.available_punctuation)
+                                  for word in space_splitted])
+        return displayed_text, reconstructed
+
 #### Here are the audio effects ####
 
 
@@ -99,6 +111,14 @@ class ReversedEffect(AudioEffect):
 class ReverbManEffect(AudioEffect):
     NAME = "reverbman"
     TIMEOUT = 180
+
+    def __init__(self):
+        super().__init__()
+        self._name = random.choice(["ouévèwbèw", self.NAME, "lou monastèw"])
+
+    @property
+    def name(self):
+        return self._name
 
     def process(self, wave_data: numpy.ndarray):
         wave_data = numpy.concatenate([wave_data, numpy.zeros(16000, wave_data.dtype)])
