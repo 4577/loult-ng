@@ -113,7 +113,7 @@ class User:
             sex = 4 if voice in (2, 4) else 1
 
         volume = 1
-        if lang != 'fr' and lang != 'de':
+        if lang != 'de':
             volume = self.volumes_presets['%s%d' % (lang, voice)] * 0.5
 
         # Synthesis of the voice using the output text
