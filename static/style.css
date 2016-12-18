@@ -155,6 +155,11 @@ td:first-child {
     width: 185px;
 }
 
+#sidebtns img {
+	height: 24px;
+	width: 24px;
+}
+
 #userlist {
     overflow-y: auto;
 	overflow-x: hidden;
@@ -187,7 +192,6 @@ label.right {
 .sound {
     margin-top:4px;
 }
-
 
 .backlog td,.mute > *, #chattbl td:last-child {
     opacity: 0.5;
