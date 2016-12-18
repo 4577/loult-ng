@@ -34,8 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 
 		td = document.createElement('td');
+		txt = String(txt).replace(/((?:https?:\/\/)?(?:www\.)?vocaroo\.com\/i\/((?:[0-9a-zA-Z])+))/gi, '<object width="148" height="44"><param name="movie" value="https://loult.family/player.swf?playMediaID=$2&autoplay=0"></param><param name="wmode" value="transparent"></param><embed src="https://loult.family/player.swf?playMediaID=$2&autoplay=0" width="148" height="44" wmode="transparent" type="application/x-shockwave-flash"></embed>$1</object>');
 		td.innerHTML = txt;
-       		if(String(txt).match(/^&gt;/)) {
+       		if(txt.match(/^&gt;/)) {
             		td.className = 'greentext';
 		}
 		tr.appendChild(td);
