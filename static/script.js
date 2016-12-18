@@ -373,8 +373,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     case 'backlog':
                         for(var i = 0; i < msg.msgs.length; i++) {
 				addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
-				addLine('info', 'Vous êtes connecté', (new Date), 'log');
 			}
+                        addLine('info', 'Vous êtes connecté', (new Date), 'log');
+
                         break;
                     
                     case 'msg':
