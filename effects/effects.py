@@ -36,12 +36,13 @@ class AudioEffect(Effect):
         pass
 
 
+
 #### Here are the text effects ####
 
 class SnebwewEffect(TextEffect):
     """Finds, using a simple heuristic, radom nouns and changes then to snèbwèw"""
     NAME = "snèbwèw"
-    TIMEOUT = 60
+    TIMEOUT = 180
     pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au"]
 
     def process(self, displayed_text: str, rendered_text: str):
@@ -93,5 +94,15 @@ class ReverbManEffect(AudioEffect):
     TIMEOUT = 180
 
     def process(self, wave_data: numpy.ndarray):
+        wave_data = numpy.concatenate([wave_data, numpy.zeros(16000, wave_data.dtype)])
         apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
         return apply_audio_effects(wave_data)
+
+
+class GhostEffect(AudioEffect):
+    NAME="stalker"
+    TIMEOUT = 120
+
+    def process(self, wave_data: numpy.ndarray):
+        reverb, reverse = ReverbManEffect(), ReversedEffect()
+        return reverse.process(reverb.process(reverse.process(wave_data)))

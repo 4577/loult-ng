@@ -7,7 +7,7 @@ import pyaudio
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
-from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, SnebwewEffect
+from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, SnebwewEffect, GhostEffect
 from poke import User
 from salt import SALT
 
@@ -31,11 +31,11 @@ class ConvertINT16PCM(AudioEffect):
 
 fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-# user.active_audio_effects += [ReversedEffect(), TestEffect(), ConvertINT16PCM()]
-user.active_text_effects += [SnebwewEffect()]
+user.active_audio_effects += [GhostEffect()]
+# user.active_text_effects += [SnebwewEffect()]
 
-# text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
-text, wav = user.render_message("Il a mis du pain sur son JR", "fr")
+text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
+# text, wav = user.render_message("Il a mis du pain sur son JR", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
