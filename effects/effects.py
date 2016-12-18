@@ -7,6 +7,7 @@ import numpy
 
 # TODO : effet théatre, effet speech par adolf, effet beat, effet voix robot
 
+
 class Effect:
     NAME = ""
     TIMEOUT = 0
@@ -38,11 +39,10 @@ class AudioEffect(Effect):
         pass
 
 
-
 #### Here are the text effects ####
 
 class SnebwewEffect(TextEffect):
-    """Finds, using a simple heuristic, radom nouns and changes then to snèbwèw"""
+    """Finds, using a simple heuristic, random nouns and changes then to snèbwèw"""
     NAME = "snèbwèw"
     TIMEOUT = 180
     pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à"]
@@ -87,6 +87,7 @@ class TouretteEffect(TextEffect):
                                            for i in range(random.randint(1,4))])
         return displayed_text, reconstructed
 
+
 class SpeechMasterEffect(TextEffect):
     """Increases your speech abilities by 76%"""
     NAME = "maître de l'élocution"
@@ -98,6 +99,7 @@ class SpeechMasterEffect(TextEffect):
         reconstructed = " ".join([word + random.choice(self.available_punctuation)
                                   for word in space_splitted])
         return displayed_text, reconstructed
+
 
 class NwwoiwwEffect(TextEffect):
     NAME = "nwwoiww"
