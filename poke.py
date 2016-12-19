@@ -56,7 +56,7 @@ class User:
         self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
         self.color = '#' + pack('3B', *(int(255 * i) for i in self.color)).hex()
 
-        self.user_id = cookie_hash.hex()[-5:]
+        self.user_id = cookie_hash.hex()[-16:]
 
         self.channel = channel
         self.client = client
