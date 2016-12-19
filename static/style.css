@@ -294,7 +294,6 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 	border-bottom: 1px solid #666;
 	padding-left: 8px;
 	height: 40px;
-	font-variant: small-caps;
 }
 
 #prefs {
