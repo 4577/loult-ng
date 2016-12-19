@@ -68,8 +68,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		var atBottom = chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight);
 		chattbl.appendChild(tr);
-		if(atBottom)
+		if(atBottom) {
 			chatbox.scrollTop = chatbox.scrollHeight;
+		}
 	};
 
     var addUser = function(userid, params) {
@@ -239,10 +240,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var refocus = function(evt) {
         setTimeout(function() {
-            if(!dontFocus && !window.getSelection().toString())
+            if(!dontFocus && !window.getSelection().toString()) {
                 input.focus();
-            else if(dontFocus)
+	    }
+            else if(dontFocus) {
                 dontFocus = false;
+	    }
         }, 10);
     };
 
@@ -376,7 +379,6 @@ document.addEventListener('DOMContentLoaded', function() {
 				addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
 			}
                         addLine('info', 'Vous êtes connecté', (new Date), 'log');
-
                         break;
                     
                     case 'msg':
