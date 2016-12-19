@@ -1,8 +1,8 @@
 from .effects import Effect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect, \
-    GhostEffect, SpeechMasterEffect, NwwoiwwEffect
+    GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect
 import random
 AVAILABLE_EFFECTS = [GhostEffect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect,
-                     SpeechMasterEffect, NwwoiwwEffect]
+                     SpeechMasterEffect, NwwoiwwEffect, FofoteEffect]
 # AVAILABLE_EFFECTS = [SpeechMasterEffect] # single effect list used when testing
 
 

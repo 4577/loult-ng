@@ -5,7 +5,8 @@ from pysndfx import AudioEffectsChain
 
 import numpy
 
-# TODO : effet théatre, effet speech par adolf, effet beat, effet voix robot
+# TODO : effet théatre, effet speech random, effet beat, effet voix robot,
+# effet javanais, cheveux sur la langue, effet hangul au hasard
 
 
 class Effect:
@@ -45,7 +46,8 @@ class SnebwewEffect(TextEffect):
     """Finds, using a simple heuristic, random nouns and changes then to snèbwèw"""
     NAME = "snèbwèw"
     TIMEOUT = 180
-    pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à"]
+    pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à",
+                "tu", "je"]
 
     def process(self, displayed_text: str, rendered_text: str):
         splitted = rendered_text.split(' ') # fak ye baudrive
@@ -102,17 +104,27 @@ class SpeechMasterEffect(TextEffect):
 
 
 class NwwoiwwEffect(TextEffect):
+    """Donne un accent cwéole"""
     NAME = "nwwoiww"
     TIMEOUT = 150
 
     def process(self, displayed_text : str, rendered_text : str):
-        replaced = re.sub("r", "ww", rendered_text)
-        return replaced, replaced
+        return re.sub("r", "ww", displayed_text), re.sub("r", "ww", rendered_text)
+
+
+class FofoteEffect(TextEffect):
+    """Fait un peu fofoter"""
+    NAME = "fofotage"
+    TIMEOUT = 150
+
+    def process(self, displayed_text: str, rendered_text: str):
+        return re.sub("(s|ss|c|ç)", "f", displayed_text), re.sub("(s|ss|c|ç)", "f", rendered_text)
 
 #### Here are the audio effects ####
 
 
 class ReversedEffect(AudioEffect):
+    """?sdef vlop sdaganliup uirt vlad"""
     NAME = "inversion"
     TIMEOUT = 120
 
