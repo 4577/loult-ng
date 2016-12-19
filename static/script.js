@@ -259,6 +259,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	window.addEventListener('focus', refocus, false);
 	document.body.addEventListener('mouseup', refocus, false);
 	
+	window.addEventListener('resize', function(evt) {
+		chatbox.scrollTop = chatbox.scrollHeight;
+	});
+	
 	// Sound and volume
 	
 	var speaker = document.getElementById('speaker');
