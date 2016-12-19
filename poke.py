@@ -263,7 +263,8 @@ class LoultServer(WebSocketServerProtocol):
                 self._broadcast_to_channel({'type': 'attack',
                                             'event': 'effect',
                                             'target_id': affected_user.user_id,
-                                            'effect': effect.name})
+                                            'effect': effect.name,
+                                            'timeout' : effect.TIMEOUT})
             else:
                 self._broadcast_to_channel({'type': 'attack',
                                             'event': 'nothing'})
