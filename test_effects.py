@@ -8,7 +8,7 @@ from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
-    SnebwewEffect, GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect
+    SnebwewEffect, GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect, IssouEffect
 from poke import User
 from salt import SALT
 
@@ -38,7 +38,7 @@ class ConvertINT16PCM(AudioEffect):
 
 fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-# user.active_audio_effects += [Louder()]
+user.active_audio_effects += [IssouEffect()]
 user.active_text_effects += [FofoteEffect()]
 
 # text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")

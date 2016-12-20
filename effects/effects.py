@@ -2,6 +2,8 @@ import random
 import re
 from datetime import datetime
 from pysndfx import AudioEffectsChain
+from os import path, listdir
+from scipy.io.wavfile import read
 
 import numpy
 
@@ -159,3 +161,43 @@ class GhostEffect(AudioEffect):
     def process(self, wave_data: numpy.ndarray):
         reverb, reverse = ReverbManEffect(), ReversedEffect()
         return reverse.process(reverb.process(reverse.process(wave_data)))
+
+
+class IssouEffect(AudioEffect):
+    """el famoso"""
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/issou")
+    issou_dir = path.join(main_dir, "issou")
+    other_dir = path.join(main_dir, "other")
+    NAME = "el famoso"
+    TIMEOUT = 150
+
+    def __init__(self):
+        super().__init__()
+
+        def get_sounds(dir : str):
+            sounds = []
+            for filename in listdir(dir):
+                realpath = path.join(dir, filename)
+                rate, data = read(realpath)
+                sounds.append(data)
+            return sounds
+
+        self.issou_sounds = get_sounds(self.issou_dir)
+        self.other_sounds = get_sounds(self.other_dir)
+        self.pending_issou, self.pending_other = [], []
+        self._create_pattern()
+
+    def _create_pattern(self):
+        random.shuffle(self.issou_sounds)
+        random.shuffle(self.other_sounds)
+        self.pending_other = self.other_sounds[:random.randint(4,6)]
+        self.pending_issou = self.issou_sounds[:random.randint(2,5)]
+
+    def process(self, wave_data: numpy.ndarray):
+        if self.pending_other:
+            return self.pending_other.pop()
+        elif self.pending_issou:
+            return self.pending_issou.pop()
+        else:
+            self._create_pattern()
+            return self.process(None)
