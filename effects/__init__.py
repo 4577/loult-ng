@@ -1,9 +1,9 @@
 from .effects import Effect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect, \
-    GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect
+    GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect, IssouEffect
 import random
-AVAILABLE_EFFECTS = [GhostEffect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect,
-                     SpeechMasterEffect, NwwoiwwEffect, FofoteEffect]
-# AVAILABLE_EFFECTS = [SpeechMasterEffect] # single effect list used when testing
+# AVAILABLE_EFFECTS = [GhostEffect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect,
+#                      SpeechMasterEffect, NwwoiwwEffect, FofoteEffect]
+AVAILABLE_EFFECTS = [IssouEffect] # single effect list used when testing
 
 
 def get_random_effect() -> Effect:
