@@ -1,24 +1,24 @@
 div, header, input {
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
 }
 
 html, body {
-    padding: 0;
-    margin: 0;
-    font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
-    font-size: 16px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
+	padding: 0;
+	margin: 0;
+	font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
+	font-size: 16px;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
 	background: #fcfcfc;
 }
 
 header {
 	height: 50px;
-    border-bottom: 1px solid #666;
+	border-bottom: 1px solid #666;
 }
 
 header, #prefsttl {
@@ -30,14 +30,13 @@ header, #prefsttl {
 }
 
 h1 {
-    margin: 9px;
-    font-size: 25px;
+	margin: 9px;
+	font-size: 25px;
 	font-weight: normal;
-	font-variant: small-caps;
 }
 
 #sidebtns {
-    float: right;
+	float: right;
 	height: 100%;
 	display: flex;
 	flex-direction: row;
@@ -47,41 +46,41 @@ h1 {
 }
 
 input[type=range] {
-    vertical-align: middle;
-    margin-left: 5px;
-    width: 147px;
+	vertical-align: middle;
+	margin-left: 5px;
+	width: 147px;
 }
 
 main {
-    display: flex;
-    height: 100%;
-    min-height: 0;
+	display: flex;
+	height: 100%;
+	min-height: 0;
 }
 
 #chat {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
 }
 
 #chatbox {
-    flex: 1;
-    overflow-y: auto;
+	flex: 1;
+	overflow-y: auto;
 }
 
 #chatentry {
-    display: flex;
-    min-height: 50px;
+	display: flex;
+	min-height: 50px;
 }
 
 #input {
-    flex: 1;
+	flex: 1;
 	height: 50px ;
-    font-size: 30px;
-    padding: 6px 0px;
+	font-size: 30px;
+	padding: 6px 0px;
 	text-indent: 6px;
-    min-width: 0;
+	min-width: 0;
 	outline: 0;
 	border: 0;
 	border-top: 1px solid #666;
@@ -89,12 +88,12 @@ main {
 }
 
 table {
-    border-collapse: collapse;
-    word-break: break-all;
+	border-collapse: collapse;
+	word-break: break-all;
 }
 
 td {
-    height: 20px;
+	height: 20px;
 	padding: 0;
 }
 
@@ -103,7 +102,7 @@ td {
 }
 
 td:first-child {
-    min-width: 150px;
+	min-width: 150px;
 }
 
 #chattbl tr:nth-child(odd) {
@@ -111,13 +110,13 @@ td:first-child {
 }
 
 #chattbl td:not(:nth-child(2)) {
-    white-space: nowrap;
-    text-align: right;
+	white-space: nowrap;
+	text-align: right;
 }
 
 #chattbl td:nth-child(2) {
-    width: 99%;
-    padding: 8px;
+	width: 99%;
+	padding: 8px;
 }
 
 #chattbl td:last-child {
@@ -143,20 +142,25 @@ td:first-child {
 
 #wrap {
 	height: 100%;
-    border-left: 1px solid #666;
+	border-left: 1px solid #666;
 }
 
 #usertbl {
-    max-width: 150px;
+	max-width: 150px;
 	margin: 0 5px;
 }
 
 #sidebtns, #userlist {
-    width: 185px;
+	width: 185px;
+}
+
+#sidebtns img {
+	height: 24px;
+	width: 24px;
 }
 
 #userlist {
-    overflow-y: auto;
+	overflow-y: auto;
 	overflow-x: hidden;
 	-webkit-transition: width 150ms ease-in-out;
 	-moz-transition: width 150ms ease-in-out;
@@ -166,7 +170,7 @@ td:first-child {
 }
 
 label {
-    cursor: inherit;
+	cursor: inherit;
 	display: inline-block;
 	line-height: 36px;
 	background-repeat: no-repeat;
@@ -185,102 +189,101 @@ label.right {
 }
 
 .sound {
-    margin-top:4px;
+	margin-top:4px;
 }
 
-
 .backlog td,.mute > *, #chattbl td:last-child {
-    opacity: 0.5;
+	opacity: 0.6;
 }
 
 a {
-    color: #06A;
-    text-decoration: none;
+	color: #06A;
+	text-decoration: none;
 }
 
 a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:hover {
-    opacity: 0.8;
-    cursor: pointer;
+	opacity: 0.8;
+	cursor: pointer;
 }
 
 .log {
-    color: #3C3;
+	color: #3C3;
 	text-align: center;
 }
 
 .greentext {
-    color: #792;
-    font-family: monospace;
+	color: #792;
+	font-family: monospace;
 }
 
 .part {
-    color: #1AC;
+	color: #1AC;
 }
 
 .kick {
-    color: #F33;
+	color: #F33;
 }
 
 #close:hover {
-    background: #F33;
+	background: #F33;
 }
 
 #overlay {
-    display: none;
-    flex: 0;
+	display: none;
+	flex: 0;
 }
 
 #cover {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	opacity: 0.3;
-    background: #000;
+	background: #000;
 }
 
 .blur-in {
-    -webkit-animation: blur-in 450ms forwards;
-    -moz-animation: blur-in 450ms forwards;
-    -o-animation: blur-in 450ms forwards;
-    animation: blur-in 450ms forwards;
+	-webkit-animation: blur-in 450ms forwards;
+	-moz-animation: blur-in 450ms forwards;
+	-o-animation: blur-in 450ms forwards;
+	animation: blur-in 450ms forwards;
 }
 @-webkit-keyframes blur-in {
-    0% { -webkit-filter: blur(0px); }
-    100% { -webkit-filter: blur(3px); }
+	0% { -webkit-filter: blur(0px); }
+	100% { -webkit-filter: blur(3px); }
 }
 @-moz-keyframes blur-in {
-    0% { -moz-filter: blur(0px); }
-    100% { -moz-filter: blur(3px); }
+	0% { -moz-filter: blur(0px); }
+	100% { -moz-filter: blur(3px); }
 }
 @-o-keyframes blur-in {
-    0% { -o-filter: blur(0px); }
-    100% { -o-filter: blur(3px); }
+	0% { -o-filter: blur(0px); }
+	100% { -o-filter: blur(3px); }
 }
 @-ms-keyframes blur-in {
-    0% { -ms-filter: blur(0px); }
-    100% { -ms-filter: blur(3px); }
+	0% { -ms-filter: blur(0px); }
+	100% { -ms-filter: blur(3px); }
 }
 @keyframes blur-in {
-    0% { filter: blur(0px); }
-    100% { filter: blur(3px); }
+	0% { filter: blur(0px); }
+	100% { filter: blur(3px); }
 }
 
 #window {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: 720px;
-    max-height: 480px;
-    margin: auto;
-    background: #FFF;
-    box-shadow: 0 0 15px #666;
-    line-height: 1.5em;
-    width: auto;
-    height: auto;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	max-width: 720px;
+	max-height: 480px;
+	margin: auto;
+	background: #FFF;
+	box-shadow: 0 0 15px #666;
+	line-height: 1.5em;
+	width: auto;
+	height: auto;
 }
 
 #window, #prefs input {
@@ -291,7 +294,6 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 	border-bottom: 1px solid #666;
 	padding-left: 8px;
 	height: 40px;
-	font-variant: small-caps;
 }
 
 #prefs {
@@ -313,7 +315,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 }
 
 #prefs a {
-    text-decoration: underline;
+	text-decoration: underline;
 }
 
 #prefs label {
@@ -321,12 +323,12 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 }
 
 #close {
-    cursor: pointer;
+	cursor: pointer;
 	float: right;
-    text-align: center;
+	text-align: center;
 	height: 39px;
 	width: 39px;
-    background: #EEE;
+	background: #EEE;
 	border-left: 1px solid #666;
 	-webkit-transition: background-color 150ms linear;
 	-moz-transition: background-color 150ms linear;
@@ -336,51 +338,33 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 }
 
 select {
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    padding: 0;
-    margin: 0;
+	background: transparent;
+	border: none;
+	font-size: 20px;
+	padding: 0;
+	margin: 0;
 	outline: 0;
 }
 
-@media screen and (max-width: 900px) {
-    td:last-child {
-        display: none;
-    }
-}
-
 @media screen and (max-width: 720px) {
-    #window {
-        padding: 40px;
-        max-height: none;
-    }
-	
+	#window {
+		padding: 40px;
+		max-height: none;
+	}
+
 	#prefs {
 		top: 80px;
 	}
 }
 
 @media screen and (max-width: 680px) {
-    #userlist {
-        width: 0px;
-    }
-	
-    #userswitch {
-        margin-right: -3px;
-    }
-
-    td:first-child {
-        min-width: 120px !important;
-    }
-	
 	#input {
 		padding: 20px 0px;
+		}
 	}
-}
 
 @media screen and (-webkit-min-device-pixel-ratio:0) {
-    input[type=button] {
-        padding: 5px;
-    }
+	input[type=button] {
+		padding: 5px;
+	}
 }
