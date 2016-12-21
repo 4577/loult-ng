@@ -7,6 +7,8 @@ from scipy.io.wavfile import read
 
 import numpy
 
+from .tools import mix_tracks
+
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
 # effet javanais, cheveux sur la langue, effet hangul au hasard
 
@@ -201,3 +203,32 @@ class IssouEffect(AudioEffect):
         else:
             self._create_pattern()
             return self.process(None)
+
+class AmbianceEffect(AudioEffect):
+    NAME = "ambiance"
+    TIMEOUT = 180
+    effects_mapping = {
+        "starwars_mood" : ("lasèw", 0.3),
+        "bonfire_mood" : ("les feux de l'amouw", 0.6),
+        "seastorm_mood" : ("bretagne", 0.1),
+        "war_mood" : ("wesh yé ou ryan ce pd", 0.4),
+    }
+    data_folder = path.join(path.dirname(path.realpath(__file__)), "data/ambiance/")
+
+    def __init__(self):
+        super().__init__()
+        filename = random.choice(list(self.effects_mapping.keys()))
+        self._name, self.gain = self.effects_mapping[filename]
+        with open(path.join(self.data_folder, filename + ".wav"), "rb") as sndfile:
+            self.rate, self.track_data = read(sndfile)
+
+    @property
+    def name(self):
+        return self._name
+
+    def process(self, wave_data: numpy.ndarray):
+        padding_time = self.rate * 2
+        rnd_pos = random.randint(0,len(self.track_data) - len(wave_data) - padding_time)
+        return mix_tracks(self.track_data[rnd_pos:rnd_pos + len(wave_data) + padding_time] * self.gain,
+                          wave_data,
+                          align="center")

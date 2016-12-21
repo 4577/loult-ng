@@ -1,4 +1,5 @@
 import io
+import random
 import wave
 from hashlib import md5
 
@@ -8,7 +9,8 @@ from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
-    SnebwewEffect, GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect, IssouEffect
+    SnebwewEffect, GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect, IssouEffect, AmbianceEffect
+from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
 
@@ -36,13 +38,25 @@ class ConvertINT16PCM(AudioEffect):
         return (wave_data * (2. ** 15)).astype("int16")
 
 
+class AddTrackEffect(AudioEffect):
+    NAME = "convert"
+    TIMEOUT = 30
+
+    def process(self, wave_data: numpy.ndarray):
+        with open("effects/data/ambiance/war_mood.wav", "rb") as sndfile:
+            rate, track_data = read(sndfile)
+        # rnd_pos = random.randint(0,len(track_data) - len(wave_data))
+        print(len(track_data))
+        return mix_tracks(track_data[rate*3:len(wave_data) + rate*5] * 0.4, wave_data, align="center")
+
+
 fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-user.active_audio_effects += [IssouEffect()]
+user.active_audio_effects += [AmbianceEffect()]
 user.active_text_effects += [FofoteEffect()]
 
-# text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
-text, wav = user.render_message("Il a mis du pain sur son JR", "fr")
+text, wav = user.render_message("PK VOUS FAITES ÇAAAAA", "fr")
+# text, wav = user.render_message("Il a mis du pain sur son JR", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
