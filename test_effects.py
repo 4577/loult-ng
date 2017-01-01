@@ -50,13 +50,12 @@ class AddTrackEffect(AudioEffect):
         return mix_tracks(track_data[rate*3:len(wave_data) + rate*5] * 0.4, wave_data, align="center")
 
 
-fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("622526c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
 user.active_audio_effects += [AmbianceEffect()]
-user.active_text_effects += [FofoteEffect()]
+#user.active_text_effects += [FofoteEffect()]
 
-text, wav = user.render_message("PK VOUS FAITES ÇAAAAA", "fr")
-# text, wav = user.render_message("Il a mis du pain sur son JR", "fr")
+text, wav = user.render_message("Est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:

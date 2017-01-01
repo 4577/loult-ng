@@ -129,8 +129,9 @@ class User:
             rate, data = wavfile.read(BytesIO(wav),)
             # casting the data array to the right format (float32, for usage by pysndfx)
             data = apply_effects((data / (2. ** 15)).astype('float32'), self.active_audio_effects)
+            # casting it back to int16
             data = (data * (2. ** 15)).astype("int16")
-            # then, converting it back to bytes
+            # then, converting it back to binary data
             bytes_obj = bytes()
             bytes_buff = BytesIO(bytes_obj)
             wavfile.write(bytes_buff, rate, data)
