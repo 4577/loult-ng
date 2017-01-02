@@ -13,6 +13,8 @@ from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
 from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 class TestEffect(AudioEffect):
@@ -52,8 +54,8 @@ class AddTrackEffect(AudioEffect):
 
 fake_cookie = md5(("622526c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-user.active_audio_effects += [AmbianceEffect()]
-#user.active_text_effects += [FofoteEffect()]
+for effect in [FofoteEffect()]:
+    user.add_effect(effect)
 
 text, wav = user.render_message("Est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
 print("Text : ", text)

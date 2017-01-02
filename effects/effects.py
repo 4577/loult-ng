@@ -33,9 +33,24 @@ class Effect:
 
 class TextEffect(Effect):
 
-    def process(self, displayed_text : str, rendered_text : str):
+    def process(self, text : str):
         """The displayed text is the text sent to the chat, the rendered_text goes through mbrola"""
         pass
+
+
+class ExplicitTextEffect(TextEffect):
+    """Effect that modifies the text that is rendered AND sent to mbrola"""
+    pass
+
+
+class HiddenTextEffect(TextEffect):
+    """Effect that modifies the text before it is sent to mbrola, but the end user doesn't see it"""
+    pass
+
+
+class PhonemicEffect(Effect):
+    """Effect that modifies Phonems before they're sent to mbrola"""
+    pass
 
 
 class AudioEffect(Effect):
@@ -46,22 +61,22 @@ class AudioEffect(Effect):
 
 #### Here are the text effects ####
 
-class SnebwewEffect(TextEffect):
+class SnebwewEffect(ExplicitTextEffect):
     """Finds, using a simple heuristic, random nouns and changes then to snèbwèw"""
     NAME = "snèbwèw"
     TIMEOUT = 180
     pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à",
                 "tu", "je"]
 
-    def process(self, displayed_text: str, rendered_text: str):
-        splitted = rendered_text.split(' ') # fak ye baudrive
+    def process(self, text: str):
+        splitted = text.split(' ') # fak ye baudrive
         reconstructed = ''
         it = iter(splitted)
         endswith_sneb = False
         for word in it:
             if word:
                 reconstructed += word + ' '
-                if word in self.pronouns and random.randint(1,2) == 1:
+                if word.lower() in self.pronouns and random.randint(1,2) == 1:
                     reconstructed += "SNÈBWÈW" + ' '
                     endswith_sneb = True
                     try:
@@ -73,56 +88,57 @@ class SnebwewEffect(TextEffect):
         if endswith_sneb:
             reconstructed = reconstructed[:-1] + "ENNW"
 
-        return reconstructed, reconstructed
+        return reconstructed
 
 
-class TouretteEffect(TextEffect):
+class TouretteEffect(HiddenTextEffect):
     """Randomly inserts insults in between words"""
     NAME = "syndrome de tourette"
     TIMEOUT = 120
-    available_swears = ["pute", "salope", "chier", "kk", "chienne", "merde", "cul", "bite", "chatte"]
+    available_swears = ["pute", "salope", "chier", "kk", "chienne", "merde", "cul", "bite", "chatte", "suce"]
 
-    def process(self, displayed_text : str, rendered_text : str):
+    def process(self, text: str):
         # the variable is called splitted because it pisses off this australian cunt that mboevink is
-        space_splitted = [word for word in rendered_text.split(" ") if word != ""]
+        space_splitted = [word for word in text.split(" ") if word != ""]
         reconstructed = ""
         for word in space_splitted:
             reconstructed += " " + word + " "
             if random.randint(1,6) == 1:
                 reconstructed += " ".join([random.choice(self.available_swears)
                                            for i in range(random.randint(1,4))])
-        return displayed_text, reconstructed
+        return text
 
 
-class SpeechMasterEffect(TextEffect):
+class SpeechMasterEffect(HiddenTextEffect):
     """Increases your speech abilities by 76%"""
     NAME = "maître de l'élocution"
     TIMEOUT = 120
     available_punctuation = "?,!.:'"
 
-    def process(self, displayed_text: str, rendered_text: str):
-        space_splitted = [word for word in rendered_text.split(" ") if word != ""]
+    def process(self, text: str):
+        space_splitted = [word for word in text.split(" ") if word != ""]
         reconstructed = " ".join([word + random.choice(self.available_punctuation)
                                   for word in space_splitted])
-        return displayed_text, reconstructed
+        return reconstructed
 
 
-class NwwoiwwEffect(TextEffect):
+class NwwoiwwEffect(ExplicitTextEffect):
     """Donne un accent cwéole"""
     NAME = "nwwoiww"
     TIMEOUT = 150
 
-    def process(self, displayed_text : str, rendered_text : str):
-        return re.sub("r", "ww", displayed_text), re.sub("r", "ww", rendered_text)
+    def process(self, text: str):
+        return re.sub("r", "ww", text, flags=re.I)
 
 
-class FofoteEffect(TextEffect):
+class FofoteEffect(ExplicitTextEffect):
     """Fait un peu fofoter"""
     NAME = "fofotage"
     TIMEOUT = 150
 
-    def process(self, displayed_text: str, rendered_text: str):
-        return re.sub("(s|ss|c|ç)", "f", displayed_text), re.sub("(s|ss|c|ç)", "f", rendered_text)
+    def process(self, text: str):
+        return re.sub("(s|ss|c|ç)", "f", text, flags=re.I)
+
 
 #### Here are the audio effects ####
 
@@ -166,6 +182,7 @@ class GhostEffect(AudioEffect):
 
 
 class IssouEffect(AudioEffect):
+    # TODO : refactor plus compact des fonctions sur les deux dossiers différents
     """el famoso"""
     main_dir = path.join(path.dirname(path.realpath(__file__)), "data/issou")
     issou_dir = path.join(main_dir, "issou")
@@ -204,7 +221,9 @@ class IssouEffect(AudioEffect):
             self._create_pattern()
             return self.process(None)
 
+
 class AmbianceEffect(AudioEffect):
+    """Adds a random mood to the audio"""
     NAME = "ambiance"
     TIMEOUT = 180
     effects_mapping = {
