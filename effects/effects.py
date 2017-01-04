@@ -7,6 +7,7 @@ from scipy.io.wavfile import read
 
 import numpy
 
+from effects.phonems import PhonemList, Phonem, FrenchPhonems
 from .tools import mix_tracks
 
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
@@ -33,7 +34,7 @@ class Effect:
 
 class TextEffect(Effect):
 
-    def process(self, text : str):
+    def process(self, text : str) -> str:
         """The displayed text is the text sent to the chat, the rendered_text goes through mbrola"""
         pass
 
@@ -50,12 +51,14 @@ class HiddenTextEffect(TextEffect):
 
 class PhonemicEffect(Effect):
     """Effect that modifies Phonems before they're sent to mbrola"""
-    pass
+
+    def process(self, phonems : PhonemList) -> PhonemList:
+        """"""
 
 
 class AudioEffect(Effect):
 
-    def process(self, wave_data: numpy.ndarray):
+    def process(self, wave_data: numpy.ndarray) -> numpy.ndarray:
         pass
 
 
@@ -106,7 +109,7 @@ class TouretteEffect(HiddenTextEffect):
             if random.randint(1,6) == 1:
                 reconstructed += " ".join([random.choice(self.available_swears)
                                            for i in range(random.randint(1,4))])
-        return text
+        return reconstructed
 
 
 class SpeechMasterEffect(HiddenTextEffect):
@@ -122,23 +125,65 @@ class SpeechMasterEffect(HiddenTextEffect):
         return reconstructed
 
 
-class NwwoiwwEffect(ExplicitTextEffect):
-    """Donne un accent cwéole"""
+#### Here are the phonemic effects ####
+
+class PhonemicNwwoiwwEffect(PhonemicEffect):
     NAME = "nwwoiww"
     TIMEOUT = 150
 
-    def process(self, text: str):
-        return re.sub("r", "ww", text, flags=re.I)
+    def process(self, phonems : PhonemList):
+        w_phonem = Phonem("w", 103, [])
+        for i, phonem in enumerate(phonems):
+            if phonem.name == "R":
+                phonem.name = "w"
+                if random.randint(0,1) == 0:
+                    for j in range(2):
+                        phonems.insert(i, w_phonem)
+                else:
+                    phonem.duration = 206
+        return phonems
 
 
-class FofoteEffect(ExplicitTextEffect):
-    """Fait un peu fofoter"""
+class PhonemicFofoteEffect(PhonemicEffect):
     NAME = "fofotage"
     TIMEOUT = 150
 
-    def process(self, text: str):
-        return re.sub("(s|ss|c|ç)", "f", text, flags=re.I)
+    def process(self, phonems : PhonemList):
+        for phonem in phonems:
+            if phonem.name in ["s", "v", "z", "S", "Z"]:
+                phonem.name = "f"
+        return phonems
 
+
+class PhonemicShuffleEffect(PhonemicEffect):
+    NAME = "interprète kiglon"
+    TIMEOUT = 120
+
+    def process(self, phonems : PhonemList):
+        random.shuffle(phonems)
+        return phonems
+
+
+class AccentMarseillaisEffect(PhonemicEffect):
+    NAME = "du vieux port"
+    TIMEOUT = 150
+
+    def process(self, phonems: PhonemList):
+        reconstructed = PhonemList([])
+        ng_phonem = Phonem("N", 100)
+        euh_phonem = Phonem("2", 79)
+        for i, phonem in enumerate(phonems):
+            if phonem.name in FrenchPhonems.NASAL_WOVELS:
+                reconstructed += [phonem, ng_phonem]
+            elif phonem.name in FrenchPhonems.CONSONANTS and phonems[i+1].name not in FrenchPhonems.WOVELS:
+                reconstructed += [phonem, euh_phonem]
+            elif phonem.name == "o":
+                phonem.name = "O"
+                reconstructed.append(phonem)
+            else:
+                reconstructed.append(phonem)
+        print(str(reconstructed))
+        return reconstructed
 
 #### Here are the audio effects ####
 
@@ -188,7 +233,7 @@ class IssouEffect(AudioEffect):
     issou_dir = path.join(main_dir, "issou")
     other_dir = path.join(main_dir, "other")
     NAME = "el famoso"
-    TIMEOUT = 150
+    TIMEOUT = 120
 
     def __init__(self):
         super().__init__()
@@ -213,13 +258,16 @@ class IssouEffect(AudioEffect):
         self.pending_issou = self.issou_sounds[:random.randint(2,5)]
 
     def process(self, wave_data: numpy.ndarray):
-        if self.pending_other:
-            return self.pending_other.pop()
-        elif self.pending_issou:
-            return self.pending_issou.pop()
+        if random.randint(0,3) == 1:
+            if self.pending_other:
+                return self.pending_other.pop()
+            elif self.pending_issou:
+                return self.pending_issou.pop()
+            else:
+                self._create_pattern()
+                return self.process(wave_data)
         else:
-            self._create_pattern()
-            return self.process(None)
+            return wave_data
 
 
 class AmbianceEffect(AudioEffect):

@@ -9,7 +9,8 @@ from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
-    SnebwewEffect, GhostEffect, SpeechMasterEffect, NwwoiwwEffect, FofoteEffect, IssouEffect, AmbianceEffect
+    SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
+    PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect
 from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
@@ -25,12 +26,14 @@ class TestEffect(AudioEffect):
         apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
         return apply_audio_effects(wave_data)
 
+
 class Louder(AudioEffect):
     NAME = "test"
     TIMEOUT = 30
 
     def process(self, wave_data: numpy.ndarray):
         return wave_data * 2
+
 
 class ConvertINT16PCM(AudioEffect):
     NAME = "convert"
@@ -54,10 +57,10 @@ class AddTrackEffect(AudioEffect):
 
 fake_cookie = md5(("622526c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [FofoteEffect()]:
+for effect in [SnebwewEffect(), TouretteEffect(), SpeechMasterEffect(), AccentMarseillaisEffect(), ReverbManEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("Est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
+text, wav = user.render_message("J'habite sur le vieux port", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
