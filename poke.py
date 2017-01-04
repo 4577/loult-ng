@@ -24,7 +24,8 @@ from scipy.io import wavfile
 
 from config import pokemon, ATTACK_RESTING_TIME
 from effects import get_random_effect
-from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect
+from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect
+from effects.phonems import PhonemList
 from salt import SALT
 
 
@@ -39,7 +40,8 @@ class User:
                            "es" : ("es" , (1, 2)),
                            "de" : ("de" , (4, 5, 6, 7))}
 
-    volumes_presets = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.64384, 'fr6': 1.35412, 'fr7': 1.96092, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}
+    volumes_presets = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.64384, 'fr6': 1.35412,
+                       'fr7': 1.96092, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}
 
     links_translation = {'fr': 'cliquez mes petits chatons',
                          'de': 'Klick drauf!',
@@ -60,7 +62,7 @@ class User:
 
         self.channel = channel
         self.client = client
-        self.effects = {cls : [] for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect)}
+        self.effects = {cls : [] for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect)}
         self.last_attack = datetime.now() # any user has to wait some time before attacking, after entering the chan
         self._info = None
 
@@ -72,7 +74,7 @@ class User:
 
     def add_effect(self, effect : Effect):
         """Adds an effect to one of the active effects list (depending on the effect type)"""
-        for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect):
+        for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
             if isinstance(effect, cls):
                 self.effects[cls].append(effect)
                 break
@@ -90,7 +92,19 @@ class User:
             }
         return self._info
 
+    @staticmethod
+    def apply_effects(input_obj, effect_list: List[Effect]):
+        if effect_list:
+            for effect in effect_list:
+                if effect.is_expired():
+                    effect_list.remove(effect)  # if the effect has expired, remove it
+                else:
+                    input_obj = effect.process(input_obj)
+
+        return input_obj
+
     def _vocode(self, text, lang) -> bytes:
+        """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # Language support : default to french if value is incorrect
         lang, voices = self.lang_voices_mapping.get(lang, self.lang_voices_mapping["fr"])
         voice = voices[self.voice_id % len(voices)]
@@ -104,30 +118,36 @@ class User:
         if lang != 'de':
             volume = self.volumes_presets['%s%d' % (lang, voice)] * 0.5
 
-        # Synthesis of the voice using the output text
-        synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s | MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' % (
-            self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice)
-        logging.debug("Running synth command %s" % synth_string)
-        wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
+        if self.effects[PhonemicEffect]:
+            # first running the text-to-phonems conversion, then applying the phonemic effects, then rendering audio
+            phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
+                                  % (self.speed, self.pitch, lang, sex, text)
+            logging.debug("Running espeak command %s" % phonem_synth_string)
+            phonems = PhonemList(run(phonem_synth_string, shell=True, stdout=PIPE, stderr=PIPE)
+                                 .stdout
+                                 .decode("utf-8")
+                                 .strip())
+            modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
+            audio_synth_string = 'MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
+                                 % (volume, lang, voice, lang, voice)
+            logging.debug("Running mbrola command %s" % audio_synth_string)
+            wav = run(audio_synth_string, shell=True, stdout=PIPE,
+                      stderr=PIPE, input=str(modified_phonems).encode("utf-8")).stdout
+        else:
+            # regular render
+            synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
+                           '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
+                           % (self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice)
+            logging.debug("Running synth command %s" % synth_string)
+            wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
         return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
     def render_message(self, text, lang):
-
-        def apply_effects(input_obj, effect_list : List[Effect]):
-            if effect_list:
-                for effect in effect_list:
-                    if effect.is_expired():
-                        effect_list.remove(effect) # if the effect has expired, remove it
-                    else:
-                        input_obj = effect.process(input_obj)
-
-            return input_obj
-
         cleaned_text = text[:500]
         # applying "explicit" effects (visible to the users)
-        displayed_text = apply_effects((cleaned_text, cleaned_text), self.effects[ExplicitTextEffect])
+        displayed_text = self.apply_effects(cleaned_text, self.effects[ExplicitTextEffect])
         # applying "hidden" effects (invisible on the chat, only heard in the audio)
-        rendered_text = apply_effects((cleaned_text, cleaned_text), self.effects[HiddenTextEffect])
+        rendered_text = self.apply_effects(displayed_text, self.effects[HiddenTextEffect])
         rendered_text = sub('(https?://[^ ]*[^.,?! :])', self.links_translation[lang], rendered_text)
         rendered_text = rendered_text.replace('#', 'hashtag ')
         rendered_text = quote(rendered_text.strip(' -"\'`$();:.'))
@@ -140,7 +160,7 @@ class User:
             # converting the wav to ndarray, which is much easier to use for DSP
             rate, data = wavfile.read(BytesIO(wav))
             # casting the data array to the right format (float32, for usage by pysndfx)
-            data = apply_effects((data / (2. ** 15)).astype('float32'), self.active_audio_effects)
+            data = self.apply_effects((data / (2. ** 15)).astype('float32'), self.effects[AudioEffect])
             # casting it back to int16
             data = (data * (2. ** 15)).astype("int16")
             # then, converting it back to binary data

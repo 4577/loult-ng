@@ -10,7 +10,7 @@ def mix_tracks(track1, track2, offset=None, align=None):
 
     if offset is defined:
     longest track :  [=============================]
-    smallest track : [000000][================][000]
+    smallest track : [0000000][================][00]
                       offset
 
     if align is defined:
