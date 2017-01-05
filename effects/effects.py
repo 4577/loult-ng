@@ -11,7 +11,7 @@ from effects.phonems import PhonemList, Phonem, FrenchPhonems
 from .tools import mix_tracks
 
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
-# effet javanais, cheveux sur la langue, effet hangul au hasard
+# effet javanais, effet hangul au hasard
 
 
 class Effect:
@@ -155,6 +155,24 @@ class PhonemicFofoteEffect(PhonemicEffect):
         return phonems
 
 
+class AccentAllemandEffect(PhonemicEffect):
+    NAME = "aus meinem Vaterland"
+    TIMEOUT = 150
+    _tranlation_table = {"Z" : "S", # je -> che
+                         "v" : "f", # vous -> fous
+                         "b" : "p", # boule -> poule
+                         "g" : "k" } # gant -> kan
+
+    def process(self, phonems : PhonemList):
+        for phonem in phonems:
+            if phonem.name in self._tranlation_table:
+                phonem.name = self._tranlation_table[phonem.name]
+            elif phonem.name in FrenchPhonems.ORALS and random.randint(1,3) == 1:
+                phonem.duration *= 2
+            elif phonem.name == "d" and random.randint(1,2) == 1:
+                phonem.name = "t"
+        return phonems
+
 class PhonemicShuffleEffect(PhonemicEffect):
     NAME = "interprète kiglon"
     TIMEOUT = 120
@@ -184,6 +202,27 @@ class AccentMarseillaisEffect(PhonemicEffect):
                 reconstructed.append(phonem)
         print(str(reconstructed))
         return reconstructed
+
+
+class VocalDyslexia(PhonemicEffect):
+    NAME = "dysclesie vocael"
+    TIMEOUT = 150
+
+    def process(self, phonems : PhonemList):
+
+        def permutation(i, j, input_list):
+            input_list[i], input_list[j] = input_list[j], input_list[i]
+
+        def double_permutation(i, input_list):
+            input_list[i-1], input_list[i], input_list[i+1], input_list[i+2] = \
+                input_list[i+1], input_list[i+2], input_list[i-1], input_list[i]
+        if len(phonems) > 5:
+            permut_count = random.randint(1, len(phonems) // 5) # approx 1 permut/10 phonems
+            permut_points = [random.randint(1, len(phonems) - 3) for i in range(permut_count)]
+            for point in permut_points:
+                permutation(point, point + 1, phonems)
+
+        return phonems
 
 #### Here are the audio effects ####
 

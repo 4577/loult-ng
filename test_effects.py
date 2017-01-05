@@ -10,7 +10,8 @@ from scipy.io.wavfile import read, write
 
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
-    PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect
+    PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
+    VocalDyslexia, AccentAllemandEffect
 from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
@@ -57,10 +58,10 @@ class AddTrackEffect(AudioEffect):
 
 fake_cookie = md5(("622526c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [SnebwewEffect(), TouretteEffect(), SpeechMasterEffect(), AccentMarseillaisEffect(), ReverbManEffect()]:
+for effect in [AccentAllemandEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("J'habite sur le vieux port", "fr")
+text, wav = user.render_message("Je vais envahir tout votre pays de pd et bruler tout ces salopards de dabbeurs", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
