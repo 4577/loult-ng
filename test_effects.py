@@ -11,7 +11,8 @@ from scipy.io.wavfile import read, write
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
-    VocalDyslexia, AccentAllemandEffect
+    VocalDyslexia, AccentAllemandEffect, PhonemicEffect
+from effects.phonems import PhonemList
 from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
@@ -56,12 +57,20 @@ class AddTrackEffect(AudioEffect):
         return mix_tracks(track_data[rate*3:len(wave_data) + rate*5] * 0.4, wave_data, align="center")
 
 
-fake_cookie = md5(("622526c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
+class SpeechDeformation(PhonemicEffect):
+    NAME = "un para de trop"
+    TIMEOUT = 30
+
+    def process(self, phonems : PhonemList):
+        pass
+
+
+fake_cookie = md5(("622526c6b02ec00629802b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [AccentAllemandEffect()]:
+for effect in [PhonemicFofoteEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("Je vais envahir tout votre pays de pd et bruler tout ces salopards de dabbeurs", "fr")
+text, wav = user.render_message("comment ça j'ai un cheveux sur la langue, je vois pas de quoi tu parles", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:

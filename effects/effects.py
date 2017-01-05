@@ -65,14 +65,14 @@ class AudioEffect(Effect):
 #### Here are the text effects ####
 
 class SnebwewEffect(ExplicitTextEffect):
-    """Finds, using a simple heuristic, random nouns and changes then to snèbwèw"""
+    """Finds, using a simple heuristic, random nouns and changes them to snèbwèw"""
     NAME = "snèbwèw"
-    TIMEOUT = 180
+    TIMEOUT = 240
     pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à",
                 "tu", "je"]
 
     def process(self, text: str):
-        splitted = text.split(' ') # fak ye baudrive
+        splitted = text.split() # fak ye baudrive
         reconstructed = ''
         it = iter(splitted)
         endswith_sneb = False
@@ -172,6 +172,7 @@ class AccentAllemandEffect(PhonemicEffect):
             elif phonem.name == "d" and random.randint(1,2) == 1:
                 phonem.name = "t"
         return phonems
+
 
 class PhonemicShuffleEffect(PhonemicEffect):
     NAME = "interprète kiglon"
