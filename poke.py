@@ -140,6 +140,7 @@ class User:
                            % (self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice)
             logging.debug("Running synth command %s" % synth_string)
             wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
+
         return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
     def render_message(self, text, lang):
@@ -270,12 +271,14 @@ class LoultServer(WebSocketServerProtocol):
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
             self._broadcast_to_channel({'type': 'attack',
+                                        'date': time() * 1000,
                                         'event' : 'attack',
                                         'attacker_id': self.user.user_id,
                                         'defender_id': adversary_id})
 
             attack_dice, defend_dice = random.randint(0,100), random.randint(0,100)
             self._broadcast_to_channel({'type': 'attack',
+                                        'date': time() * 1000,
                                         'event': 'dice',
                                         'attacker_dice' : attack_dice, "defender_dice" : defend_dice,
                                         'attacker_id': self.user.user_id, 'defender_id': adversary_id})
@@ -293,12 +296,14 @@ class LoultServer(WebSocketServerProtocol):
                 affected_user.add_effect(effect)
 
                 self._broadcast_to_channel({'type': 'attack',
+                                            'date': time() * 1000,
                                             'event': 'effect',
                                             'target_id': affected_user.user_id,
                                             'effect': effect.name,
                                             'timeout' : effect.TIMEOUT})
             else:
                 self._broadcast_to_channel({'type': 'attack',
+                                            'date': time() * 1000,
                                             'event': 'nothing'})
 
             self.user.last_attack = datetime.now()
@@ -358,6 +363,7 @@ class LoultServerState:
     def _signal_user_connect(self, client : LoultServer, user : User):
         client.sendMessage(json({
             'type': 'connect',
+            'date' : time() * 1000,
             **user.info}))
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> User:
@@ -382,6 +388,7 @@ class LoultServerState:
     def _signal_user_disconnect(self, client: LoultServer, user: User):
         client.sendMessage(json({
             'type': 'disconnect',
+            'date': time() * 1000,
             'userid': user.user_id
         }))
 

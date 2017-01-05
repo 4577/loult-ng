@@ -8,8 +8,9 @@ def pairwise(iterable):
     a = iter(iterable)
     return zip(a, a)
 
+
 class FrenchPhonems:
-    PLOSIVES = {"p","b","t","d","k","g"}
+    PLOSIVES = {"p", "b", "t", "d", "k", "g"}
     FRICATIVES = {'S', 'Z', 'f', 's', 'v', 'z', 'j'}
     NASAL_CONSONANTS = {'J', 'm', 'n', 'N'}
     LIQUIDS = {'H', 'R', 'j', 'l', 'w'}
@@ -31,6 +32,11 @@ class Phonem:
         self.duration = duration
         self.pitch_modifiers = pitch_mods if pitch_mods is not None else []
 
+    def __str__(self):
+        return self.name + "\t" \
+               + str(self.duration) + "\t" \
+               + " ".join([str(percent) + " " + str(pitch) for percent, pitch in self.pitch_modifiers])
+
     @classmethod
     def from_str(cls, pho_str):
         split_pho = pho_str.split()
@@ -38,10 +44,9 @@ class Phonem:
         duration = int(split_pho.pop(0))  # type:int
         return cls(name, duration, [(int(percent), int(pitch)) for percent, pitch in pairwise(split_pho)])
 
-    def __str__(self):
-        return self.name + " " \
-               + str(self.duration) + " " \
-               + " ".join([str(percent) + " " + str(pitch) for percent, pitch in self.pitch_modifiers])
+    def set_from_pitches_list(self, pitch_list : List[int]):
+        segment_length = 100 / (len(pitch_list) - 1)
+        self.pitch_modifiers = [(i * segment_length, pitch) for i, pitch in enumerate(pitch_list)]
 
 
 class PhonemList(list):
