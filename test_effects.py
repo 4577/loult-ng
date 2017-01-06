@@ -1,4 +1,5 @@
 import io
+import random
 import wave
 from hashlib import md5
 
@@ -8,9 +9,15 @@ from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
-    SnebwewEffect, GhostEffect, SpeechMasterEffect, NwwoiwwEffect
+    SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
+    PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
+    VocalDyslexia, AccentAllemandEffect, PhonemicEffect
+from effects.phonems import PhonemList
+from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 class TestEffect(AudioEffect):
@@ -22,6 +29,14 @@ class TestEffect(AudioEffect):
         return apply_audio_effects(wave_data)
 
 
+class Louder(AudioEffect):
+    NAME = "test"
+    TIMEOUT = 30
+
+    def process(self, wave_data: numpy.ndarray):
+        return wave_data * 2
+
+
 class ConvertINT16PCM(AudioEffect):
     NAME = "convert"
     TIMEOUT = 30
@@ -30,13 +45,32 @@ class ConvertINT16PCM(AudioEffect):
         return (wave_data * (2. ** 15)).astype("int16")
 
 
-fake_cookie = md5(("622536c6b02ec00669802b3193b39466" + SALT).encode('utf8')).digest()
-user = User(fake_cookie, "wesh", None)
-# user.active_audio_effects += [GhostEffect()]
-user.active_text_effects += [NwwoiwwEffect()]
+class AddTrackEffect(AudioEffect):
+    NAME = "convert"
+    TIMEOUT = 30
 
-# text, wav = user.render_message("est-ce que ça changerait quelques chose si tu avais la réponse?", "fr")
-text, wav = user.render_message("Il a mis du pain sur son JR", "fr")
+    def process(self, wave_data: numpy.ndarray):
+        with open("effects/data/ambiance/war_mood.wav", "rb") as sndfile:
+            rate, track_data = read(sndfile)
+        # rnd_pos = random.randint(0,len(track_data) - len(wave_data))
+        print(len(track_data))
+        return mix_tracks(track_data[rate*3:len(wave_data) + rate*5] * 0.4, wave_data, align="center")
+
+
+class SpeechDeformation(PhonemicEffect):
+    NAME = "un para de trop"
+    TIMEOUT = 30
+
+    def process(self, phonems : PhonemList):
+        pass
+
+
+fake_cookie = md5(("622526c6b02ec00629802b3193b39466" + SALT).encode('utf8')).digest()
+user = User(fake_cookie, "wesh", None)
+for effect in [PhonemicFofoteEffect()]:
+    user.add_effect(effect)
+
+text, wav = user.render_message("comment ça j'ai un cheveux sur la langue, je vois pas de quoi tu parles", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
