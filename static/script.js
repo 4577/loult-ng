@@ -362,15 +362,16 @@ document.addEventListener('DOMContentLoaded', function() {
 							break;
 							case 'effect':
 								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', (new Date), 'log');
+								if(users[msg.target_id].params.you)
+								{
+									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', (new Date), 'log part'); }, msg.timeout * 1000);
+								}
 							break;
 							case 'invalid':
 								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", (new Date), 'log part');
 							break;
 							case 'nothing':
 								addLine('info', 'Il ne se passe rien...', (new Date), 'log part');
-							break;
-							case 'timeout':
-								addLine('info', "L'effet " + msg.effect + ' est terminé.', (new Date), 'log part');
 							break;
 						}
 					break;
