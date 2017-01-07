@@ -5,6 +5,7 @@ import random
 from asyncio import get_event_loop
 from collections import OrderedDict
 from colorsys import hsv_to_rgb
+from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
 from html import escape
@@ -92,8 +93,7 @@ class User:
             }
         return self._info
 
-    @staticmethod
-    def apply_effects(input_obj, effect_list: List[Effect]):
+    def apply_effects(self, input_obj, effect_list: List[Effect]):
         if effect_list:
             for effect in effect_list:
                 if effect.is_expired():
@@ -213,7 +213,7 @@ class LoultServer(WebSocketServerProtocol):
         self.cnx = True  # connected!
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
-        my_userlist = OrderedDict([(user_id , user.info)
+        my_userlist = OrderedDict([(user_id , deepcopy(user.info))
                                   for user_id, user in loult_state.chans[self.channel].users.items()])
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
