@@ -93,6 +93,29 @@ class SnebwewEffect(ExplicitTextEffect):
 
         return reconstructed
 
+class MwfeEffect(ExplicitTextEffect):
+    NAME = "YE LA"
+    TIMEOUT = 150
+    _mwfe_punchlines = [
+        "CHU LA",
+        "OK BEN NIK TA MER",
+        "JGO CHIER",
+        "JGO FL",
+        "A GERBER WALLAH",
+        "YE OU JR",
+        "YA QUOI",
+        "OUÉVÈWB?"
+    ]
+
+    def process(self, text : str):
+        if random.randint(0,3) != 0:
+            text = text.upper()
+            if random.randint(0,4) == 0:
+                text = "MDR " + text
+        else:
+            text = random.choice(self._mwfe_punchlines)
+        return text
+
 
 class TouretteEffect(HiddenTextEffect):
     """Randomly inserts insults in between words"""
@@ -229,7 +252,7 @@ class VocalDyslexia(PhonemicEffect):
 
 class CrapweEffect(PhonemicEffect):
     NAME = "crapwe"
-    TIMEOUT = 120
+    TIMEOUT = 150
 
     def process(self, phonems: PhonemList):
         for phonem in phonems:
@@ -240,6 +263,19 @@ class CrapweEffect(PhonemicEffect):
                 else:
                     orgnl_pitch_avg = 150
                 phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 30) for i in range(4)])
+
+        return phonems
+
+
+class TurboHangoul(PhonemicEffect):
+    NAME = "turbo hangoul"
+    TIMEOUT = 150
+
+    def process(self, phonems: PhonemList):
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 3) == 1:
+                phonem.duration *= 8
+                phonem.set_from_pitches_list([364, 364])
 
         return phonems
 

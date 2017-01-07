@@ -12,7 +12,7 @@ from scipy.io.wavfile import read, write
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
-    VocalDyslexia, AccentAllemandEffect, PhonemicEffect
+    VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect
 from effects.phonems import PhonemList, FrenchPhonems
 from effects.tools import mix_tracks
 from poke import User
@@ -76,7 +76,7 @@ class SpeechDeformation(PhonemicEffect):
 
 fake_cookie = md5(("622526c6b02ec00629302b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [TouretteEffect()]:
+for effect in [MwfeEffect(),TurboHangoul()]:
     user.add_effect(effect)
 
 text, wav = user.render_message("J'ai un petit problème c'est que des fois quand je parle "
