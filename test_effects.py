@@ -5,6 +5,7 @@ from hashlib import md5
 
 import numpy
 import pyaudio
+from numpy.lib.function_base import average
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
@@ -12,7 +13,7 @@ from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
     VocalDyslexia, AccentAllemandEffect, PhonemicEffect
-from effects.phonems import PhonemList
+from effects.phonems import PhonemList, FrenchPhonems
 from effects.tools import mix_tracks
 from poke import User
 from salt import SALT
@@ -25,8 +26,9 @@ class TestEffect(AudioEffect):
     TIMEOUT = 30
 
     def process(self, wave_data: numpy.ndarray):
-        apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
-        return apply_audio_effects(wave_data)
+        low_shelf = AudioEffectsChain().bandreject(80, q=10.0)
+        high_shelf = AudioEffectsChain().highpass(150)
+        return low_shelf(wave_data)
 
 
 class Louder(AudioEffect):
@@ -62,15 +64,23 @@ class SpeechDeformation(PhonemicEffect):
     TIMEOUT = 30
 
     def process(self, phonems : PhonemList):
-        pass
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1,4) == 1:
+                phonem.duration *= 8
+                if phonem.pitch_modifiers:
+                    orgnl_pitch_avg = average([pitch for pos, pitch in phonem.pitch_modifiers])
+                else :
+                    orgnl_pitch_avg = 150
+                phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 40) for i in range(4)])
+        return phonems
 
-
-fake_cookie = md5(("622526c6b02ec00629802b3193b39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("622526c6b02ec00629302b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [PhonemicFofoteEffect()]:
+for effect in [TouretteEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("comment ça j'ai un cheveux sur la langue, je vois pas de quoi tu parles", "fr")
+text, wav = user.render_message("J'ai un petit problème c'est que des fois quand je parle "
+                                "il m'arrive de dire des insultes, mais là ça va", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
