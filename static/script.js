@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	var waitTime = 1000;
 	var users = {};
 	var muted = [];
+	var you = null;
 	var ws;
 	
 	// DOM-related functions
@@ -115,6 +116,9 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 			};
 		}
+		else {
+			you = userid;
+		}
 		
 		tr.appendChild(td);
 		usertbl.appendChild(tr);
@@ -193,9 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			rows[i].className = ((dt && hr) ? 'show' : '');
 		}
 		if(atBottom) {
-			for(var i = 160; i > 0; i-= 40) {
-				setTimeout(function() { chatbox.scrollTop = chatbox.scrollHeight; }, i);
-			}
+			chatbox.scrollTop = chatbox.scrollHeight;
 		}
 	}
 	
@@ -302,9 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		userlist.style.width = (userlist.style.width == '0px' ? '185px' : '0px');
 		if(atBottom) {
-			for(var i = 160; i > 0; i-= 40) {
-				setTimeout(function() { chatbox.scrollTop = chatbox.scrollHeight; }, i);
-			}
+			chatbox.scrollTop = chatbox.scrollHeight;
 		}
 	};
 	
@@ -355,23 +355,23 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'attack':
 						switch(msg['event']) {
 							case 'attack':
-								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', (new Date), 'log');
+								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', msg.date, 'log');
 							break;
 							case 'dice':
-								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ', ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' !', (new Date), 'log');
+								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ', ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' !', msg.date, 'log');
 							break;
 							case 'effect':
-								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', (new Date), 'log');
-								if(users[msg.target_id].params.you)
+								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
+								if(msg.target_id == you)
 								{
 									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', (new Date), 'log part'); }, msg.timeout * 1000);
 								}
 							break;
 							case 'invalid':
-								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", (new Date), 'log part');
+								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, 'log part');
 							break;
 							case 'nothing':
-								addLine('info', 'Il ne se passe rien...', (new Date), 'log part');
+								addLine('info', 'Il ne se passe rien...', msg.date, 'log part');
 							break;
 						}
 					break;
