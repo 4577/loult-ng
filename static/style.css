@@ -38,7 +38,6 @@ h1 {
 }
 
 #sidebtns {
-	float: right;
 	height: 100%;
 	display: flex;
 	flex-direction: row;
