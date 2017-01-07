@@ -69,7 +69,7 @@ class SnebwewEffect(ExplicitTextEffect):
     NAME = "snèbwèw"
     TIMEOUT = 240
     pronouns = ["le", "la", "un", "une", "du", "son", "sa", "mon", "ce", "ma", "cette", "au", "les", "aux", "à",
-                "tu", "je"]
+                "tu", "je", "a"]
 
     def process(self, text: str):
         splitted = text.split() # fak ye baudrive
@@ -191,10 +191,11 @@ class AccentMarseillaisEffect(PhonemicEffect):
         reconstructed = PhonemList([])
         ng_phonem = Phonem("N", 100)
         euh_phonem = Phonem("2", 79)
+        phonems.append(Phonem("_", 10)) # end-silence-padding, just to be safe
         for i, phonem in enumerate(phonems):
             if phonem.name in FrenchPhonems.NASAL_WOVELS:
                 reconstructed += [phonem, ng_phonem]
-            elif phonem.name in FrenchPhonems.CONSONANTS and phonems[i+1].name not in FrenchPhonems.WOVELS:
+            elif phonem.name in FrenchPhonems.CONSONANTS and phonems[i+1].name not in FrenchPhonems.VOWELS:
                 reconstructed += [phonem, euh_phonem]
             elif phonem.name == "o":
                 phonem.name = "O"
@@ -222,6 +223,23 @@ class VocalDyslexia(PhonemicEffect):
             permut_points = [random.randint(1, len(phonems) - 3) for i in range(permut_count)]
             for point in permut_points:
                 permutation(point, point + 1, phonems)
+
+        return phonems
+
+
+class CrapweEffect(PhonemicEffect):
+    NAME = "crapwe"
+    TIMEOUT = 120
+
+    def process(self, phonems: PhonemList):
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 4) == 1:
+                phonem.duration *= 8
+                if phonem.pitch_modifiers:
+                    orgnl_pitch_avg = numpy.average([pitch for pos, pitch in phonem.pitch_modifiers])
+                else:
+                    orgnl_pitch_avg = 150
+                phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 30) for i in range(4)])
 
         return phonems
 

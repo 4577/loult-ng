@@ -18,8 +18,8 @@ class FrenchPhonems:
     ORALS = {'2', '9', '@', 'A', 'E', 'O', 'a', 'e', 'i', 'o', 'u', 'y'}
     NASAL_WOVELS = {'9~', 'a~', 'e~', 'o~'}
     INDETERMINATE_WOVELS = {'&/', 'A/', 'E/', 'O/', 'U~/'}
-    WOVELS = ORALS | NASAL_WOVELS | INDETERMINATE_WOVELS
-    _all = WOVELS | CONSONANTS
+    VOWELS = ORALS | NASAL_WOVELS | INDETERMINATE_WOVELS
+    _all = VOWELS | CONSONANTS
 
     def __contains__(self, item):
         return item in self._all
