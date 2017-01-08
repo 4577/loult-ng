@@ -8,7 +8,7 @@ from scipy.io.wavfile import read
 import numpy
 
 from effects.phonems import PhonemList, Phonem, FrenchPhonems
-from .tools import mix_tracks
+from .tools import mix_tracks, get_sounds
 
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
 # effet javanais, effet hangul au hasard
@@ -332,14 +332,6 @@ class IssouEffect(AudioEffect):
     def __init__(self):
         super().__init__()
 
-        def get_sounds(dir : str):
-            sounds = []
-            for filename in listdir(dir):
-                realpath = path.join(dir, filename)
-                rate, data = read(realpath)
-                sounds.append(data)
-            return sounds
-
         self.issou_sounds = get_sounds(self.issou_dir)
         self.other_sounds = get_sounds(self.other_dir)
         self.pending_issou, self.pending_other = [], []
@@ -348,8 +340,8 @@ class IssouEffect(AudioEffect):
     def _create_pattern(self):
         random.shuffle(self.issou_sounds)
         random.shuffle(self.other_sounds)
-        self.pending_other = self.other_sounds[:random.randint(4,6)]
-        self.pending_issou = self.issou_sounds[:random.randint(2,5)]
+        self.pending_other = self.other_sounds[:random.randint(1,3)]
+        self.pending_issou = self.issou_sounds[:random.randint(2,4)]
 
     def process(self, wave_data: numpy.ndarray):
         if random.randint(0,3) == 1:
@@ -393,3 +385,22 @@ class AmbianceEffect(AudioEffect):
         return mix_tracks(self.track_data[rnd_pos:rnd_pos + len(wave_data) + padding_time] * self.gain,
                           wave_data,
                           align="center")
+
+
+class BeatsEffect(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/serbian_film")
+    NAME = "JR"
+    TIMEOUT = 150
+
+    def __init__(self):
+        super().__init__()
+        beat_filename = random.choice(listdir(self.main_dir))
+        with open(path.join(self.main_dir, beat_filename), "rb") as sndfile:
+            self.rate, self.track = read(sndfile)
+
+    def process(self, wave_data: numpy.ndarray):
+        if len(self.track) < len(wave_data):
+            beat_track = numpy.tile(self.track, (len(wave_data) // len(self.track)) + 1)
+            return mix_tracks(beat_track * 0.4, wave_data, align="center")
+        else:
+            return wave_data
