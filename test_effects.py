@@ -12,7 +12,7 @@ from scipy.io.wavfile import read, write
 from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
-    VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect, BeatsEffect
+    VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect
 from effects.phonems import PhonemList, FrenchPhonems
 from effects.tools import mix_tracks
 from poke import User
@@ -76,10 +76,10 @@ class SpeechDeformation(PhonemicEffect):
 
 fake_cookie = md5(("622526c6b02ec00629302b3193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [BeatsEffect()]:
+for effect in [VenerEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("WESH C QWA CE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI", "fr")
+text, wav = user.render_message("WESH C QWA CETTE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:

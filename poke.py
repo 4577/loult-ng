@@ -25,7 +25,8 @@ from scipy.io import wavfile
 
 from config import pokemon, ATTACK_RESTING_TIME
 from effects import get_random_effect
-from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect
+from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+    EffectGroup
 from effects.phonems import PhonemList
 from salt import SALT
 
@@ -75,10 +76,16 @@ class User:
 
     def add_effect(self, effect : Effect):
         """Adds an effect to one of the active effects list (depending on the effect type)"""
-        for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
-            if isinstance(effect, cls):
-                self.effects[cls].append(effect)
-                break
+        if isinstance(effect, EffectGroup): # if the effect is a meta-effect (a group of several effects)
+            added_effects = effect.effects
+        else:
+            added_effects = [effect]
+
+        for efct in added_effects:
+            for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
+                if isinstance(efct, cls):
+                    self.effects[cls].append(efct)
+                    break
 
     @property
     def info(self):
@@ -298,7 +305,7 @@ class LoultServer(WebSocketServerProtocol):
                                             'event': 'effect',
                                             'target_id': affected_user.user_id,
                                             'effect': effect.name,
-                                            'timeout' : effect.TIMEOUT})
+                                            'timeout' : effect.timeout})
             else:
                 self._broadcast_to_channel({'type': 'attack',
                                             'date': time() * 1000,
@@ -339,7 +346,7 @@ class LoultServer(WebSocketServerProtocol):
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if hasattr(self, 'cnx') and self.cnx:
-            self.channel_obj.channel_leave(self, self.user, self.channel_n)
+            self.channel_obj.channel_leave(self, self.user)
 
         logging.info("WebSocket connection closed: {0}".format(reason))
 

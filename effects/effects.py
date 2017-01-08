@@ -20,16 +20,30 @@ class Effect:
 
     def __init__(self):
         self.creation = datetime.now()
+        self._timeout = None
+
+    @property
+    def timeout(self):
+        return self.TIMEOUT if self._timeout is None else self._timeout
 
     @property
     def name(self):
         return self.NAME # using a property, in case it gets more fancy than just a class constant
 
     def is_expired(self):
-        return (datetime.now() - self.creation).seconds > self.TIMEOUT
+        return (datetime.now() - self.creation).seconds > self.timeout
 
     def process(self, **kwargs):
         pass
+
+
+class EffectGroup(Effect):
+
+    _sub_effects = []
+
+    @property
+    def effects(self):
+        return self._sub_effects
 
 
 class TextEffect(Effect):
@@ -404,3 +418,27 @@ class BeatsEffect(AudioEffect):
             return mix_tracks(beat_track * 0.4, wave_data, align="center")
         else:
             return wave_data
+
+
+#### Here are the effects groups ####
+
+class VenerEffect(EffectGroup):
+    TIMEOUT = 120
+    NAME = "YÉ CHAUD"
+    _sound_file = path.join(path.dirname(path.realpath(__file__)),
+                            "data/vener/stinkhole_shave_me_extract.wav")
+
+    class UPPERCASEEffect(ExplicitTextEffect):
+        TIMEOUT = 120
+
+        def process(self, text : str):
+            return text.upper()
+
+    @property
+    def effects(self):
+        monkey_patched = AmbianceEffect()
+        monkey_patched._timeout = 120
+        monkey_patched.gain = 0.2
+        with open(self._sound_file, "rb") as sndfile:
+            monkey_patched.rate, monkey_patched.track_data = read(sndfile)
+        return [self.UPPERCASEEffect(), monkey_patched]
