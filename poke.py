@@ -17,7 +17,7 @@ from shlex import quote
 from struct import pack
 from subprocess import run, PIPE
 from time import time
-from typing import List, Dict, Set, Any
+from typing import List, Dict, Set, Any, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
@@ -177,12 +177,12 @@ class LoultServer(WebSocketServerProtocol):
 
     def __init__(self):
         super().__init__()
-        self.cookie, self.channel, self.sendend, self.lasttxt = None, None, None, None
+        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt = None, None, None, None, None
         self.cnx = False
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        print("Client connecting: {0}".format(request.peer))
+        logging.info("Client connecting: {0}".format(request.peer))
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
         # telling the client to store it with a Set-Cookie header
@@ -195,8 +195,8 @@ class LoultServer(WebSocketServerProtocol):
 
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
         self.cookie = cookie_hash
-        self.channel = request.path.lower().split('/', 2)[-1]
-        self.channel = sub("/.*", "", self.channel)
+        self.channel_n = request.path.lower().split('/', 2)[-1]
+        self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
 
@@ -208,13 +208,13 @@ class LoultServer(WebSocketServerProtocol):
         print("WebSocket connection open.")
 
         # telling the  connected users'register to register the current user in the current channel
-        self.user = loult_state.channel_connect(self, self.cookie, self.channel)
+        self.channel_obj, self.user = loult_state.channel_connect(self, self.cookie, self.channel_n)
 
         self.cnx = True  # connected!
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
         my_userlist = OrderedDict([(user_id , deepcopy(user.info))
-                                  for user_id, user in loult_state.chans[self.channel].users.items()])
+                                   for user_id, user in self.channel_obj.users.items()])
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.sendMessage(json({
@@ -224,11 +224,11 @@ class LoultServer(WebSocketServerProtocol):
 
         self.sendMessage(json({
             'type': 'backlog',
-            'msgs': loult_state.chans[self.channel].backlog
+            'msgs': self.channel_obj.backlog
         }))
 
     def _broadcast_to_channel(self, msg_dict, binary_payload=None):
-        for client in loult_state.chans[self.channel].clients:
+        for client in self.channel_obj.clients:
             client.sendMessage(json(msg_dict))
             if binary_payload:
                 client.sendMessage(binary_payload, isBinary=True)
@@ -250,8 +250,7 @@ class LoultServer(WebSocketServerProtocol):
         if synth:
             self.sendend = calc_sendend
 
-        info = loult_state.log_to_backlog(loult_state.chans[self.channel].users[self.user.user_id].info['params'],
-                                          output_msg, self.channel)
+        info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
         # broadcast message and rendered audio to all clients in the channel
         self._broadcast_to_channel({'type': 'msg',
@@ -264,9 +263,8 @@ class LoultServer(WebSocketServerProtocol):
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
-        adversary_id, adversary = loult_state.get_user_by_name(msg_data.get("target", self.user.pokename),
-                                                                            self.channel,
-                                                                            msg_data.get("order", 0))
+        adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target", self.user.pokename),
+                                                                    msg_data.get("order", 0))
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
@@ -341,9 +339,9 @@ class LoultServer(WebSocketServerProtocol):
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if hasattr(self, 'cnx') and self.cnx:
-            loult_state.channel_leave(self, self.user, self.channel)
+            self.channel_obj.channel_leave(self, self.user, self.channel_n)
 
-        print("WebSocket connection closed: {0}".format(reason))
+        logging.info("WebSocket connection closed: {0}".format(reason))
 
 
 class Channel:
@@ -354,36 +352,11 @@ class Channel:
         self.refcnts = {}  # type:Dict[str,int]
         self.backlog = []  # type:List
 
-
-class LoultServerState:
-
-    def __init__(self):
-        self.chans = {} # type:Dict[str,Channel]
-
-    def _signal_user_connect(self, client : LoultServer, user : User):
+    def _signal_user_connect(self, client: LoultServer, user: User):
         client.sendMessage(json({
             'type': 'connect',
-            'date' : time() * 1000,
+            'date': time() * 1000,
             **user.info}))
-
-    def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> User:
-        # if the channel doesn't exist, we instanciate it and add it to the channel dict
-        if channel_name not in self.chans:
-            self.chans[channel_name] = Channel(channel_name)
-        channel_obj = self.chans[channel_name]
-        channel_obj.clients.add(client)
-
-        new_user = User(user_cookie, channel_name, client)
-        if new_user.user_id not in channel_obj.users:
-            for other_client in channel_obj.clients:
-                if other_client != client:
-                    self._signal_user_connect(other_client, new_user)
-            channel_obj.refcnts[new_user.user_id] = 1
-            channel_obj.users[new_user.user_id] = new_user
-            return new_user
-        else:
-            channel_obj.refcnts[new_user.user_id] += 1
-            return channel_obj.users[new_user.user_id] # returning an already existing instance of the user
 
     def _signal_user_disconnect(self, client: LoultServer, user: User):
         client.sendMessage(json({
@@ -392,43 +365,54 @@ class LoultServerState:
             'userid': user.user_id
         }))
 
-    def channel_leave(self, client : LoultServer, user : User, channel_name : str):
+    def channel_leave(self, client: LoultServer, user: User):
         try:
-            channel_obj = self.chans[channel_name]
-            channel_obj.refcnts[user.user_id] -= 1
+            self.refcnts[user.user_id] -= 1
 
             # if the user is not connected anymore, we signal its disconnect to the others
-            if channel_obj.refcnts[user.user_id] < 1:
-                channel_obj.clients.discard(client)
-                del channel_obj.users[user.user_id]
-                del channel_obj.refcnts[user.user_id]
+            if self.refcnts[user.user_id] < 1:
+                self.clients.discard(client)
+                del self.users[user.user_id]
+                del self.refcnts[user.user_id]
 
-                for client in channel_obj.clients:
+                for client in self.clients:
                     self._signal_user_disconnect(client, user)
 
-                # if no one's connected dans the backlog is empty, we delete the channel
-                if not channel_obj.clients and not channel_obj.backlog:
-                    del self.chans[channel_name]
+                # if no one's connected dans the backlog is empty, we delete the channel from the register
+                if not self.clients and not self.backlog:
+                    del loult_state.chans[self.name]
         except KeyError:
             pass
 
-    def log_to_backlog(self, user_data, msg : str, channel : str):
+    def user_connect(self, new_user : User, client : LoultServer):
+        if new_user.user_id not in self.users:
+            for other_client in self.clients:
+                if other_client != client:
+                    self._signal_user_connect(other_client, new_user)
+            self.refcnts[new_user.user_id] = 1
+            self.users[new_user.user_id] = new_user
+            return new_user
+        else:
+            self.refcnts[new_user.user_id] += 1
+            return self.users[new_user.user_id]  # returning an already existing instance of the user
+
+    def log_to_backlog(self, user_id, msg: str):
         # creating new entry
         info = {
-            'user': user_data,
+            'user': self.users[user_id].info['params'],
             'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
                        escape(msg[:500])),
             'date': time() * 1000
         }
 
         # adding it to list and removing oldest entry
-        self.chans[channel].backlog.append(info)
-        self.chans[channel].backlog = self.chans[channel].backlog[-10:]
+        self.backlog.append(info)
+        self.backlog = self.backlog[-10:]
         return info
 
-    def get_user_by_name(self, pokemon_name : str, channel : str, order = 0) -> (int, User):
+    def get_user_by_name(self, pokemon_name: str, order=0) -> (int, User):
 
-        for user_id, user in self.chans[channel].users.items():
+        for user_id, user in self.users.items():
             if user.pokename.lower() == pokemon_name.lower():
                 if order == 0:
                     return user_id, user
@@ -436,6 +420,21 @@ class LoultServerState:
                     order -= 1
 
         return None, None
+
+
+class LoultServerState:
+
+    def __init__(self):
+        self.chans = {} # type:Dict[str,Channel]
+
+    def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
+        # if the channel doesn't exist, we instanciate it and add it to the channel dict
+        if channel_name not in self.chans:
+            self.chans[channel_name] = Channel(channel_name)
+        channel_obj = self.chans[channel_name]
+        channel_obj.clients.add(client)
+
+        return channel_obj, channel_obj.user_connect(User(user_cookie, channel_name, client), client)
 
 
 loult_state = LoultServerState()
