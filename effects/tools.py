@@ -1,4 +1,9 @@
+from typing import List
+
+import numpy
 from numpy.lib import pad
+from os import listdir, path
+from scipy.io.wavfile import read
 
 class ToolsError(Exception):
     pass
@@ -45,3 +50,12 @@ def mix_tracks(track1, track2, offset=None, align=None):
 
     # the result vector's elements are c_i = a_i + b_i
     return padded_short_t + long_t
+
+
+def get_sounds(dir: str) -> List[numpy.ndarray]:
+    sounds = []
+    for filename in listdir(dir):
+        realpath = path.join(dir, filename)
+        rate, data = read(realpath)
+        sounds.append(data)
+    return sounds
