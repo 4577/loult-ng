@@ -402,7 +402,7 @@ class AmbianceEffect(AudioEffect):
 
 
 class BeatsEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/serbian_film")
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/outrun")
     NAME = "JR"
     TIMEOUT = 150
 

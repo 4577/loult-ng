@@ -28,6 +28,7 @@ from effects import get_random_effect
 from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
     EffectGroup
 from effects.phonems import PhonemList
+from effects.tools import resample
 from salt import SALT
 
 
@@ -167,8 +168,13 @@ class User:
         if self.effects[AudioEffect]:
             # converting the wav to ndarray, which is much easier to use for DSP
             rate, data = wavfile.read(BytesIO(wav))
+            data = (data / (2. ** 15)).astype('float32')
+            if rate != 16000:
+                data = resample(data, rate)
+                rate = 16000
             # casting the data array to the right format (float32, for usage by pysndfx)
-            data = self.apply_effects((data / (2. ** 15)).astype('float32'), self.effects[AudioEffect])
+            data = self.apply_effects(data, self.effects[AudioEffect])
+
             # casting it back to int16
             data = (data * (2. ** 15)).astype("int16")
             # then, converting it back to binary data
