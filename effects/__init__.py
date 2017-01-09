@@ -9,7 +9,7 @@ AVAILABLE_EFFECTS = [GhostEffect, SnebwewEffect, ReversedEffect, ReverbManEffect
                      SpeechMasterEffect, PhonemicNwwoiwwEffect, PhonemicShuffleEffect,
                      PhonemicFofoteEffect, AccentMarseillaisEffect, IssouEffect, AmbianceEffect,
                      VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect]
-AVAILABLE_EFFECTS = [BeatsEffect, TurboHangoul, VenerEffect] # single effects list used when testing
+AVAILABLE_EFFECTS = [TurboHangoul, BeatsEffect, VenerEffect] # single effects list used when testing
 
 
 def get_random_effect() -> Effect:
