@@ -38,6 +38,13 @@ class Effect:
 
 
 class EffectGroup(Effect):
+    """An effect group is basically a 'meta-effect'. It returns, through the property 'effects' a
+    list of already instanciated effect objects, which are all going to be added the a user's effects
+    lists. In practice, it's a simple way to have effects that are both on sound, phonems and text.
+
+    Before returning the list of effects, one has to make sure that the effects return by the 'effects' property
+    all have the same timeout time as the effect group that returns them. This can be done by setting the optional
+    _timeout instance attribute (*NOT* the TIMEOUT class attribute) of an Effect object"""
 
     _sub_effects = []
 
@@ -49,7 +56,7 @@ class EffectGroup(Effect):
 class TextEffect(Effect):
 
     def process(self, text : str) -> str:
-        """The displayed text is the text sent to the chat, the rendered_text goes through mbrola"""
+        """This function takes text and applies (or not, it's up the dev) alterations to that text"""
         pass
 
 
@@ -106,6 +113,7 @@ class SnebwewEffect(ExplicitTextEffect):
             reconstructed = reconstructed[:-1] + "ENNW"
 
         return reconstructed
+
 
 class MwfeEffect(ExplicitTextEffect):
     NAME = "YE LA"
@@ -402,7 +410,7 @@ class AmbianceEffect(AudioEffect):
 
 
 class BeatsEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/outrun")
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/other")
     NAME = "JR"
     TIMEOUT = 150
 
@@ -421,6 +429,7 @@ class BeatsEffect(AudioEffect):
 
 
 #### Here are the effects groups ####
+
 
 class VenerEffect(EffectGroup):
     TIMEOUT = 120
@@ -442,3 +451,31 @@ class VenerEffect(EffectGroup):
         with open(self._sound_file, "rb") as sndfile:
             monkey_patched.rate, monkey_patched.track_data = read(sndfile)
         return [self.UPPERCASEEffect(), monkey_patched]
+
+
+class VieuxPortEffect(EffectGroup):
+    TIMEOUT = 150
+    NAME = "du vieux port"
+
+    class VieuxPortInterjections(HiddenTextEffect):
+        """Kinda like a tourette effect, but but just a couple of southern interjections"""
+        TIMEOUT = 150
+        available_words = ["putain", "con", "oh là", "t'es fada"]
+
+        def process(self, text: str):
+            # the variable is called splitted because it pisses off this australian cunt that mboevink is
+            space_splitted = [word for word in text.split(" ") if word != ""]
+            reconstructed = ""
+            for word in space_splitted:
+                reconstructed += " " + word + " "
+                if random.randint(1, 6) == 1:
+                    reconstructed += ", %s ," % random.choice(self.available_words)
+            if random.randint(1,3) == 1:
+                reconstructed += ", %s" % random.choice(self.available_words)
+            return reconstructed
+
+    @property
+    def effects(self):
+        southern_accent = AccentMarseillaisEffect()
+        southern_accent._timeout = 150
+        return [southern_accent, self.VieuxPortInterjections()]
