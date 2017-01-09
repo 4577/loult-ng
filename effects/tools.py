@@ -4,6 +4,7 @@ import numpy
 from numpy.lib import pad
 from os import listdir, path
 from scipy.io.wavfile import read
+from subprocess import PIPE, run
 
 class ToolsError(Exception):
     pass
@@ -59,3 +60,10 @@ def get_sounds(dir: str) -> List[numpy.ndarray]:
         rate, data = read(realpath)
         sounds.append(data)
     return sounds
+
+
+def resample(wave_data : numpy.ndarray, sample_in, sample_out=16000):
+    """Uses sox to resample the wave data array"""
+    cmd = "sox -N -V1 -t f32 -r %s -c 1 - -t f32 -r %s -c 1 -" % (sample_in, sample_out)
+    output = run(cmd, shell=True, stdout=PIPE, stderr=PIPE, input=wave_data.tobytes(order="f")).stdout
+    return numpy.fromstring(output, dtype=numpy.float32)

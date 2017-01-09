@@ -74,12 +74,13 @@ class SpeechDeformation(PhonemicEffect):
                 phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 40) for i in range(4)])
         return phonems
 
-fake_cookie = md5(("622526c6b02ec00629302b3193b39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("622526c6b024c0062930283193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [VenerEffect()]:
+for effect in [BeatsEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("WESH C QWA CETTE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI", "fr")
+text, wav = user.render_message("WESH C QWA CETTE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI "
+                                "WESH C QWA CETTE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
