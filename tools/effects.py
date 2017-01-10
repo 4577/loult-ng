@@ -410,14 +410,21 @@ class AmbianceEffect(AudioEffect):
 
 
 class BeatsEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/other")
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/")
     NAME = "JR"
     TIMEOUT = 150
 
+    _directories = {"posay" : ["other"],
+                    "tape ton para": ["ez3kiel", "outrun", "serbian_film"],
+                    "JR" : ["jr"]}
+
     def __init__(self):
         super().__init__()
-        beat_filename = random.choice(listdir(self.main_dir))
-        with open(path.join(self.main_dir, beat_filename), "rb") as sndfile:
+        all_files = []
+        self._name, directories = random.choice(list(self._directories.items()))
+        dir = random.choice(directories)
+        beat_filename = random.choice(listdir(path.join(self.main_dir, dir)))
+        with open(path.join(self.main_dir, dir, beat_filename), "rb") as sndfile:
             self.rate, self.track = read(sndfile)
 
     def process(self, wave_data: numpy.ndarray):
