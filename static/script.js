@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// DOM-related functions
 	
-	var addLine = function(pkmn, txt, datemsg, trclass = null) {
+	var addLine = function(pkmn, txt, datemsg, trclass) {
 		var tr = document.createElement('tr');
 		if(trclass) {
 			tr.className = trclass;
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'msg':
 						lastMuted = (muted.indexOf(msg.userid) != -1);
 						if(!lastMuted) {
-							addLine(users[msg.userid], msg.msg, msg.date);
+							addLine(users[msg.userid], msg.msg, msg.date, null);
 						}
 					break;
 				}
