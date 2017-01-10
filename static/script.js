@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
 								addLine(
 								'info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), '
 								+ users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !',
-								 mgs.date, 'log'
+								 msg.date, 'log'
 								);
 							break;
 							case 'effect':
