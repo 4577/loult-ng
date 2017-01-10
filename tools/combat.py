@@ -23,7 +23,7 @@ class CombatSimulator:
 
         if self.atk_dice == 100: # global effect
             effect_type = random.choice(self._global_effects)
-            for userid, user in channel.users.values():
+            for userid, user in channel.users.items():
                 if userid != attacker.user_id:
                     effect_obj = effect_type()
                     user.add_effect(effect_obj)

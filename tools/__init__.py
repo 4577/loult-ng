@@ -13,7 +13,7 @@ AVAILABLE_EFFECTS = 1 * [IssouEffect, PhonemicShuffleEffect] + \
                          CrapweEffect] + \
                     3 * [AmbianceEffect, TurboHangoul] + \
                     4 * [BeatsEffect]
-AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
+# AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:

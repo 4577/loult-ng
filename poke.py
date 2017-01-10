@@ -90,6 +90,8 @@ class User:
         for efct in added_effects:
             for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
                 if isinstance(efct, cls):
+                    if len(self.effects[cls]) == 5: # only 5 effects of one time allowed at a time
+                        self.effects[cls].pop(0)
                     self.effects[cls].append(efct)
                     break
 
@@ -282,7 +284,7 @@ class LoultServer(WebSocketServerProtocol):
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
         adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target", self.user.pokename),
-                                                                    msg_data.get("order", 0))
+                                                                    msg_data.get("order", 1) - 1)
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
@@ -424,7 +426,7 @@ class Channel:
 
         for user_id, user in self.users.items():
             if user.pokename.lower() == pokemon_name.lower():
-                if order == 0:
+                if order <= 0:
                     return user_id, user
                 else:
                     order -= 1
