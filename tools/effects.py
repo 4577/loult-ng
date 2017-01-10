@@ -420,12 +420,15 @@ class BeatsEffect(AudioEffect):
 
     def __init__(self):
         super().__init__()
-        all_files = []
         self._name, directories = random.choice(list(self._directories.items()))
         dir = random.choice(directories)
         beat_filename = random.choice(listdir(path.join(self.main_dir, dir)))
         with open(path.join(self.main_dir, dir, beat_filename), "rb") as sndfile:
             self.rate, self.track = read(sndfile)
+
+    @property
+    def name(self):
+        return self._name
 
     def process(self, wave_data: numpy.ndarray):
         if len(self.track) < len(wave_data):
@@ -467,7 +470,7 @@ class VieuxPortEffect(EffectGroup):
     class VieuxPortInterjections(HiddenTextEffect):
         """Kinda like a tourette effect, but but just a couple of southern interjections"""
         TIMEOUT = 150
-        available_words = ["putain", "con", "oh là", "t'es fada"]
+        available_words = ["putain", "con", "bonne mère", "t'es fada"]
 
         def process(self, text: str):
             # the variable is called splitted because it pisses off this australian cunt that mboevink is
