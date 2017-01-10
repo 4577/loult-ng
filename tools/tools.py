@@ -188,7 +188,7 @@ class SpoilerBipEffect(UtilitaryEffect):
         # TODO : comment some stuff here
         occ_list = re.findall(r"\*\*.+?\*\*", text)
         if occ_list:
-            tagged_occ_list = ["king %s gink" % occ.strip("*") for occ in occ_list]
+            tagged_occ_list = [" king %s gink " % occ.strip("*") for occ in occ_list]
             for occ, tagged_occ in zip(occ_list, tagged_occ_list):
                 text = text.replace(occ, tagged_occ)
 
