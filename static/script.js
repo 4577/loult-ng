@@ -364,10 +364,9 @@ document.addEventListener('DOMContentLoaded', function() {
 								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
 								if(msg.target_id == you)
 								{
-									var t = msg.timeout * 1000;
 									var d = new Date(msg.date);
-									d.setSeconds(d.getSeconds() + t);
-									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, 'log part'); }, t);
+									d.setSeconds(d.getSeconds() + msg.timeout);
+									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, 'log part'); }, msg.timeout * 1000);
 								}
 							break;
 							case 'invalid':
