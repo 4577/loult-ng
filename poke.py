@@ -9,29 +9,24 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
 from html import escape
-from io import BytesIO
 from json import loads, dumps
 from os import urandom
 from re import sub
 from shlex import quote
 from struct import pack
-from subprocess import run, PIPE
 from time import time
-from typing import List, Dict, Set, Any, Tuple
+from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
-from scipy.io import wavfile
 
 from config import pokemon, ATTACK_RESTING_TIME
-from tools import get_random_effect
+from salt import SALT
 from tools.combat import CombatSimulator
-from tools.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
     EffectGroup
 from tools.phonems import PhonemList
-from tools.tools import resample
-from salt import SALT
-
+from tools.tools import AudioRenderer, SpoilerBipEffect
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
@@ -39,13 +34,7 @@ json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode(
 
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
-    lang_voices_mapping = {"fr" : ("fr" , (1, 2, 3, 4, 5, 6, 7)),
-                           "en" : ("us" , (1, 2, 3)),
-                           "es" : ("es" , (1, 2)),
-                           "de" : ("de" , (4, 5, 6, 7))}
 
-    volumes_presets = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.64384, 'fr6': 1.35412,
-                       'fr7': 1.96092, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}
 
     links_translation = {'fr': 'cliquez mes petits chatons',
                          'de': 'Klick drauf!',
@@ -54,9 +43,7 @@ class User:
 
     def __init__(self, cookie_hash, channel, client):
         """Initiating a user using its cookie md5 hash"""
-        self.speed = (cookie_hash[5] % 80) + 90
-        self.pitch = cookie_hash[0] % 100
-        self.voice_id = cookie_hash[1]
+        self.audio_renderer = AudioRenderer(cookie_hash)
         self.poke_id = (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemon) + 1
         self.pokename = pokemon[self.poke_id]
         self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
@@ -120,43 +107,28 @@ class User:
 
     def _vocode(self, text, lang) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
-        # Language support : default to french if value is incorrect
-        lang, voices = self.lang_voices_mapping.get(lang, self.lang_voices_mapping["fr"])
-        voice = voices[self.voice_id % len(voices)]
+        # apply the beep effect for spoilers
+        beeped = SpoilerBipEffect(self.audio_renderer).process(text, lang)
 
-        if lang != 'fr':
-            sex = voice
-        else:
-            sex = 4 if voice in (2, 4) else 1
+        if isinstance(beeped, PhonemList) or self.effects[PhonemicEffect]:
 
-        volume = 1
-        if lang != 'de':
-            volume = self.volumes_presets['%s%d' % (lang, voice)] * 0.5
+            modified_phonems = None
+            if isinstance(beeped, PhonemList) and self.effects[PhonemicEffect]:
+                # if it's already a phonem list, we apply the effect diretcly
+                modified_phonems = self.apply_effects(beeped, self.effects[PhonemicEffect])
+            elif isinstance(beeped, PhonemList):
+                # no effects, only the beeped phonem list
+                modified_phonems = beeped
+            elif self.effects[PhonemicEffect]:
+                # first running the text-to-phonems conversion, then applying the phonemic tools
+                phonems = self.audio_renderer.string_to_phonemes(text, lang)
+                modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
 
-        if self.effects[PhonemicEffect]:
-            # first running the text-to-phonems conversion, then applying the phonemic tools, then rendering audio
-            phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
-                                  % (self.speed, self.pitch, lang, sex, text)
-            logging.debug("Running espeak command %s" % phonem_synth_string)
-            phonems = PhonemList(run(phonem_synth_string, shell=True, stdout=PIPE, stderr=PIPE)
-                                 .stdout
-                                 .decode("utf-8")
-                                 .strip())
-            modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
-            audio_synth_string = 'MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
-                                 % (volume, lang, voice, lang, voice)
-            logging.debug("Running mbrola command %s" % audio_synth_string)
-            wav = run(audio_synth_string, shell=True, stdout=PIPE,
-                      stderr=PIPE, input=str(modified_phonems).encode("utf-8")).stdout
+            #rendering audio using the phonemlist
+            return self.audio_renderer.phonemes_to_audio(modified_phonems, lang)
         else:
             # regular render
-            synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
-                           '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
-                           % (self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice)
-            logging.debug("Running synth command %s" % synth_string)
-            wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
-
-        return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
+            return self.audio_renderer.string_to_audio(text, lang)
 
     def render_message(self, text, lang):
         cleaned_text = text[:500]
@@ -173,22 +145,12 @@ class User:
 
         # if there are effets in the audio_effect list, we run it
         if self.effects[AudioEffect]:
-            # converting the wav to ndarray, which is much easier to use for DSP
-            rate, data = wavfile.read(BytesIO(wav))
-            data = (data / (2. ** 15)).astype('float32')
-            if rate != 16000:
-                data = resample(data, rate)
-                rate = 16000
-            # casting the data array to the right format (float32, for usage by pysndfx)
+            # converting to f32 (more standard) and resampling to 16k if needed
+            rate , data = self.audio_renderer.to_f32_16k(wav)
+            # applying the effects pipeline to the sound
             data = self.apply_effects(data, self.effects[AudioEffect])
-
-            # casting it back to int16
-            data = (data * (2. ** 15)).astype("int16")
-            # then, converting it back to binary data
-            bytes_obj = bytes()
-            bytes_buff = BytesIO(bytes_obj)
-            wavfile.write(bytes_buff, rate, data)
-            wav = bytes_buff.read()
+            # converting the sound's ndarray back to bytes
+            wav = self.audio_renderer.to_wav_bytes(data, rate)
 
         return displayed_text, wav
 
