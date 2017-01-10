@@ -7,7 +7,7 @@ from scipy.io.wavfile import read
 
 import numpy
 
-from effects.phonems import PhonemList, Phonem, FrenchPhonems
+from tools.phonems import PhonemList, Phonem, FrenchPhonems
 from .tools import mix_tracks, get_sounds
 
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
@@ -38,11 +38,11 @@ class Effect:
 
 
 class EffectGroup(Effect):
-    """An effect group is basically a 'meta-effect'. It returns, through the property 'effects' a
-    list of already instanciated effect objects, which are all going to be added the a user's effects
-    lists. In practice, it's a simple way to have effects that are both on sound, phonems and text.
+    """An effect group is basically a 'meta-effect'. It returns, through the property 'tools' a
+    list of already instanciated effect objects, which are all going to be added the a user's tools
+    lists. In practice, it's a simple way to have tools that are both on sound, phonems and text.
 
-    Before returning the list of effects, one has to make sure that the effects return by the 'effects' property
+    Before returning the list of tools, one has to make sure that the tools return by the 'tools' property
     all have the same timeout time as the effect group that returns them. This can be done by setting the optional
     _timeout instance attribute (*NOT* the TIMEOUT class attribute) of an Effect object"""
 
@@ -83,7 +83,7 @@ class AudioEffect(Effect):
         pass
 
 
-#### Here are the text effects ####
+#### Here are the text tools ####
 
 class SnebwewEffect(ExplicitTextEffect):
     """Finds, using a simple heuristic, random nouns and changes them to snèbwèw"""
@@ -170,7 +170,7 @@ class SpeechMasterEffect(HiddenTextEffect):
         return reconstructed
 
 
-#### Here are the phonemic effects ####
+#### Here are the phonemic tools ####
 
 class PhonemicNwwoiwwEffect(PhonemicEffect):
     NAME = "nwwoiww"
@@ -240,7 +240,7 @@ class AccentMarseillaisEffect(PhonemicEffect):
         for i, phonem in enumerate(phonems):
             if phonem.name in FrenchPhonems.NASAL_WOVELS:
                 reconstructed += [phonem, ng_phonem]
-            elif phonem.name in FrenchPhonems.CONSONANTS and phonems[i+1].name not in FrenchPhonems.VOWELS:
+            elif phonem.name in FrenchPhonems.CONSONANTS - {"w"} and phonems[i+1].name not in FrenchPhonems.VOWELS:
                 reconstructed += [phonem, euh_phonem]
             elif phonem.name == "o":
                 phonem.name = "O"
@@ -301,7 +301,7 @@ class TurboHangoul(PhonemicEffect):
 
         return phonems
 
-#### Here are the audio effects ####
+#### Here are the audio tools ####
 
 
 class ReversedEffect(AudioEffect):
@@ -428,7 +428,7 @@ class BeatsEffect(AudioEffect):
             return wave_data
 
 
-#### Here are the effects groups ####
+#### Here are the tools groups ####
 
 
 class VenerEffect(EffectGroup):

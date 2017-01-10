@@ -358,7 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
 								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', (new Date), 'log');
 							break;
 							case 'dice':
-								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ', ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' !', (new Date), 'log');
+								addLine(
+								'info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), '
+								+ users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !',
+								 (new Date), 'log'
+								);
 							break;
 							case 'effect':
 								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', (new Date), 'log');

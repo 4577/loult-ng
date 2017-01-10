@@ -24,11 +24,12 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol, \
 from scipy.io import wavfile
 
 from config import pokemon, ATTACK_RESTING_TIME
-from effects import get_random_effect
-from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+from tools import get_random_effect
+from tools.combat import CombatSimulator
+from tools.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
     EffectGroup
-from effects.phonems import PhonemList
-from effects.tools import resample
+from tools.phonems import PhonemList
+from tools.tools import resample
 from salt import SALT
 
 
@@ -75,9 +76,13 @@ class User:
     def __eq__(self, other):
         return self.user_id == other.user_id
 
+    def throw_dice(self, type="attack") -> Tuple[int, int]:
+        bonus = (datetime.now() - self.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
+        return random.randint(1,100), bonus
+
     def add_effect(self, effect : Effect):
-        """Adds an effect to one of the active effects list (depending on the effect type)"""
-        if isinstance(effect, EffectGroup): # if the effect is a meta-effect (a group of several effects)
+        """Adds an effect to one of the active tools list (depending on the effect type)"""
+        if isinstance(effect, EffectGroup): # if the effect is a meta-effect (a group of several tools)
             added_effects = effect.effects
         else:
             added_effects = [effect]
@@ -127,7 +132,7 @@ class User:
             volume = self.volumes_presets['%s%d' % (lang, voice)] * 0.5
 
         if self.effects[PhonemicEffect]:
-            # first running the text-to-phonems conversion, then applying the phonemic effects, then rendering audio
+            # first running the text-to-phonems conversion, then applying the phonemic tools, then rendering audio
             phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                                   % (self.speed, self.pitch, lang, sex, text)
             logging.debug("Running espeak command %s" % phonem_synth_string)
@@ -153,9 +158,9 @@ class User:
 
     def render_message(self, text, lang):
         cleaned_text = text[:500]
-        # applying "explicit" effects (visible to the users)
+        # applying "explicit" tools (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.effects[ExplicitTextEffect])
-        # applying "hidden" effects (invisible on the chat, only heard in the audio)
+        # applying "hidden" tools (invisible on the chat, only heard in the audio)
         rendered_text = self.apply_effects(displayed_text, self.effects[HiddenTextEffect])
         rendered_text = sub('(https?://[^ ]*[^.,?! :])', self.links_translation[lang], rendered_text)
         rendered_text = rendered_text.replace('#', 'hashtag ')
@@ -287,32 +292,24 @@ class LoultServer(WebSocketServerProtocol):
                                         'attacker_id': self.user.user_id,
                                         'defender_id': adversary_id})
 
-            attack_dice, defend_dice = random.randint(0,100), random.randint(0,100)
+            combat_sim = CombatSimulator()
+            combat_sim.run_attack(self.user, adversary, self.channel_obj)
             self._broadcast_to_channel({'type': 'attack',
                                         'date': time() * 1000,
                                         'event': 'dice',
-                                        'attacker_dice' : attack_dice, "defender_dice" : defend_dice,
+                                        'attacker_dice' : combat_sim.atk_dice, "defender_dice" : combat_sim.def_dice,
+                                        'attacker_bonus' : combat_sim.atk_bonus, "defender_bonus" : combat_sim.def_bonus,
                                         'attacker_id': self.user.user_id, 'defender_id': adversary_id})
 
-            # if the attacker won, the user affected by the effect is the defender, else, there's a a 1/3 chance
-            # that the attacker gets the effect (a rebound)
-            affected_user = None
-            if attack_dice > defend_dice:
-                affected_user = adversary
-            elif random.randint(1,3) == 1:
-                affected_user = self.user
-
-            if affected_user is not None:
-                effect = get_random_effect()
-                affected_user.add_effect(effect)
-
-                self._broadcast_to_channel({'type': 'attack',
-                                            'date': time() * 1000,
-                                            'event': 'effect',
-                                            'target_id': affected_user.user_id,
-                                            'effect': effect.name,
-                                            'timeout' : effect.timeout})
-            else:
+            if combat_sim.affected_users: # there are users affected by some effects
+                for user, effect in combat_sim.affected_users:
+                    self._broadcast_to_channel({'type': 'attack',
+                                                'date': time() * 1000,
+                                                'event': 'effect',
+                                                'target_id': user.user_id,
+                                                'effect': effect.name,
+                                                'timeout': effect.timeout})
+            else: # list is empty, no one was attacked
                 self._broadcast_to_channel({'type': 'attack',
                                             'date': time() * 1000,
                                             'event': 'nothing'})

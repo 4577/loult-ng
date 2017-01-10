@@ -9,12 +9,12 @@ from numpy.lib.function_base import average
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
-from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
+from tools.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
     VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect
-from effects.phonems import PhonemList, FrenchPhonems
-from effects.tools import mix_tracks
+from tools.phonems import PhonemList, FrenchPhonems
+from tools.tools import mix_tracks
 from poke import User
 from salt import SALT
 import logging
@@ -52,7 +52,7 @@ class AddTrackEffect(AudioEffect):
     TIMEOUT = 30
 
     def process(self, wave_data: numpy.ndarray):
-        with open("effects/data/ambiance/war_mood.wav", "rb") as sndfile:
+        with open("tools/data/ambiance/war_mood.wav", "rb") as sndfile:
             rate, track_data = read(sndfile)
         # rnd_pos = random.randint(0,len(track_data) - len(wave_data))
         print(len(track_data))
