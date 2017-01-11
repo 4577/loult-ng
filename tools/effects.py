@@ -123,6 +123,7 @@ class MwfeEffect(ExplicitTextEffect):
         "OK BEN NIK TA MER",
         "JGO CHIER",
         "JGO FL",
+        "PUTT 1 1 1 1 1 1 COUZ 1 1 1 1 1 1",
         "A GERBER WALLAH",
         "YE OU JR",
         "YA QUOI",
