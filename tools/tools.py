@@ -27,6 +27,10 @@ def mix_tracks(track1, track2, offset=None, align=None):
     longest track :  [=============================]
     smallest track : [0000000][================][00]
                       offset
+    or
+    longest track :  [=============================][00]
+    smallest track : [000000000000000][================]
+                          offset
 
     if align is defined:
     left:
@@ -45,7 +49,12 @@ def mix_tracks(track1, track2, offset=None, align=None):
     diff = len(long_t) - len(short_t)
 
     if offset is not None:
-        padded_short_t = pad(short_t, (offset, diff - offset), "constant", constant_values=0.0)
+        if len(long_t) - (len(short_t) + offset) >= 0:
+            padded_short_t = pad(short_t, (offset, diff - offset), "constant", constant_values=0.0)
+        else: # if offset + short > long, we have to padd the end of the long one
+            padded_short_t = pad(short_t, (offset, 0), "constant", constant_values=0.0)
+            long_t = pad(long_t, (0, offset - diff), "constant", constant_values=0.0)
+
     elif align is not None and align in ["left", "right", "center"]:
         if align == "right":
             padded_short_t = pad(short_t, (diff, 0), "constant", constant_values=0.0)
