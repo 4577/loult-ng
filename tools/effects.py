@@ -438,6 +438,29 @@ class BeatsEffect(AudioEffect):
             return wave_data
 
 
+class LaughTrackEffect(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/laugh_track/")
+    NAME = "issou"
+    TIMEOUT = 150
+
+    def __init__(self):
+        super().__init__()
+        self.tracks = get_sounds(self.main_dir)
+        # sorting by length
+        self.tracks.sort(key = lambda s: len(s))
+
+    def process(self, wave_data: numpy.ndarray):
+        if random.randint(0,1):
+            with_laughs = numpy.concatenate((wave_data, random.choice(self.tracks)))
+            if len(wave_data) > 80000:
+                for i in range(random.randint(1, len(wave_data) // 40000 - 1)):
+                    with_laughs = mix_tracks(with_laughs,
+                                             self.tracks[random.randint(1,4)],
+                                             random.randint(1, wave_data))
+            return with_laughs
+        else:
+            return wave_data
+
 #### Here are the tools groups ####
 
 

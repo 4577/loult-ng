@@ -79,8 +79,7 @@ user = User(fake_cookie, "wesh", None)
 for effect in [BeatsEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("WESH C QWA CETTE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI "
-                                "WESH C QWA CETTE HISTOIRE  BANDE DE SHLAG C'EST PAS LA FÊTE ICI", "fr")
+text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
