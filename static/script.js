@@ -15,14 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	var addLine = function(pkmn, txt, datemsg, trclass) {
 		var tr = document.createElement('tr');
-		if(trclass) {
+		if(trclass)
 			tr.className = trclass;
-		}
 		
 		var td = document.createElement('td');
-		if(pkmn == 'info') {
+		if(pkmn == 'info')
 			td.appendChild(document.createTextNode('[Info]'));
-		}
 		else
 		{
 			var label = document.createElement('label');
@@ -35,58 +33,52 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		// txt = String(txt).replace(/((?:https?:\/\/)?(?:www\.)?vocaroo\.com\/i\/((?:[0-9a-zA-Z])+))/gi, '<object width="148" height="44"><param name="movie" value="https://loult.family/player.swf?playMediaID=$2&autoplay=0"></param><param name="wmode" value="transparent"></param><embed src="https://loult.family/player.swf?playMediaID=$2&autoplay=0" width="148" height="44" wmode="transparent" type="application/x-shockwave-flash"></embed>$1</object>');
+		txt = String(txt).replace(/\*{2}([^\*]+)\*{2}/gu, '<span>$1</span>');
+		txt = String(txt).replace(/\{{4}(.+)\}{4}/u, '<marquee>$1</marquee>');
 		td.innerHTML = txt;
-		if(txt.match(/^&gt;/)) {
+		if(txt.match(/^&gt;/))
 			td.className = 'greentext';
-		}
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
 		var dat = (new Date(datemsg)).toLocaleDateString().replace(/ /, '\xa0');
 		var sp = document.createElement('span');
-		if(dt) {
+		if(dt)
 			sp.className = 'show';
-		}
 		sp.appendChild(document.createTextNode(dat));
 		td.appendChild(sp);
 		
 		sp = document.createElement('span');
-		if(dt && hr) {
+		if(dt && hr)
 			sp.className = 'show';
-		}
 		sp.appendChild(document.createTextNode(',\xa0'));
 		td.appendChild(sp);
 
 		dat = (new Date(datemsg)).toLocaleTimeString().replace(/ /, '\xa0');
 		sp = document.createElement('span');
-		if(hr) {
+		if(hr)
 			sp.className = 'show';
-		}
 		sp.appendChild(document.createTextNode(dat));
 		td.appendChild(sp);
 		tr.appendChild(td);
 		
 		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		chattbl.appendChild(tr);
-		if(atBottom) {
+		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
-		}
 	};
 	
 	var addUser = function(userid, params) {
-		if(userid in users) {
+		if(userid in users)
 			return;
-		}
 		
 		users[userid] = params;
 		var mute = (muted.indexOf(userid) != -1);
 		var tr = document.createElement('tr');
 		var td = document.createElement('td');
 		var label = document.createElement('label');
-		if(mute) {
+		if(mute)
 			tr.className = 'mute';
-		}
 		
 		label.appendChild(document.createTextNode(params.name));
 		label.style.color = params.color;
@@ -116,10 +108,9 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 			};
 		}
-		else {
+		else
 			you = userid;
-		}
-
+		
 		tr.appendChild(td);
 		usertbl.appendChild(tr);
 		users[userid].dom = tr;
@@ -163,42 +154,38 @@ document.addEventListener('DOMContentLoaded', function() {
 		left = !rightbtn.checked;
 		localStorage.left = left;
 		var rows = document.querySelectorAll('#chattbl td:first-child label');
-		for(var i = 0; i < rows.length; i++) {
+		for(var i = 0; i < rows.length; i++)
 			rows[i].className = (left ? 'left' : 'right');
-		}
 	};
 	
 	dtbtn.checked = dt;
 	dtbtn.onchange = function(evt) {
 		dt = dtbtn.checked;
 		localStorage.dt = dt;
+		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		var rows = document.querySelectorAll('#chattbl td:last-child span:first-child');
-		for(var i = 0; i < rows.length; i++) {
+		for(var i = 0; i < rows.length; i++)
 			rows[i].className = (dt ? 'show' : '');
-		}
-		mid();
+		mid(atBottom);
 	};
 	
 	hrbtn.checked = hr;
 	hrbtn.onchange = function(evt) {
 		hr = hrbtn.checked;
 		localStorage.hr = hr;
+		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		var rows = document.querySelectorAll('#chattbl td:last-child span:last-child');
-		for(var i = 0; i < rows.length; i++) {
+		for(var i = 0; i < rows.length; i++)
 			rows[i].className = (hr ? 'show' : '');
-		}
-		mid();
+		mid(atBottom);
 	};
 	
-	var mid = function() {
-		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
+	var mid = function(atBottom) {
 		var rows = document.querySelectorAll('#chattbl td:last-child span:nth-child(2)');
-		for(var i = 0; i < rows.length; i++) {
+		for(var i = 0; i < rows.length; i++)
 			rows[i].className = ((dt && hr) ? 'show' : '');
-		}
-		if(atBottom) {
+		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
-		}
 	}
 	
 	ckwipe.onclick = function(evt) {
@@ -227,9 +214,8 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 		document.cookie = 'lang=' + lang + '; Path=/';
 	}
-	else {
+	else
 		lang = lang[1];
-	}
 	
 	select.value = lang;
 	
@@ -247,14 +233,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	var refocus = function(evt) {
 		setTimeout(function() {
-			if(!dontFocus && !window.getSelection().toString()) {
+			if(!dontFocus && !window.getSelection().toString())
 				input.focus();
-			}
-			else {
-				if(dontFocus) {
-					dontFocus = false;
-				}
-			}
+			else if(dontFocus)
+				dontFocus = false;
 		}, 10);
 	};
 	
@@ -303,9 +285,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	userswitch.onclick = function() {
 		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		userlist.style.width = (userlist.style.width == '0px' ? '185px' : '0px');
-		if(atBottom) {
+		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
-		}
 	};
 	
 	// WebSocket-related functions
@@ -314,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	var wsConnect = function() {
 		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		//ws = new WebSocket('ws://loult.family/socket' + location.pathname);
+		// ws = new WebSocket('ws://loult.family/socket' + location.pathname);
 		
 		var lastMuted = false;
 		ws.binaryType = 'arraybuffer';
@@ -325,9 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
 					splitted = input.value.split(' ');
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
-				else {
+				else
 					ws.send(JSON.stringify({type: 'msg', msg: input.value.trim(), lang: lang}));
-				}
 				
 				input.value = '';
 			}
@@ -358,11 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
 								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', msg.date, 'log');
 							break;
 							case 'dice':
-								addLine(
-								'info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), '
-								+ users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !',
-								 msg.date, 'log'
-								);
+								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ', ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' !', msg.date, 'log');
 							break;
 							case 'effect':
 								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
@@ -383,35 +359,30 @@ document.addEventListener('DOMContentLoaded', function() {
 					break;
 					
 					case 'userlist':
-						for(var i = 0; i < msg.users.length; i++) {
+						for(var i = 0; i < msg.users.length; i++)
 							addUser(msg.users[i].userid, msg.users[i].params);
-						}
 					break;
 					
 					case 'backlog':
-						for(var i = 0; i < msg.msgs.length; i++) {
+						for(var i = 0; i < msg.msgs.length; i++)
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
-						}
 						addLine('info', 'Vous êtes connecté', (new Date), 'log');
 					break;
 					
 					case 'msg':
 						lastMuted = (muted.indexOf(msg.userid) != -1);
-						if(!lastMuted) {
+						if(!lastMuted)
 							addLine(users[msg.userid], msg.msg, msg.date, null);
-						}
 					break;
 				}
 			}
-			else {
-				if(!lastMuted) {
-					context.decodeAudioData(msg.data, function(buf) {
-						var source = context.createBufferSource();
-						source.buffer = buf;
-						source.connect(volume);
-						source.start();
-					});
-				}
+			else if(!lastMuted) {
+				context.decodeAudioData(msg.data, function(buf) {
+					var source = context.createBufferSource();
+					source.buffer = buf;
+					source.connect(volume);
+					source.start();
+				});
 			}
 		};
 		
@@ -420,9 +391,8 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 		
 		ws.onclose = function() {
-			for(var i in users) {
+			for(var i in users)
 				delUser(i);
-			}
 			
 			addLine('info', 'Déconnecté, réessai...', (new Date), 'log part');
 			
