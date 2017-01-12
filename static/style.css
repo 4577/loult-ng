@@ -18,7 +18,15 @@ html, body {
 	        flex-direction: column;
 	height: 100%;
 	width: 100%;
-	background: #fcfcfc;
+	background: #f9f9f9;
+	color: #000;
+}
+
+*::-moz-selection {
+	background: #ACF;
+}
+*::selection {
+	background: #ACF;
 }
 
 header {
@@ -29,7 +37,7 @@ header {
 	display: -ms-flexbox;
 	display: flex;
 	min-height: 50px;
-	border-bottom: 1px solid #666;
+	border-bottom: 1px solid #BBB;
 }
 
 header, #prefsttl {
@@ -119,7 +127,7 @@ main {
 	min-width: 0;
 	outline: 0;
 	border: 0;
-	border-top: 1px solid #666;
+	border-top: 1px solid #BBB;
 	background: transparent;
 }
 
@@ -167,13 +175,21 @@ td:first-child {
 	margin-top: 6px;
 }
 
+#chattbl td:nth-child(2) span {
+	background: #000;
+}
+
+#chattbl td:nth-child(2) span:hover {
+	background: transparent;
+}
+
 .show {
 	max-width: 99px !important;
 }
 
 #wrap {
 	height: 100%;
-	border-left: 1px solid #666;
+	border-left: 1px solid #BBB;
 }
 
 #usertbl {
@@ -294,7 +310,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 	max-height: 480px;
 	margin: auto;
 	background: #FFF;
-	box-shadow: 0 0 15px #666;
+	box-shadow: 0 0 15px #BBB;
 	line-height: 1.5em;
 	width: auto;
 	height: auto;
@@ -305,7 +321,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 }
 
 #prefsttl {
-	border-bottom: 1px solid #666;
+	border-bottom: 1px solid #BBB;
 	padding-left: 8px;
 	height: 40px;
 }
@@ -347,7 +363,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:h
 	height: 39px;
 	width: 39px;
 	background: #EEE;
-	border-left: 1px solid #666;
+	border-left: 1px solid #BBB;
 	-webkit-transition: background-color 150ms linear;
 	transition: background-color 150ms linear;
 }
