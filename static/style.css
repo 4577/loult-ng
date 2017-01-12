@@ -175,11 +175,12 @@ td:first-child {
 	margin-top: 6px;
 }
 
-#chattbl td:nth-child(2) span {
+#chattbl td:nth-child(2) span, #chattbl td:nth-child(2) span * {
 	background: #000;
+	color: #000;
 }
 
-#chattbl td:nth-child(2) span:hover {
+#chattbl td:nth-child(2) span:hover, #chattbl td:nth-child(2) span:hover * {
 	background: transparent;
 }
 
@@ -238,7 +239,7 @@ label.right {
 	opacity: 0.6;
 }
 
-a {
+a, #chattbl td:nth-child(2) span:hover a {
 	color: #06A;
 	text-decoration: none;
 }
