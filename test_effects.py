@@ -9,12 +9,12 @@ from numpy.lib.function_base import average
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read, write
 
-from effects.effects import ReversedEffect, AudioEffect, TouretteEffect, \
+from tools.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
-    VocalDyslexia, AccentAllemandEffect, PhonemicEffect
-from effects.phonems import PhonemList, FrenchPhonems
-from effects.tools import mix_tracks
+    VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect
+from tools.phonems import PhonemList, FrenchPhonems
+from tools.tools import mix_tracks
 from poke import User
 from salt import SALT
 import logging
@@ -52,7 +52,7 @@ class AddTrackEffect(AudioEffect):
     TIMEOUT = 30
 
     def process(self, wave_data: numpy.ndarray):
-        with open("effects/data/ambiance/war_mood.wav", "rb") as sndfile:
+        with open("tools/data/ambiance/war_mood.wav", "rb") as sndfile:
             rate, track_data = read(sndfile)
         # rnd_pos = random.randint(0,len(track_data) - len(wave_data))
         print(len(track_data))
@@ -74,13 +74,12 @@ class SpeechDeformation(PhonemicEffect):
                 phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 40) for i in range(4)])
         return phonems
 
-fake_cookie = md5(("622526c6b02ec00629302b3193b39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("622526c6b024c0062930283193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [TouretteEffect()]:
+for effect in [BeatsEffect()]:
     user.add_effect(effect)
 
-text, wav = user.render_message("J'ai un petit problème c'est que des fois quand je parle "
-                                "il m'arrive de dire des insultes, mais là ça va", "fr")
+text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:

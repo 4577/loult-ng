@@ -59,3 +59,7 @@ class PhonemList(list):
 
     def __str__(self):
         return "\n".join([str(phonem) for phonem in self])
+
+    @property
+    def phonemes_str(self):
+        return "".join([str(phonem.name) for phonem in self])

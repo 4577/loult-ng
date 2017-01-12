@@ -7,8 +7,8 @@ from scipy.io.wavfile import read
 
 import numpy
 
-from effects.phonems import PhonemList, Phonem, FrenchPhonems
-from .tools import mix_tracks
+from tools.phonems import PhonemList, Phonem, FrenchPhonems
+from .tools import mix_tracks, get_sounds
 
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
 # effet javanais, effet hangul au hasard
@@ -20,22 +20,43 @@ class Effect:
 
     def __init__(self):
         self.creation = datetime.now()
+        self._timeout = None
+
+    @property
+    def timeout(self):
+        return self.TIMEOUT if self._timeout is None else self._timeout
 
     @property
     def name(self):
         return self.NAME # using a property, in case it gets more fancy than just a class constant
 
     def is_expired(self):
-        return (datetime.now() - self.creation).seconds > self.TIMEOUT
+        return (datetime.now() - self.creation).seconds > self.timeout
 
     def process(self, **kwargs):
         pass
 
 
+class EffectGroup(Effect):
+    """An effect group is basically a 'meta-effect'. It returns, through the property 'tools' a
+    list of already instanciated effect objects, which are all going to be added the a user's tools
+    lists. In practice, it's a simple way to have tools that are both on sound, phonems and text.
+
+    Before returning the list of tools, one has to make sure that the tools return by the 'tools' property
+    all have the same timeout time as the effect group that returns them. This can be done by setting the optional
+    _timeout instance attribute (*NOT* the TIMEOUT class attribute) of an Effect object"""
+
+    _sub_effects = []
+
+    @property
+    def effects(self):
+        return self._sub_effects
+
+
 class TextEffect(Effect):
 
     def process(self, text : str) -> str:
-        """The displayed text is the text sent to the chat, the rendered_text goes through mbrola"""
+        """This function takes text and applies (or not, it's up the dev) alterations to that text"""
         pass
 
 
@@ -62,7 +83,7 @@ class AudioEffect(Effect):
         pass
 
 
-#### Here are the text effects ####
+#### Here are the text tools ####
 
 class SnebwewEffect(ExplicitTextEffect):
     """Finds, using a simple heuristic, random nouns and changes them to snèbwèw"""
@@ -92,6 +113,31 @@ class SnebwewEffect(ExplicitTextEffect):
             reconstructed = reconstructed[:-1] + "ENNW"
 
         return reconstructed
+
+
+class MwfeEffect(ExplicitTextEffect):
+    NAME = "YE LA"
+    TIMEOUT = 150
+    _mwfe_punchlines = [
+        "CHU LA",
+        "OK BEN NIK TA MER",
+        "JGO CHIER",
+        "JGO FL",
+        "PUTT 1 1 1 1 1 1 COUZ 1 1 1 1 1 1",
+        "A GERBER WALLAH",
+        "YE OU JR",
+        "YA QUOI",
+        "OUÉVÈWB?"
+    ]
+
+    def process(self, text : str):
+        if random.randint(0,3) != 0:
+            text = text.upper()
+            if random.randint(0,4) == 0:
+                text = "MDR " + text
+        else:
+            text = random.choice(self._mwfe_punchlines)
+        return text
 
 
 class TouretteEffect(HiddenTextEffect):
@@ -125,7 +171,7 @@ class SpeechMasterEffect(HiddenTextEffect):
         return reconstructed
 
 
-#### Here are the phonemic effects ####
+#### Here are the phonemic tools ####
 
 class PhonemicNwwoiwwEffect(PhonemicEffect):
     NAME = "nwwoiww"
@@ -195,7 +241,7 @@ class AccentMarseillaisEffect(PhonemicEffect):
         for i, phonem in enumerate(phonems):
             if phonem.name in FrenchPhonems.NASAL_WOVELS:
                 reconstructed += [phonem, ng_phonem]
-            elif phonem.name in FrenchPhonems.CONSONANTS and phonems[i+1].name not in FrenchPhonems.VOWELS:
+            elif phonem.name in FrenchPhonems.CONSONANTS - {"w"} and phonems[i+1].name not in FrenchPhonems.VOWELS:
                 reconstructed += [phonem, euh_phonem]
             elif phonem.name == "o":
                 phonem.name = "O"
@@ -229,7 +275,7 @@ class VocalDyslexia(PhonemicEffect):
 
 class CrapweEffect(PhonemicEffect):
     NAME = "crapwe"
-    TIMEOUT = 120
+    TIMEOUT = 150
 
     def process(self, phonems: PhonemList):
         for phonem in phonems:
@@ -243,7 +289,20 @@ class CrapweEffect(PhonemicEffect):
 
         return phonems
 
-#### Here are the audio effects ####
+
+class TurboHangoul(PhonemicEffect):
+    NAME = "turbo hangoul"
+    TIMEOUT = 150
+
+    def process(self, phonems: PhonemList):
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 3) == 1:
+                phonem.duration *= 8
+                phonem.set_from_pitches_list([364, 364])
+
+        return phonems
+
+#### Here are the audio tools ####
 
 
 class ReversedEffect(AudioEffect):
@@ -296,14 +355,6 @@ class IssouEffect(AudioEffect):
     def __init__(self):
         super().__init__()
 
-        def get_sounds(dir : str):
-            sounds = []
-            for filename in listdir(dir):
-                realpath = path.join(dir, filename)
-                rate, data = read(realpath)
-                sounds.append(data)
-            return sounds
-
         self.issou_sounds = get_sounds(self.issou_dir)
         self.other_sounds = get_sounds(self.other_dir)
         self.pending_issou, self.pending_other = [], []
@@ -312,8 +363,8 @@ class IssouEffect(AudioEffect):
     def _create_pattern(self):
         random.shuffle(self.issou_sounds)
         random.shuffle(self.other_sounds)
-        self.pending_other = self.other_sounds[:random.randint(4,6)]
-        self.pending_issou = self.issou_sounds[:random.randint(2,5)]
+        self.pending_other = self.other_sounds[:random.randint(1,3)]
+        self.pending_issou = self.issou_sounds[:random.randint(2,4)]
 
     def process(self, wave_data: numpy.ndarray):
         if random.randint(0,3) == 1:
@@ -357,3 +408,108 @@ class AmbianceEffect(AudioEffect):
         return mix_tracks(self.track_data[rnd_pos:rnd_pos + len(wave_data) + padding_time] * self.gain,
                           wave_data,
                           align="center")
+
+
+class BeatsEffect(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/")
+    NAME = "JR"
+    TIMEOUT = 150
+
+    _directories = {"posay" : ["other"],
+                    "tape ton para": ["ez3kiel", "outrun", "serbian_film"],
+                    "JR" : ["jr"]}
+
+    def __init__(self):
+        super().__init__()
+        self._name, directories = random.choice(list(self._directories.items()))
+        dir = random.choice(directories)
+        beat_filename = random.choice(listdir(path.join(self.main_dir, dir)))
+        with open(path.join(self.main_dir, dir, beat_filename), "rb") as sndfile:
+            self.rate, self.track = read(sndfile)
+
+    @property
+    def name(self):
+        return self._name
+
+    def process(self, wave_data: numpy.ndarray):
+        if len(self.track) < len(wave_data):
+            beat_track = numpy.tile(self.track, (len(wave_data) // len(self.track)) + 1)
+            return mix_tracks(beat_track * 0.4, wave_data, align="center")
+        else:
+            return wave_data
+
+
+class LaughTrackEffect(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/laugh_track/")
+    NAME = "issou"
+    TIMEOUT = 150
+
+    def __init__(self):
+        super().__init__()
+        self.tracks = get_sounds(self.main_dir)
+        # sorting by length
+        self.tracks.sort(key = lambda s: len(s))
+
+    def process(self, wave_data: numpy.ndarray):
+        if random.randint(0,1):
+            with_laughs = numpy.concatenate((wave_data, random.choice(self.tracks)))
+            if len(wave_data) > 80000:
+                for i in range(random.randint(1, len(wave_data) // 40000 - 1)):
+                    with_laughs = mix_tracks(with_laughs,
+                                             self.tracks[random.randint(1,4)],
+                                             random.randint(1, wave_data))
+            return with_laughs
+        else:
+            return wave_data
+
+#### Here are the tools groups ####
+
+
+class VenerEffect(EffectGroup):
+    TIMEOUT = 120
+    NAME = "YÉ CHAUD"
+    _sound_file = path.join(path.dirname(path.realpath(__file__)),
+                            "data/vener/stinkhole_shave_me_extract.wav")
+
+    class UPPERCASEEffect(ExplicitTextEffect):
+        TIMEOUT = 120
+
+        def process(self, text : str):
+            return text.upper()
+
+    @property
+    def effects(self):
+        monkey_patched = AmbianceEffect()
+        monkey_patched._timeout = 120
+        monkey_patched.gain = 0.2
+        with open(self._sound_file, "rb") as sndfile:
+            monkey_patched.rate, monkey_patched.track_data = read(sndfile)
+        return [self.UPPERCASEEffect(), monkey_patched]
+
+
+class VieuxPortEffect(EffectGroup):
+    TIMEOUT = 150
+    NAME = "du vieux port"
+
+    class VieuxPortInterjections(HiddenTextEffect):
+        """Kinda like a tourette effect, but but just a couple of southern interjections"""
+        TIMEOUT = 150
+        available_words = ["putain", "con", "bonne mère", "t'es fada"]
+
+        def process(self, text: str):
+            # the variable is called splitted because it pisses off this australian cunt that mboevink is
+            space_splitted = [word for word in text.split(" ") if word != ""]
+            reconstructed = ""
+            for word in space_splitted:
+                reconstructed += " " + word + " "
+                if random.randint(1, 6) == 1:
+                    reconstructed += ", %s ," % random.choice(self.available_words)
+            if random.randint(1,3) == 1:
+                reconstructed += ", %s" % random.choice(self.available_words)
+            return reconstructed
+
+    @property
+    def effects(self):
+        southern_accent = AccentMarseillaisEffect()
+        southern_accent._timeout = 150
+        return [southern_accent, self.VieuxPortInterjections()]

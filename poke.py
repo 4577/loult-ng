@@ -9,26 +9,24 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
 from html import escape
-from io import BytesIO
 from json import loads, dumps
 from os import urandom
 from re import sub
 from shlex import quote
 from struct import pack
-from subprocess import run, PIPE
 from time import time
-from typing import List, Dict, Set, Any
+from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
-from scipy.io import wavfile
 
 from config import pokemon, ATTACK_RESTING_TIME
-from effects import get_random_effect
-from effects.effects import Effect, AudioEffect, TextEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect
-from effects.phonems import PhonemList
 from salt import SALT
-
+from tools.combat import CombatSimulator
+from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+    EffectGroup
+from tools.phonems import PhonemList
+from tools.tools import AudioRenderer, SpoilerBipEffect
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
@@ -36,13 +34,7 @@ json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode(
 
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
-    lang_voices_mapping = {"fr" : ("fr" , (1, 2, 3, 4, 5, 6, 7)),
-                           "en" : ("us" , (1, 2, 3)),
-                           "es" : ("es" , (1, 2)),
-                           "de" : ("de" , (4, 5, 6, 7))}
 
-    volumes_presets = {'fr1': 1.17138, 'fr2': 1.60851,'fr3': 1.01283, 'fr4': 1.0964, 'fr5': 2.64384, 'fr6': 1.35412,
-                       'fr7': 1.96092, 'us1': 1.658, 'us2': 1.7486, 'us3': 3.48104, 'es1': 3.26885, 'es2': 1.84053}
 
     links_translation = {'fr': 'cliquez mes petits chatons',
                          'de': 'Klick drauf!',
@@ -51,9 +43,7 @@ class User:
 
     def __init__(self, cookie_hash, channel, client):
         """Initiating a user using its cookie md5 hash"""
-        self.speed = (cookie_hash[5] % 80) + 90
-        self.pitch = cookie_hash[0] % 100
-        self.voice_id = cookie_hash[1]
+        self.audio_renderer = AudioRenderer(cookie_hash)
         self.poke_id = (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemon) + 1
         self.pokename = pokemon[self.poke_id]
         self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
@@ -73,12 +63,24 @@ class User:
     def __eq__(self, other):
         return self.user_id == other.user_id
 
+    def throw_dice(self, type="attack") -> Tuple[int, int]:
+        bonus = (datetime.now() - self.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
+        return random.randint(1,100), bonus
+
     def add_effect(self, effect : Effect):
-        """Adds an effect to one of the active effects list (depending on the effect type)"""
-        for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
-            if isinstance(effect, cls):
-                self.effects[cls].append(effect)
-                break
+        """Adds an effect to one of the active tools list (depending on the effect type)"""
+        if isinstance(effect, EffectGroup): # if the effect is a meta-effect (a group of several tools)
+            added_effects = effect.effects
+        else:
+            added_effects = [effect]
+
+        for efct in added_effects:
+            for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
+                if isinstance(efct, cls):
+                    if len(self.effects[cls]) == 5: # only 5 effects of one time allowed at a time
+                        self.effects[cls].pop(0)
+                    self.effects[cls].append(efct)
+                    break
 
     @property
     def info(self):
@@ -105,49 +107,34 @@ class User:
 
     def _vocode(self, text, lang) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
-        # Language support : default to french if value is incorrect
-        lang, voices = self.lang_voices_mapping.get(lang, self.lang_voices_mapping["fr"])
-        voice = voices[self.voice_id % len(voices)]
+        # apply the beep effect for spoilers
+        beeped = SpoilerBipEffect(self.audio_renderer).process(text, lang)
 
-        if lang != 'fr':
-            sex = voice
-        else:
-            sex = 4 if voice in (2, 4) else 1
+        if isinstance(beeped, PhonemList) or self.effects[PhonemicEffect]:
 
-        volume = 1
-        if lang != 'de':
-            volume = self.volumes_presets['%s%d' % (lang, voice)] * 0.5
+            modified_phonems = None
+            if isinstance(beeped, PhonemList) and self.effects[PhonemicEffect]:
+                # if it's already a phonem list, we apply the effect diretcly
+                modified_phonems = self.apply_effects(beeped, self.effects[PhonemicEffect])
+            elif isinstance(beeped, PhonemList):
+                # no effects, only the beeped phonem list
+                modified_phonems = beeped
+            elif self.effects[PhonemicEffect]:
+                # first running the text-to-phonems conversion, then applying the phonemic tools
+                phonems = self.audio_renderer.string_to_phonemes(text, lang)
+                modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
 
-        if self.effects[PhonemicEffect]:
-            # first running the text-to-phonems conversion, then applying the phonemic effects, then rendering audio
-            phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
-                                  % (self.speed, self.pitch, lang, sex, text)
-            logging.debug("Running espeak command %s" % phonem_synth_string)
-            phonems = PhonemList(run(phonem_synth_string, shell=True, stdout=PIPE, stderr=PIPE)
-                                 .stdout
-                                 .decode("utf-8")
-                                 .strip())
-            modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
-            audio_synth_string = 'MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
-                                 % (volume, lang, voice, lang, voice)
-            logging.debug("Running mbrola command %s" % audio_synth_string)
-            wav = run(audio_synth_string, shell=True, stdout=PIPE,
-                      stderr=PIPE, input=str(modified_phonems).encode("utf-8")).stdout
+            #rendering audio using the phonemlist
+            return self.audio_renderer.phonemes_to_audio(modified_phonems, lang)
         else:
             # regular render
-            synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
-                           '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
-                           % (self.speed, self.pitch, lang, sex, text, volume, lang, voice, lang, voice)
-            logging.debug("Running synth command %s" % synth_string)
-            wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
-
-        return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
+            return self.audio_renderer.string_to_audio(text, lang)
 
     def render_message(self, text, lang):
         cleaned_text = text[:500]
-        # applying "explicit" effects (visible to the users)
+        # applying "explicit" tools (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.effects[ExplicitTextEffect])
-        # applying "hidden" effects (invisible on the chat, only heard in the audio)
+        # applying "hidden" tools (invisible on the chat, only heard in the audio)
         rendered_text = self.apply_effects(displayed_text, self.effects[HiddenTextEffect])
         rendered_text = sub('(https?://[^ ]*[^.,?! :])', self.links_translation[lang], rendered_text)
         rendered_text = rendered_text.replace('#', 'hashtag ')
@@ -158,17 +145,12 @@ class User:
 
         # if there are effets in the audio_effect list, we run it
         if self.effects[AudioEffect]:
-            # converting the wav to ndarray, which is much easier to use for DSP
-            rate, data = wavfile.read(BytesIO(wav))
-            # casting the data array to the right format (float32, for usage by pysndfx)
-            data = self.apply_effects((data / (2. ** 15)).astype('float32'), self.effects[AudioEffect])
-            # casting it back to int16
-            data = (data * (2. ** 15)).astype("int16")
-            # then, converting it back to binary data
-            bytes_obj = bytes()
-            bytes_buff = BytesIO(bytes_obj)
-            wavfile.write(bytes_buff, rate, data)
-            wav = bytes_buff.read()
+            # converting to f32 (more standard) and resampling to 16k if needed
+            rate , data = self.audio_renderer.to_f32_16k(wav)
+            # applying the effects pipeline to the sound
+            data = self.apply_effects(data, self.effects[AudioEffect])
+            # converting the sound's ndarray back to bytes
+            wav = self.audio_renderer.to_wav_bytes(data, rate)
 
         return displayed_text, wav
 
@@ -177,12 +159,12 @@ class LoultServer(WebSocketServerProtocol):
 
     def __init__(self):
         super().__init__()
-        self.cookie, self.channel, self.sendend, self.lasttxt = None, None, None, None
+        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt = None, None, None, None, None
         self.cnx = False
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        print("Client connecting: {0}".format(request.peer))
+        logging.info("Client connecting: {0}".format(request.peer))
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
         # telling the client to store it with a Set-Cookie header
@@ -195,8 +177,8 @@ class LoultServer(WebSocketServerProtocol):
 
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
         self.cookie = cookie_hash
-        self.channel = request.path.lower().split('/', 2)[-1]
-        self.channel = sub("/.*", "", self.channel)
+        self.channel_n = request.path.lower().split('/', 2)[-1]
+        self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
 
@@ -208,13 +190,13 @@ class LoultServer(WebSocketServerProtocol):
         print("WebSocket connection open.")
 
         # telling the  connected users'register to register the current user in the current channel
-        self.user = loult_state.channel_connect(self, self.cookie, self.channel)
+        self.channel_obj, self.user = loult_state.channel_connect(self, self.cookie, self.channel_n)
 
         self.cnx = True  # connected!
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
         my_userlist = OrderedDict([(user_id , deepcopy(user.info))
-                                  for user_id, user in loult_state.chans[self.channel].users.items()])
+                                   for user_id, user in self.channel_obj.users.items()])
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.sendMessage(json({
@@ -224,11 +206,11 @@ class LoultServer(WebSocketServerProtocol):
 
         self.sendMessage(json({
             'type': 'backlog',
-            'msgs': loult_state.chans[self.channel].backlog
+            'msgs': self.channel_obj.backlog
         }))
 
     def _broadcast_to_channel(self, msg_dict, binary_payload=None):
-        for client in loult_state.chans[self.channel].clients:
+        for client in self.channel_obj.clients:
             client.sendMessage(json(msg_dict))
             if binary_payload:
                 client.sendMessage(binary_payload, isBinary=True)
@@ -250,8 +232,7 @@ class LoultServer(WebSocketServerProtocol):
         if synth:
             self.sendend = calc_sendend
 
-        info = loult_state.log_to_backlog(loult_state.chans[self.channel].users[self.user.user_id].info['params'],
-                                          output_msg, self.channel)
+        info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
         # broadcast message and rendered audio to all clients in the channel
         self._broadcast_to_channel({'type': 'msg',
@@ -264,9 +245,8 @@ class LoultServer(WebSocketServerProtocol):
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
-        adversary_id, adversary = loult_state.get_user_by_name(msg_data.get("target", self.user.pokename),
-                                                                            self.channel,
-                                                                            msg_data.get("order", 0))
+        adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target", self.user.pokename),
+                                                                    msg_data.get("order", 1) - 1)
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
@@ -276,32 +256,24 @@ class LoultServer(WebSocketServerProtocol):
                                         'attacker_id': self.user.user_id,
                                         'defender_id': adversary_id})
 
-            attack_dice, defend_dice = random.randint(0,100), random.randint(0,100)
+            combat_sim = CombatSimulator()
+            combat_sim.run_attack(self.user, adversary, self.channel_obj)
             self._broadcast_to_channel({'type': 'attack',
                                         'date': time() * 1000,
                                         'event': 'dice',
-                                        'attacker_dice' : attack_dice, "defender_dice" : defend_dice,
+                                        'attacker_dice' : combat_sim.atk_dice, "defender_dice" : combat_sim.def_dice,
+                                        'attacker_bonus' : combat_sim.atk_bonus, "defender_bonus" : combat_sim.def_bonus,
                                         'attacker_id': self.user.user_id, 'defender_id': adversary_id})
 
-            # if the attacker won, the user affected by the effect is the defender, else, there's a a 1/3 chance
-            # that the attacker gets the effect (a rebound)
-            affected_user = None
-            if attack_dice > defend_dice:
-                affected_user = adversary
-            elif random.randint(1,3) == 1:
-                affected_user = self.user
-
-            if affected_user is not None:
-                effect = get_random_effect()
-                affected_user.add_effect(effect)
-
-                self._broadcast_to_channel({'type': 'attack',
-                                            'date': time() * 1000,
-                                            'event': 'effect',
-                                            'target_id': affected_user.user_id,
-                                            'effect': effect.name,
-                                            'timeout' : effect.TIMEOUT})
-            else:
+            if combat_sim.affected_users: # there are users affected by some effects
+                for user, effect in combat_sim.affected_users:
+                    self._broadcast_to_channel({'type': 'attack',
+                                                'date': time() * 1000,
+                                                'event': 'effect',
+                                                'target_id': user.user_id,
+                                                'effect': effect.name,
+                                                'timeout': effect.timeout})
+            else: # list is empty, no one was attacked
                 self._broadcast_to_channel({'type': 'attack',
                                             'date': time() * 1000,
                                             'event': 'nothing'})
@@ -341,9 +313,9 @@ class LoultServer(WebSocketServerProtocol):
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if hasattr(self, 'cnx') and self.cnx:
-            loult_state.channel_leave(self, self.user, self.channel)
+            self.channel_obj.channel_leave(self, self.user)
 
-        print("WebSocket connection closed: {0}".format(reason))
+        logging.info("WebSocket connection closed: {0}".format(reason))
 
 
 class Channel:
@@ -354,36 +326,11 @@ class Channel:
         self.refcnts = {}  # type:Dict[str,int]
         self.backlog = []  # type:List
 
-
-class LoultServerState:
-
-    def __init__(self):
-        self.chans = {} # type:Dict[str,Channel]
-
-    def _signal_user_connect(self, client : LoultServer, user : User):
+    def _signal_user_connect(self, client: LoultServer, user: User):
         client.sendMessage(json({
             'type': 'connect',
-            'date' : time() * 1000,
+            'date': time() * 1000,
             **user.info}))
-
-    def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> User:
-        # if the channel doesn't exist, we instanciate it and add it to the channel dict
-        if channel_name not in self.chans:
-            self.chans[channel_name] = Channel(channel_name)
-        channel_obj = self.chans[channel_name]
-        channel_obj.clients.add(client)
-
-        new_user = User(user_cookie, channel_name, client)
-        if new_user.user_id not in channel_obj.users:
-            for other_client in channel_obj.clients:
-                if other_client != client:
-                    self._signal_user_connect(other_client, new_user)
-            channel_obj.refcnts[new_user.user_id] = 1
-            channel_obj.users[new_user.user_id] = new_user
-            return new_user
-        else:
-            channel_obj.refcnts[new_user.user_id] += 1
-            return channel_obj.users[new_user.user_id] # returning an already existing instance of the user
 
     def _signal_user_disconnect(self, client: LoultServer, user: User):
         client.sendMessage(json({
@@ -392,50 +339,76 @@ class LoultServerState:
             'userid': user.user_id
         }))
 
-    def channel_leave(self, client : LoultServer, user : User, channel_name : str):
+    def channel_leave(self, client: LoultServer, user: User):
         try:
-            channel_obj = self.chans[channel_name]
-            channel_obj.refcnts[user.user_id] -= 1
+            self.refcnts[user.user_id] -= 1
 
             # if the user is not connected anymore, we signal its disconnect to the others
-            if channel_obj.refcnts[user.user_id] < 1:
-                channel_obj.clients.discard(client)
-                del channel_obj.users[user.user_id]
-                del channel_obj.refcnts[user.user_id]
+            if self.refcnts[user.user_id] < 1:
+                self.clients.discard(client)
+                del self.users[user.user_id]
+                del self.refcnts[user.user_id]
 
-                for client in channel_obj.clients:
+                for client in self.clients:
                     self._signal_user_disconnect(client, user)
 
-                # if no one's connected dans the backlog is empty, we delete the channel
-                if not channel_obj.clients and not channel_obj.backlog:
-                    del self.chans[channel_name]
+                # if no one's connected dans the backlog is empty, we delete the channel from the register
+                if not self.clients and not self.backlog:
+                    del loult_state.chans[self.name]
         except KeyError:
             pass
 
-    def log_to_backlog(self, user_data, msg : str, channel : str):
+    def user_connect(self, new_user : User, client : LoultServer):
+        if new_user.user_id not in self.users:
+            for other_client in self.clients:
+                if other_client != client:
+                    self._signal_user_connect(other_client, new_user)
+            self.refcnts[new_user.user_id] = 1
+            self.users[new_user.user_id] = new_user
+            return new_user
+        else:
+            self.refcnts[new_user.user_id] += 1
+            return self.users[new_user.user_id]  # returning an already existing instance of the user
+
+    def log_to_backlog(self, user_id, msg: str):
         # creating new entry
         info = {
-            'user': user_data,
+            'user': self.users[user_id].info['params'],
             'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
                        escape(msg[:500])),
             'date': time() * 1000
         }
 
         # adding it to list and removing oldest entry
-        self.chans[channel].backlog.append(info)
-        self.chans[channel].backlog = self.chans[channel].backlog[-10:]
+        self.backlog.append(info)
+        self.backlog = self.backlog[-10:]
         return info
 
-    def get_user_by_name(self, pokemon_name : str, channel : str, order = 0) -> (int, User):
+    def get_user_by_name(self, pokemon_name: str, order=0) -> (int, User):
 
-        for user_id, user in self.chans[channel].users.items():
+        for user_id, user in self.users.items():
             if user.pokename.lower() == pokemon_name.lower():
-                if order == 0:
+                if order <= 0:
                     return user_id, user
                 else:
                     order -= 1
 
         return None, None
+
+
+class LoultServerState:
+
+    def __init__(self):
+        self.chans = {} # type:Dict[str,Channel]
+
+    def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
+        # if the channel doesn't exist, we instanciate it and add it to the channel dict
+        if channel_name not in self.chans:
+            self.chans[channel_name] = Channel(channel_name)
+        channel_obj = self.chans[channel_name]
+        channel_obj.clients.add(client)
+
+        return channel_obj, channel_obj.user_connect(User(user_cookie, channel_name, client), client)
 
 
 loult_state = LoultServerState()
