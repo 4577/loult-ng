@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		td = document.createElement('td');
 		txt = String(txt).replace(/\*{2}([^\*]+)\*{2}/gu, '<span>$1</span>');
-		txt = String(txt).replace(/(.+)?\{{4}(.+)\}{4}(.+)?/u, '<marquee>$1$2$3</marquee>');
+		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/u, '<marquee>$1$2$3</marquee>');
 		td.innerHTML = txt;
 		if(txt.match(/^&gt;/))
 			td.className = 'greentext';
