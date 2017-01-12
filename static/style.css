@@ -222,13 +222,13 @@ label {
 label.left {
 	padding-left: 40px;
 	padding-right: 0;
-	background-position: left 0 bottom 3px;
+	background-position: left 0 bottom 5px;
 }
 
 label.right {
 	padding-left: 0;
 	padding-right: 40px;
-	background-position: right 0 bottom 3px;
+	background-position: right 0 bottom 5px;
 }
 
 .sound {
