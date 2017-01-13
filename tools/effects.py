@@ -1,6 +1,9 @@
+import json
 import random
 import re
 from datetime import datetime
+
+from math import ceil, floor
 from pysndfx import AudioEffectsChain
 from os import path, listdir
 from scipy.io.wavfile import read
@@ -8,10 +11,12 @@ from scipy.io.wavfile import read
 import numpy
 
 from tools.phonems import PhonemList, Phonem, FrenchPhonems
+from tools.tools import VoiceParameters
 from .tools import mix_tracks, get_sounds
 
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
 # effet javanais, effet hangul au hasard
+# 1 pitch 60 vitesse 110 : voix mwfe
 
 
 class Effect:
@@ -75,6 +80,13 @@ class PhonemicEffect(Effect):
 
     def process(self, phonems : PhonemList) -> PhonemList:
         """"""
+
+
+class VoiceEffect(Effect):
+    """Affects the voice before the audio rendering"""
+
+    def process(self, voice_params : VoiceParameters) -> VoiceParameters:
+        pass
 
 
 class AudioEffect(Effect):
@@ -273,7 +285,34 @@ class VocalDyslexia(PhonemicEffect):
         return phonems
 
 
+class AutotuneEffect(PhonemicEffect):
+    pitch_file = path.join(path.dirname(path.realpath(__file__)), "data/melody/pitches.json")
+    NAME = "lou a du talent"
+    TIMEOUT = 150
+    _melody = ["C4"] * 3 + ["D4", "E4", "C4", "D4", "E4", "D4"]
+
+    def __init__(self):
+        super().__init__()
+        with open(self.pitch_file) as pitch_file:
+            self.pitches = json.load(pitch_file)
+
+    def process(self, phonems : PhonemList):
+        melo = iter(self._melody)
+        for pho in phonems:
+            if pho.name in FrenchPhonems.VOWELS:
+                try:
+                    flpitch = self.pitches[next(melo)]
+                    pitch = floor(flpitch) if flpitch - int(flpitch) < 0.5 else ceil(flpitch)
+                    pho.pitch = [pitch] * 2
+                    pho.duration *= 2
+                except StopIteration:
+                    melo = iter(self._melody)
+
+        return phonems
+
+
 class CrapweEffect(PhonemicEffect):
+    """Dilates random vowels and modifies the peach to go up and down"""
     NAME = "crapwe"
     TIMEOUT = 150
 
@@ -494,7 +533,7 @@ class VieuxPortEffect(EffectGroup):
     class VieuxPortInterjections(HiddenTextEffect):
         """Kinda like a tourette effect, but but just a couple of southern interjections"""
         TIMEOUT = 150
-        available_words = ["putain", "con", "bonne mère", "t'es fada"]
+        available_words = ["putain", "con", "bonne mère", "t'es fada", "peuchère"]
 
         def process(self, text: str):
             # the variable is called splitted because it pisses off this australian cunt that mboevink is

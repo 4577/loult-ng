@@ -24,7 +24,7 @@ from config import pokemon, ATTACK_RESTING_TIME
 from salt import SALT
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
-    EffectGroup
+    EffectGroup, VoiceEffect
 from tools.phonems import PhonemList
 from tools.tools import AudioRenderer, SpoilerBipEffect
 
@@ -53,7 +53,8 @@ class User:
 
         self.channel = channel
         self.client = client
-        self.effects = {cls : [] for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect)}
+        self.effects = {cls : [] for cls in
+                        (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
         self.last_attack = datetime.now() # any user has to wait some time before attacking, after entering the chan
         self._info = None
 
@@ -107,6 +108,11 @@ class User:
 
     def _vocode(self, text, lang) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
+        # apply eventual voice effets
+        if self.effects[VoiceEffect]:
+            self.audio_renderer.voice_params = self.apply_effects(self.audio_renderer.voice_params,
+                                                                  self.effects[VoiceEffect])
+
         # apply the beep effect for spoilers
         beeped = SpoilerBipEffect(self.audio_renderer).process(text, lang)
 

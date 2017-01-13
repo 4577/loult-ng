@@ -12,7 +12,8 @@ from scipy.io.wavfile import read, write
 from tools.effects import ReversedEffect, AudioEffect, TouretteEffect, \
     SnebwewEffect, GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, \
     PhonemicNwwoiwwEffect, PhonemicShuffleEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, ReverbManEffect, \
-    VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect
+    VocalDyslexia, AccentAllemandEffect, PhonemicEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect, \
+    AutotuneEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.tools import mix_tracks
 from poke import User
@@ -76,10 +77,11 @@ class SpeechDeformation(PhonemicEffect):
 
 fake_cookie = md5(("622526c6b024c0062930283193b39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [BeatsEffect()]:
+for effect in [AutotuneEffect()]:
     user.add_effect(effect)
 
 text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
+# text, wav = user.render_message("Non mais là les mecs faut se détendre", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
