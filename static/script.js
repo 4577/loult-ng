@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		input.onkeydown = function(evt) {
 			if(evt.keyCode == 13 && input.value) {
-				if(input.value.match(/^\/atta(ck|que)\s/)) {
+				if(input.value.match(/^\/atta(ck|que)\s/i)) {
 					splitted = input.value.split(' ');
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
