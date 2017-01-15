@@ -309,8 +309,11 @@ document.addEventListener('DOMContentLoaded', function() {
 			var interim_transcript = '';
 			for(var i = event.resultIndex; i < event.results.length; i++) {
 				if(event.results[i].isFinal) {
-					ws.send(JSON.stringify({type: 'msg', msg: input.value.trim(), lang: lang}));
-					input.value = '';
+					var m = input.value.trim();
+					if(m.length > 0) {
+						ws.send(JSON.stringify({type: 'msg', msg: m, lang: lang}));
+						input.value = '';
+					}
 				}
 				else {
 					interim_transcript += event.results[i][0].transcript;
