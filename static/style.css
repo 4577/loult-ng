@@ -127,7 +127,7 @@ main {
 	        flex: 1;
 	height: 49px ;
 	font-size: 30px;
-	padding: 0 6px;
+	padding: 6px 0;
 	text-indent: 6px;
 	min-width: 0;
 	outline: 0;
