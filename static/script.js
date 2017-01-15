@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
 	var usertbl = document.getElementById('usertbl');
@@ -34,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		txt = String(txt).replace(/\*{2}([^\*]+)\*{2}?/gu, '<span>$1</span>');
-		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/u, '<marquee>$1$2$3</marquee>');
+		txt = String(txt).replace(/\*{2}([^\*]+)\*{2}/g, '<span>$1</span>');
+		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/, '<marquee>$1$2$3</marquee>');
 		td.innerHTML = txt;
 		if(txt.match(/^&gt;/))
 			td.className = 'greentext';
@@ -250,33 +251,36 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// Sound and volume
 	
-	var speaker = document.getElementById('speaker');
-	var volrange = document.getElementById('volrange');
-	var context = new (window.AudioContext || webkitAudioContext)();
-	var volume = (context.createGain ? context.createGain() : context.createGainNode());
-	volume.connect(context.destination);
-	
-	if(localStorage.volume) {
-		volrange.value = localStorage.volume * 100;
-		volume.gain.value = localStorage.volume;
+	if(audio)
+	{
+		var speaker = document.getElementById('speaker');
+		var volrange = document.getElementById('volrange');
+		var context = new (window.AudioContext || webkitAudioContext)();
+		var volume = (context.createGain ? context.createGain() : context.createGainNode());
+		volume.connect(context.destination);
+		
+		if(localStorage.volume) {
+			volrange.value = localStorage.volume * 100;
+			volume.gain.value = localStorage.volume;
+		}
+		
+		speaker.onclick = function() {
+			if(this.src.indexOf('mute') == -1) {
+				volume.gain.value = 0;
+				this.src = './img/mute.png';
+			}
+			else {
+				volume.gain.value = volrange.value / 100;
+				this.src = './img/speaker.png';
+			}
+		};
+		volrange.oninput = function() {
+			if(speaker.src.indexOf('mute') == -1) {
+				volume.gain.value = volrange.value / 100;
+				localStorage.volume = volume.gain.value;
+			}
+		};
 	}
-	
-	speaker.onclick = function() {
-		if(this.src.indexOf('mute') == -1) {
-			volume.gain.value = 0;
-			this.src = './img/mute.png';
-		}
-		else {
-			volume.gain.value = volrange.value / 100;
-			this.src = './img/speaker.png';
-		}
-	};
-	volrange.oninput = function() {
-		if(speaker.src.indexOf('mute') == -1) {
-			volume.gain.value = volrange.value / 100;
-			localStorage.volume = volume.gain.value;
-		}
-	};
 	
 	// Speech
 	
@@ -447,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					break;
 				}
 			}
-			else if(!lastMuted) {
+			else if(!lastMuted && audio) {
 				context.decodeAudioData(msg.data, function(buf) {
 					var source = context.createBufferSource();
 					source.buffer = buf;
