@@ -26,7 +26,7 @@ from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
     EffectGroup, VoiceEffect
 from tools.phonems import PhonemList
-from tools.tools import AudioRenderer, SpoilerBipEffect
+from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
@@ -43,7 +43,8 @@ class User:
 
     def __init__(self, cookie_hash, channel, client):
         """Initiating a user using its cookie md5 hash"""
-        self.audio_renderer = AudioRenderer(cookie_hash)
+        self.audio_renderer = AudioRenderer()
+        self.voice_params = VoiceParameters.from_cookie_hash(cookie_hash)
         self.poke_id = (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemon) + 1
         self.pokename = pokemon[self.poke_id]
         self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
@@ -76,7 +77,7 @@ class User:
             added_effects = [effect]
 
         for efct in added_effects:
-            for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect):
+            for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect):
                 if isinstance(efct, cls):
                     if len(self.effects[cls]) == 5: # only 5 effects of one time allowed at a time
                         self.effects[cls].pop(0)
@@ -108,13 +109,14 @@ class User:
 
     def _vocode(self, text, lang) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
-        # apply eventual voice effets
+        # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
         if self.effects[VoiceEffect]:
-            self.audio_renderer.voice_params = self.apply_effects(self.audio_renderer.voice_params,
-                                                                  self.effects[VoiceEffect])
+            voice_params = self.apply_effects(self.voice_params, self.effects[VoiceEffect])
+        else:
+            voice_params = self.voice_params
 
         # apply the beep effect for spoilers
-        beeped = SpoilerBipEffect(self.audio_renderer).process(text, lang)
+        beeped = SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
 
         if isinstance(beeped, PhonemList) or self.effects[PhonemicEffect]:
 
@@ -127,20 +129,20 @@ class User:
                 modified_phonems = beeped
             elif self.effects[PhonemicEffect]:
                 # first running the text-to-phonems conversion, then applying the phonemic tools
-                phonems = self.audio_renderer.string_to_phonemes(text, lang)
+                phonems = self.audio_renderer.string_to_phonemes(text, lang, voice_params)
                 modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
 
             #rendering audio using the phonemlist
-            return self.audio_renderer.phonemes_to_audio(modified_phonems, lang)
+            return self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
         else:
             # regular render
-            return self.audio_renderer.string_to_audio(text, lang)
+            return self.audio_renderer.string_to_audio(text, lang, voice_params)
 
     def render_message(self, text, lang):
         cleaned_text = text[:500]
-        # applying "explicit" tools (visible to the users)
+        # applying "explicit" effects (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.effects[ExplicitTextEffect])
-        # applying "hidden" tools (invisible on the chat, only heard in the audio)
+        # applying "hidden" texts effects (invisible on the chat, only heard in the audio)
         rendered_text = self.apply_effects(displayed_text, self.effects[HiddenTextEffect])
         rendered_text = sub('(https?://[^ ]*[^.,?! :])', self.links_translation[lang], rendered_text)
         rendered_text = rendered_text.replace('#', 'hashtag ')
@@ -238,12 +240,15 @@ class LoultServer(WebSocketServerProtocol):
         if synth:
             self.sendend = calc_sendend
 
+        # add output
+        output_msg = add_msg_html_tag(output_msg)
+        # send to the backlog
         info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
         # broadcast message and rendered audio to all clients in the channel
         self._broadcast_to_channel({'type': 'msg',
                                     'userid': self.user.user_id,
-                                    'msg': info['msg'],
+                                    'msg': output_msg,
                                     'date': info['date']},
                                    wav if synth else None)
 
@@ -380,8 +385,7 @@ class Channel:
         # creating new entry
         info = {
             'user': self.users[user_id].info['params'],
-            'msg': sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>',
-                       escape(msg[:500])),
+            'msg': msg,
             'date': time() * 1000
         }
 

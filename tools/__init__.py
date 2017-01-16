@@ -1,20 +1,23 @@
-from .effects import Effect, SnebwewEffect, ReversedEffect, ReverbManEffect, TouretteEffect, \
-    GhostEffect, SpeechMasterEffect, IssouEffect, AmbianceEffect, LaughTrackEffect,\
-    PhonemicShuffleEffect, PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, \
+from tools.effects import WpseEffect, SpoinkEffect
+from .effects import Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, \
+    GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect, \
+    PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, \
     VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect ,\
     VieuxPortEffect
+from .effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
 from .phonems import PhonemList
+
 
 import random
 # the multiplier for each tools list sets the "probability" of the effect
-AVAILABLE_EFFECTS = 1 * [IssouEffect, PhonemicShuffleEffect] + \
-                    2 * [GhostEffect, ReversedEffect, SnebwewEffect, ReverbManEffect, TouretteEffect, VenerEffect,
-                         SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia, LaughTrackEffect,
+AVAILABLE_EFFECTS = 1 * [] + \
+                    2 * [GhostEffect, SnebwewEffect, ReverbManEffect, TouretteEffect, VenerEffect,
+                         SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia, SitcomEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
-                         CrapweEffect] + \
-                    3 * [AmbianceEffect, TurboHangoul] + \
+                         CrapweEffect, AmbianceEffect] + \
+                    3 * [TurboHangoul] + \
                     4 * [BeatsEffect]
-# AVAILABLE_EFFECTS = [LaughTrackEffect] # single tools list used when testing
+AVAILABLE_EFFECTS = [MwfeEffect, TurboHangoul, CrapweEffect, SitcomEffect, WpseEffect, SpoinkEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:
