@@ -14,7 +14,7 @@ AVAILABLE_EFFECTS = 1 * [] + \
                     2 * [GhostEffect, SnebwewEffect, ReverbManEffect, TouretteEffect, VenerEffect,
                          SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia, SitcomEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
-                         CrapweEffect, AmbianceEffect, SpoinkEffect, SitcomEffect] + \
+                         CrapweEffect, AmbianceEffect, SpoinkEffect] + \
                     3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect] + \
                     4 * [WpseEffect]
 # AVAILABLE_EFFECTS = [MwfeEffect, TurboHangoul, CrapweEffect, SitcomEffect, WpseEffect, SpoinkEffect, GodSpeakingEffect] # single tools list used when testing
