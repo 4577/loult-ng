@@ -231,6 +231,9 @@ class SpoilerBipEffect(UtilitaryEffect):
 def add_msg_html_tag(text : str) -> str:
     """Add html tags to the output message, for vocaroos, links or spoilers"""
     text = escape(text)
+    if re.search(r'\*\*.*?\*\*', text):
+        text = re.sub(r'(\*\*(.*?)\*\*)', r'<span class="spoiler">\2</span>', text)
+
     if re.search(r'(https?://vocaroo\.com/i/[0-9a-z]+)', text, flags=re.IGNORECASE):
         vocaroo_player_tag= r'''<object width="148" height="44">
             <param name="movie" value="https://loult.family/player.swf?playMediaID=\2&autoplay=0"></param>
@@ -240,10 +243,9 @@ def add_msg_html_tag(text : str) -> str:
             </embed>\1</object>'''
         text = re.sub(r'(?P<link>https?://vocaroo\.com/i/(?P<id>[0-9a-z]+))', vocaroo_player_tag, text,
                       flags=re.IGNORECASE)
-    elif re.search(r'(https?://[^ ]*[^.,?! :])', text):
-        text = re.sub('(https?://[^ ]*[^.,?! :])', r'<a href="\1" target="_blank">\1</a>', text)
+    elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):
+        text = re.sub(r'(https?://[^< ]*[^<*.,?! :])', r'<a href="\1" target="_blank">\1</a>', text)
 
-    if re.search(r'\*\*([^ ]+\*\*)', text):
-        text = re.sub(r'\*\*(.*?)\*\*', r'<span class="spoiler">\1</span>', text)
+
 
     return text
