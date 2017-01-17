@@ -1,17 +1,22 @@
+import json
 import random
-import re
 from datetime import datetime
-from pysndfx import AudioEffectsChain
+from math import ceil, floor
 from os import path, listdir
-from scipy.io.wavfile import read
+from typing import List
 
 import numpy
+from pysndfx import AudioEffectsChain
+from scipy.io.wavfile import read
 
 from tools.phonems import PhonemList, Phonem, FrenchPhonems
+from tools.tools import VoiceParameters
+import tools
 from .tools import mix_tracks, get_sounds
 
+
 # TODO : effet théatre, effet speech random, effet beat, effet voix robot,
-# effet javanais, effet hangul au hasard
+# effet javanais, effet prwte aléatoir, effet
 
 
 class Effect:
@@ -49,8 +54,8 @@ class EffectGroup(Effect):
     _sub_effects = []
 
     @property
-    def effects(self):
-        return self._sub_effects
+    def effects(self) -> List[Effect]:
+        return [effect_cls() for effect_cls in self._sub_effects]
 
 
 class TextEffect(Effect):
@@ -75,6 +80,13 @@ class PhonemicEffect(Effect):
 
     def process(self, phonems : PhonemList) -> PhonemList:
         """"""
+
+
+class VoiceEffect(Effect):
+    """Affects the voice before the audio rendering"""
+
+    def process(self, voice_params : VoiceParameters) -> VoiceParameters:
+        pass
 
 
 class AudioEffect(Effect):
@@ -115,28 +127,20 @@ class SnebwewEffect(ExplicitTextEffect):
         return reconstructed
 
 
-class MwfeEffect(ExplicitTextEffect):
-    NAME = "YE LA"
+
+class SpoinkEffect(ExplicitTextEffect):
+    NAME = "mme"
     TIMEOUT = 150
-    _mwfe_punchlines = [
-        "CHU LA",
-        "OK BEN NIK TA MER",
-        "JGO CHIER",
-        "JGO FL",
-        "PUTT 1 1 1 1 1 1 COUZ 1 1 1 1 1 1",
-        "A GERBER WALLAH",
-        "YE OU JR",
-        "YA QUOI",
-        "OUÉVÈWB?"
-    ]
+    _spoink_punchlines = ["hihihi", "onwww", "jtm", "jvm", "c'est genre hyper irrespectueux", "onwwwwww",
+                          "onw pleuwww", "pleplpleplelepelepeleuwww", "peuw", "jtm mr", "t two cwle",
+                          "dacowe"]
 
     def process(self, text : str):
-        if random.randint(0,3) != 0:
-            text = text.upper()
-            if random.randint(0,4) == 0:
-                text = "MDR " + text
+        if random.randint(0, 3) != 0:
+            if random.randint(0, 4) == 0:
+                text = "hihihihi " + text
         else:
-            text = random.choice(self._mwfe_punchlines)
+            text = random.choice(self._spoink_punchlines)
         return text
 
 
@@ -220,15 +224,6 @@ class AccentAllemandEffect(PhonemicEffect):
         return phonems
 
 
-class PhonemicShuffleEffect(PhonemicEffect):
-    NAME = "interprète kiglon"
-    TIMEOUT = 120
-
-    def process(self, phonems : PhonemList):
-        random.shuffle(phonems)
-        return phonems
-
-
 class AccentMarseillaisEffect(PhonemicEffect):
     NAME = "du vieux port"
     TIMEOUT = 150
@@ -273,13 +268,49 @@ class VocalDyslexia(PhonemicEffect):
         return phonems
 
 
-class CrapweEffect(PhonemicEffect):
-    NAME = "crapwe"
+class AutotuneEffect(PhonemicEffect):
+    pitch_file = path.join(path.dirname(path.realpath(__file__)), "data/melody/pitches.json")
+    NAME = "lou a du talent"
     TIMEOUT = 150
+    _melody = ["C4"] * 3 + ["D4", "E4", "C4", "D4", "E4", "D4"]
+
+    def __init__(self):
+        super().__init__()
+        with open(self.pitch_file) as pitch_file:
+            self.pitches = json.load(pitch_file)
+
+    def process(self, phonems : PhonemList):
+        melo = iter(self._melody)
+        for pho in phonems:
+            if pho.name in FrenchPhonems.VOWELS:
+                try:
+                    flpitch = self.pitches[next(melo)]
+                    pitch = floor(flpitch) if flpitch - int(flpitch) < 0.5 else ceil(flpitch)
+                    pho.set_from_pitches_list([pitch] * 2)
+                    pho.duration *= 2
+                except StopIteration:
+                    melo = iter(self._melody)
+
+        return phonems
+
+
+class CrapweEffect(PhonemicEffect):
+    """Dilates random vowels and modifies the peach to go up and down"""
+    NAME = "crapwe force"
+    TIMEOUT = 150
+
+    def __init__(self, intensity=None):
+        super().__init__()
+        self.intensity = random.randint(1, 4) if intensity is None else intensity
+        self._name = self.NAME + " " + str(self.intensity)
+
+    @property
+    def name(self):
+        return self._name
 
     def process(self, phonems: PhonemList):
         for phonem in phonems:
-            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 4) == 1:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 4) >= self.intensity:
                 phonem.duration *= 8
                 if phonem.pitch_modifiers:
                     orgnl_pitch_avg = numpy.average([pitch for pos, pitch in phonem.pitch_modifiers])
@@ -291,27 +322,28 @@ class CrapweEffect(PhonemicEffect):
 
 
 class TurboHangoul(PhonemicEffect):
-    NAME = "turbo hangoul"
+    NAME = "turbo hangoul force"
     TIMEOUT = 150
+
+    def __init__(self, intensity=None):
+        super().__init__()
+        self.intensity = random.randint(1,4) if intensity is None else intensity
+        self._name = self.NAME + " " + str(self.intensity)
+
+    @property
+    def name(self):
+        return self._name
 
     def process(self, phonems: PhonemList):
         for phonem in phonems:
-            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 3) == 1:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 4) <= self.intensity:
                 phonem.duration *= 8
-                phonem.set_from_pitches_list([364, 364])
+                phonem.set_from_pitches_list([364 - 10, 364])
 
         return phonems
 
-#### Here are the audio tools ####
 
-
-class ReversedEffect(AudioEffect):
-    """?sdef vlop sdaganliup uirt vlad"""
-    NAME = "inversion"
-    TIMEOUT = 120
-
-    def process(self, wave_data: numpy.ndarray):
-        return wave_data[::-1]
+#### Here are the audio effects ####
 
 
 class ReverbManEffect(AudioEffect):
@@ -339,44 +371,8 @@ class GhostEffect(AudioEffect):
     TIMEOUT = 120
 
     def process(self, wave_data: numpy.ndarray):
-        reverb, reverse = ReverbManEffect(), ReversedEffect()
+        reverb, reverse = ReverbManEffect(), tools.ReversedEffect()
         return reverse.process(reverb.process(reverse.process(wave_data)))
-
-
-class IssouEffect(AudioEffect):
-    # TODO : refactor plus compact des fonctions sur les deux dossiers différents
-    """el famoso"""
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/issou")
-    issou_dir = path.join(main_dir, "issou")
-    other_dir = path.join(main_dir, "other")
-    NAME = "el famoso"
-    TIMEOUT = 120
-
-    def __init__(self):
-        super().__init__()
-
-        self.issou_sounds = get_sounds(self.issou_dir)
-        self.other_sounds = get_sounds(self.other_dir)
-        self.pending_issou, self.pending_other = [], []
-        self._create_pattern()
-
-    def _create_pattern(self):
-        random.shuffle(self.issou_sounds)
-        random.shuffle(self.other_sounds)
-        self.pending_other = self.other_sounds[:random.randint(1,3)]
-        self.pending_issou = self.issou_sounds[:random.randint(2,4)]
-
-    def process(self, wave_data: numpy.ndarray):
-        if random.randint(0,3) == 1:
-            if self.pending_other:
-                return self.pending_other.pop()
-            elif self.pending_issou:
-                return self.pending_issou.pop()
-            else:
-                self._create_pattern()
-                return self.process(wave_data)
-        else:
-            return wave_data
 
 
 class AmbianceEffect(AudioEffect):
@@ -384,10 +380,10 @@ class AmbianceEffect(AudioEffect):
     NAME = "ambiance"
     TIMEOUT = 180
     effects_mapping = {
-        "starwars_mood" : ("lasèw", 0.3),
+        "starwars_mood" : ("lasèw", 0.1),
         "bonfire_mood" : ("les feux de l'amouw", 0.6),
-        "seastorm_mood" : ("bretagne", 0.1),
-        "war_mood" : ("wesh yé ou ryan ce pd", 0.4),
+        "seastorm_mood" : ("bretagne", 0.08),
+        "war_mood" : ("wesh yé ou ryan ce pd", 0.2),
     }
     data_folder = path.join(path.dirname(path.realpath(__file__)), "data/ambiance/")
 
@@ -439,30 +435,76 @@ class BeatsEffect(AudioEffect):
             return wave_data
 
 
-class LaughTrackEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/laugh_track/")
-    NAME = "issou"
+class SitcomEffect(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/sitcom")
+    _subfolders = ["laugh_track", "boo", "applaud"]
+    NAME = "sitcom"
     TIMEOUT = 150
 
     def __init__(self):
         super().__init__()
-        self.tracks = get_sounds(self.main_dir)
-        # sorting by length
-        self.tracks.sort(key = lambda s: len(s))
+        self.tracks = dict()
+        for subfolder in self._subfolders:
+            self.tracks[subfolder] = get_sounds(path.join(self.main_dir, subfolder))
+            # sorting by length
+            self.tracks[subfolder].sort(key = lambda s: len(s))
+
+    def find_nearest(self, track_list, value):
+        nearest_bigger_index = next((i for i, x in enumerate(track_list) if len(x) > value), None)
+        return nearest_bigger_index - 1 if nearest_bigger_index > 0 else 0
 
     def process(self, wave_data: numpy.ndarray):
         if random.randint(0,1):
-            with_laughs = numpy.concatenate((wave_data, random.choice(self.tracks)))
-            if len(wave_data) > 80000:
-                for i in range(random.randint(1, len(wave_data) // 40000 - 1)):
-                    with_laughs = mix_tracks(with_laughs,
-                                             self.tracks[random.randint(1,4)],
-                                             random.randint(1, wave_data))
-            return with_laughs
-        else:
-            return wave_data
+            randoum = random.randint(1, 3)
+            if randoum == 1:
+                wave_data = numpy.concatenate((wave_data, random.choice(self.tracks["laugh_track"])))
+            elif randoum == 2:
+                wave_data = numpy.concatenate((wave_data, random.choice(self.tracks["applaud"])))
+            elif randoum == 3:
+                boo_track_id = self.find_nearest(self.tracks["boo"], len(wave_data))
+                wave_data = mix_tracks(wave_data, self.tracks["boo"][boo_track_id], align="right")
 
-#### Here are the tools groups ####
+        return wave_data
+
+
+class WpseEffect(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/maturity")
+    subfolders = ["burps", "prout"]
+    NAME = "c pas moi lol"
+    TIMEOUT = 130
+
+    def __init__(self):
+        super().__init__()
+        self.type_folder = random.choice(self.subfolders)
+        self.samples = get_sounds(path.join(self.main_dir, self.type_folder))
+
+    def process(self, wave_data: numpy.ndarray):
+        if random.randint(1,2) == 1:
+            sample = random.choice(self.samples) * 0.3
+            if self.type_folder == "burps":
+                wave_data = numpy.insert(wave_data, random.randint(1,len(wave_data)), sample)
+            else:
+                wave_data = mix_tracks(wave_data, sample, offset=random.randint(1,len(wave_data)))
+
+        return wave_data
+
+
+class WpseEffectTwo(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/burps")
+    NAME = "élite du web"
+    TIMEOUT = 130
+
+    def __init__(self):
+        super().__init__()
+        self.samples = get_sounds(self.main_dir)
+
+    def process(self, wave_data: numpy.ndarray):
+        if random.randint(1, 2) == 1:
+            sample = random.choice(self.samples) * 0.3
+
+        return wave_data
+
+#### Here are the effects groups ####
 
 
 class VenerEffect(EffectGroup):
@@ -494,7 +536,7 @@ class VieuxPortEffect(EffectGroup):
     class VieuxPortInterjections(HiddenTextEffect):
         """Kinda like a tourette effect, but but just a couple of southern interjections"""
         TIMEOUT = 150
-        available_words = ["putain", "con", "bonne mère", "t'es fada"]
+        available_words = ["putain", "con", "bonne mère", "t'es fada", "peuchère"]
 
         def process(self, text: str):
             # the variable is called splitted because it pisses off this australian cunt that mboevink is
@@ -513,3 +555,47 @@ class VieuxPortEffect(EffectGroup):
         southern_accent = AccentMarseillaisEffect()
         southern_accent._timeout = 150
         return [southern_accent, self.VieuxPortInterjections()]
+
+
+class MwfeEffect(EffectGroup):
+    NAME = "YE LA"
+    TIMEOUT = 150
+
+    class TextMwfeEffect(ExplicitTextEffect):
+        TIMEOUT = 150
+
+        _mwfe_punchlines = ["CHU LA", "OK BEN NIK TA MER", "JGO CHIER", "JGO FL", "PUTT 1 1 1 1 1 1 COUZ 1 1 1 1 1 1",
+                            "A GERBER WALLAH", "YE OU JR", "YA QUOI", "OUÉVÈWB?", "PK LA VIE"]
+
+        def process(self, text: str):
+            if random.randint(0, 3) != 0:
+                text = text.upper()
+                if random.randint(0, 4) == 0:
+                    text = "MDR " + text
+            else:
+                text = random.choice(self._mwfe_punchlines)
+            return text
+
+    class VoiceMwfeEffect(VoiceEffect):
+        TIMEOUT = 150
+
+        def process(self, voice_params : VoiceParameters):
+            return VoiceParameters(speed=110, pitch=60, voice_id=7)
+
+    _sub_effects = [TextMwfeEffect, VoiceMwfeEffect]
+
+
+class GodSpeakingEffect(EffectGroup):
+    TIMEOUT = 120
+    NAME = "gode mode"
+    _sound_file = path.join(path.dirname(path.realpath(__file__)),
+                            "data/godspeaking/godspeaking.wav")
+
+    @property
+    def effects(self):
+        monkey_patched = AmbianceEffect()
+        monkey_patched._timeout = 120
+        monkey_patched.gain = 0.4
+        with open(self._sound_file, "rb") as sndfile:
+            monkey_patched.rate, monkey_patched.track_data = read(sndfile)
+        return [ReverbManEffect(), monkey_patched]

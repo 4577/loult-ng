@@ -1,4 +1,7 @@
 # Description du système d'attaque
+**NB** : Pour l'instant, tout est implémenté sans le niveau et l'XP.
+On verra déjà si ce système marche bien avec les loutiste avant de voir
+si on peut complexifier.
 
 ## La phase de tirage des dés
 Quand user1 attaque user2, chacun des utilisateurs renvoie 2 valeurs: 
@@ -54,7 +57,7 @@ et c'est tout.
 
 ### Rebond
 Un utilisateur aléatoire dans le salon se prend un effet au hasard 
-(résultat classique d'une attaque mais sur un clanpin random)
+(résultat classique d'une attaque mais sur un clampin random)
 
 ## À propos du niveau
 
