@@ -114,20 +114,24 @@ main {
 	display: -ms-flexbox;
 	display: flex;
 	min-height: 50px;
+	border-top: 1px solid #BBB;
+}
+
+#chatentry img {
+	padding: 12px 8px;
 }
 
 #input {
 	-webkit-box-flex: 1;
 	    -ms-flex: 1;
 	        flex: 1;
-	height: 50px ;
+	height: 49px ;
 	font-size: 30px;
-	padding: 6px 0px;
+	padding: 6px 0;
 	text-indent: 6px;
 	min-width: 0;
 	outline: 0;
 	border: 0;
-	border-top: 1px solid #BBB;
 	background: transparent;
 }
 
@@ -175,11 +179,12 @@ td:first-child {
 	margin-top: 6px;
 }
 
-#chattbl td:nth-child(2) span {
+#chattbl td:nth-child(2) span, #chattbl td:nth-child(2) span * {
 	background: #000;
+	color: #000;
 }
 
-#chattbl td:nth-child(2) span:hover {
+#chattbl td:nth-child(2) span:hover, #chattbl td:nth-child(2) span:hover * {
 	background: transparent;
 }
 
@@ -201,7 +206,7 @@ td:first-child {
 	width: 185px;
 }
 
-#sidebtns img {
+#sidebtns img, #chatentry img {
 	height: 24px;
 	width: 24px;
 }
@@ -221,13 +226,13 @@ label {
 label.left {
 	padding-left: 40px;
 	padding-right: 0;
-	background-position: left 0 bottom 3px;
+	background-position: left 0 bottom 5px;
 }
 
 label.right {
 	padding-left: 0;
 	padding-right: 40px;
-	background-position: right 0 bottom 3px;
+	background-position: right 0 bottom 5px;
 }
 
 .sound {
@@ -238,12 +243,12 @@ label.right {
 	opacity: 0.6;
 }
 
-a {
+a, #chattbl td:nth-child(2) span:hover a {
 	color: #06A;
 	text-decoration: none;
 }
 
-a:hover, .sound:hover, #sidebtns > img:hover, #prefs input:hover, #prefs label:hover {
+a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs input:hover, #prefs label:hover, select:hover {
 	opacity: 0.8;
 	cursor: pointer;
 }
