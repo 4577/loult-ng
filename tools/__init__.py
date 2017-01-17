@@ -3,7 +3,7 @@ from .effects import Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, \
     GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect, \
     PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, \
     VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect ,\
-    VieuxPortEffect
+    VieuxPortEffect, GodSpeakingEffect
 from .effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
 from .phonems import PhonemList
 
@@ -14,10 +14,10 @@ AVAILABLE_EFFECTS = 1 * [] + \
                     2 * [GhostEffect, SnebwewEffect, ReverbManEffect, TouretteEffect, VenerEffect,
                          SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia, SitcomEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
-                         CrapweEffect, AmbianceEffect] + \
-                    3 * [TurboHangoul] + \
-                    4 * [BeatsEffect]
-AVAILABLE_EFFECTS = [MwfeEffect, TurboHangoul, CrapweEffect, SitcomEffect, WpseEffect, SpoinkEffect] # single tools list used when testing
+                         CrapweEffect, AmbianceEffect, SpoinkEffect, SitcomEffect] + \
+                    3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect] + \
+                    4 * [WpseEffect]
+# AVAILABLE_EFFECTS = [MwfeEffect, TurboHangoul, CrapweEffect, SitcomEffect, WpseEffect, SpoinkEffect, GodSpeakingEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:
