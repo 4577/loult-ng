@@ -468,8 +468,30 @@ class SitcomEffect(AudioEffect):
 
 
 class WpseEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/prout")
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/maturity")
+    subfolders = ["burps", "prout"]
     NAME = "c pas moi lol"
+    TIMEOUT = 130
+
+    def __init__(self):
+        super().__init__()
+        self.type_folder = random.choice(self.subfolders)
+        self.samples = get_sounds(path.join(self.main_dir, self.type_folder))
+
+    def process(self, wave_data: numpy.ndarray):
+        if random.randint(1,2) == 1:
+            sample = random.choice(self.samples) * 0.3
+            if self.type_folder == "burps":
+                wave_data = numpy.insert(wave_data, random.randint(1,len(wave_data)), sample)
+            else:
+                wave_data = mix_tracks(wave_data, sample, offset=random.randint(1,len(wave_data)))
+
+        return wave_data
+
+
+class WpseEffectTwo(AudioEffect):
+    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/burps")
+    NAME = "élite du web"
     TIMEOUT = 130
 
     def __init__(self):
@@ -477,9 +499,8 @@ class WpseEffect(AudioEffect):
         self.samples = get_sounds(self.main_dir)
 
     def process(self, wave_data: numpy.ndarray):
-        if random.randint(1,2) == 1:
+        if random.randint(1, 2) == 1:
             sample = random.choice(self.samples) * 0.3
-            wave_data = mix_tracks(wave_data, sample, offset=random.randint(1,len(wave_data)))
 
         return wave_data
 
