@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
 	var usertbl = document.getElementById('usertbl');
+	var input = document.getElementById('input');
 	var left = (localStorage.left == 'true');
 	var dt = (localStorage.dt == 'true');
 	var hr = (localStorage.hr == 'true');
@@ -33,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		txt = String(txt).replace(/(.+)?\{{4}(.+)\}{4}(.+)?/u, '<marquee>$1$2$3</marquee>');
+		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/, '<marquee>$1$2$3</marquee>');
 		td.innerHTML = txt;
 		if(txt.match(/^&gt;/))
 			td.className = 'greentext';
@@ -129,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	var rightbtn = document.getElementById('right');
 	var dtbtn = document.getElementById('dt');
 	var hrbtn = document.getElementById('hr');
-	var ckwipe = document.getElementById('ckwipe');
+	// var ckwipe = document.getElementById('ckwipe');
 	var head = document.getElementById('head');
 	var main = document.getElementById('main');
 	
@@ -187,18 +189,18 @@ document.addEventListener('DOMContentLoaded', function() {
 			chatbox.scrollTop = chatbox.scrollHeight;
 	}
 	
-	ckwipe.onclick = function(evt) {
-		evt.preventDefault();
-		if(confirm('Supprimer le cookie ?')) {
-			document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
-			location.reload();
-		}
-	}; 
+	// ckwipe.onclick = function(evt) {
+		// evt.preventDefault();
+		// if(confirm('Supprimer le cookie ?')) {
+			// document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
+			// location.reload();
+		// }
+	// }; 
 	
 	// Languages
 	
 	var select = document.getElementById('lang');
-	var lang = document.cookie.match(/lang=(\w\w)/);
+	var lang = document.cookie.match(/lang=(\w{2})/);
 	
 	if(!lang) {
 		var l = navigator.language.substr(0, 2);
@@ -248,33 +250,108 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// Sound and volume
 	
-	var speaker = document.getElementById('speaker');
-	var volrange = document.getElementById('volrange');
-	var context = new (window.AudioContext || webkitAudioContext)();
-	var volume = (context.createGain ? context.createGain() : context.createGainNode());
-	volume.connect(context.destination);
-	
-	if(localStorage.volume) {
-		volrange.value = localStorage.volume * 100;
-		volume.gain.value = localStorage.volume;
+	if(audio)
+	{
+		var speaker = document.getElementById('speaker');
+		var volrange = document.getElementById('volrange');
+		var context = new (window.AudioContext || webkitAudioContext)();
+		var volume = (context.createGain ? context.createGain() : context.createGainNode());
+		volume.connect(context.destination);
+		
+		if(localStorage.volume) {
+			volrange.value = localStorage.volume * 100;
+			volume.gain.value = localStorage.volume;
+		}
+		
+		speaker.onclick = function() {
+			if(this.src.indexOf('mute') == -1) {
+				volume.gain.value = 0;
+				this.src = './img/mute.png';
+			}
+			else {
+				volume.gain.value = volrange.value / 100;
+				this.src = './img/speaker.png';
+			}
+		};
+		volrange.oninput = function() {
+			if(speaker.src.indexOf('mute') == -1) {
+				volume.gain.value = volrange.value / 100;
+				localStorage.volume = volume.gain.value;
+			}
+		};
 	}
 	
-	speaker.onclick = function() {
-		if(this.src.indexOf('mute') == -1) {
-			volume.gain.value = 0;
-			this.src = './img/mute.png';
+	// Speech
+	
+	if('webkitSpeechRecognition' in window) {
+		var recognition = new webkitSpeechRecognition();
+		var recognizing = false;
+		
+		var chatentry = document.getElementById('chatentry');
+		var img = document.createElement('img');
+        img.src = './img/micro_off.png';
+		chatentry.appendChild(img);
+		img.onclick = startDictation;
+		
+		recognition.continuous = true;
+		recognition.interimResults = true;
+		
+		recognition.onstart = function() {
+			recognizing = true;
+		};
+		
+		recognition.onerror = function(event) {
+			// console.log(event.error);
+		};
+		
+		recognition.onend = function() {
+			recognizing = false;
+		};
+		
+		recognition.onresult = function(event) {
+			var interim_transcript = '';
+			for(var i = event.resultIndex; i < event.results.length; i++) {
+				if(event.results[i].isFinal) {
+					var m = input.value.trim();
+					if(m.length > 0) {
+						ws.send(JSON.stringify({type: 'msg', msg: m, lang: lang}));
+						input.value = '';
+					}
+				}
+				else {
+					interim_transcript += event.results[i][0].transcript;
+				}
+			}
+			input.value = interim_transcript.trim();
+			input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
+		};
+		
+		function startDictation() {
+			if(recognizing) {
+				recognition.stop();
+				img.src = './img/micro_off.png';
+				return;
+			}
+			var l = 'en-US';
+			switch(lang) {
+				case 'fr':
+					l = 'fr-FR';
+				break;
+				case 'es':
+					l = 'es-ES';
+				break;
+				case 'de':
+					l = 'de-DE';
+				break;
+				default:
+					l = 'en-US';
+			}
+			img.src = './img/micro_on.png';
+			recognition.lang = l;
+			recognition.start();
+			input.value = '';
 		}
-		else {
-			volume.gain.value = volrange.value / 100;
-			this.src = './img/speaker.png';
-		}
-	};
-	volrange.oninput = function() {
-		if(speaker.src.indexOf('mute') == -1) {
-			volume.gain.value = volrange.value / 100;
-			localStorage.volume = volume.gain.value;
-		}
-	};
+	}
 	
 	// Users list display
 	
@@ -290,8 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// WebSocket-related functions
 	
-	var input = document.getElementById('input');
-	
 	var wsConnect = function() {
 		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
 		// ws = new WebSocket('ws://loult.family/socket' + location.pathname);
@@ -301,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		input.onkeydown = function(evt) {
 			if(evt.keyCode == 13 && input.value) {
-				if(input.value.match(/^\/atta(ck|que)\s/)) {
+				if(input.value.match(/^\/atta(ck|que)\s/i)) {
 					splitted = input.value.split(' ');
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
@@ -375,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					break;
 				}
 			}
-			else if(!lastMuted) {
+			else if(!lastMuted && audio) {
 				context.decodeAudioData(msg.data, function(buf) {
 					var source = context.createBufferSource();
 					source.buffer = buf;
