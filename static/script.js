@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
+		txt = String(txt).replace(/\*{2}([^\*]+)\*{2}/g, '<span>$1</span>');
 		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/, '<marquee>$1$2$3</marquee>');
 		td.innerHTML = txt;
 		if(txt.match(/^&gt;/))
@@ -195,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			// document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
 			// location.reload();
 		// }
-	// };
+	// }; 
 	
 	// Languages
 	
@@ -257,12 +258,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		var context = new (window.AudioContext || webkitAudioContext)();
 		var volume = (context.createGain ? context.createGain() : context.createGainNode());
 		volume.connect(context.destination);
-
+		
 		if(localStorage.volume) {
 			volrange.value = localStorage.volume * 100;
 			volume.gain.value = localStorage.volume;
 		}
-
+		
 		speaker.onclick = function() {
 			if(this.src.indexOf('mute') == -1) {
 				volume.gain.value = 0;
@@ -280,34 +281,34 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		};
 	}
-
+	
 	// Speech
-
+	
 	if('webkitSpeechRecognition' in window) {
 		var recognition = new webkitSpeechRecognition();
 		var recognizing = false;
-
+		
 		var chatentry = document.getElementById('chatentry');
 		var img = document.createElement('img');
         img.src = './img/micro_off.png';
 		chatentry.appendChild(img);
 		img.onclick = startDictation;
-
+		
 		recognition.continuous = true;
 		recognition.interimResults = true;
-
+		
 		recognition.onstart = function() {
 			recognizing = true;
 		};
-
+		
 		recognition.onerror = function(event) {
 			// console.log(event.error);
 		};
-
+		
 		recognition.onend = function() {
 			recognizing = false;
 		};
-
+		
 		recognition.onresult = function(event) {
 			var interim_transcript = '';
 			for(var i = event.resultIndex; i < event.results.length; i++) {
@@ -325,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			input.value = interim_transcript.trim();
 			input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
 		};
-
+		
 		function startDictation() {
 			if(recognizing) {
 				recognition.stop();
@@ -366,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	};
 	
 	// WebSocket-related functions
-
+	
 	var wsConnect = function() {
 		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
 		// ws = new WebSocket('ws://loult.family/socket' + location.pathname);
