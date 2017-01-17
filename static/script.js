@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		txt = String(txt).replace(/\*{2}([^\*]+)\*{2}/g, '<span>$1</span>');
 		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/, '<marquee>$1$2$3</marquee>');
 		td.innerHTML = txt;
 		if(txt.match(/^&gt;/))
@@ -196,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			// document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
 			// location.reload();
 		// }
-	// }; 
+	// };
 	
 	// Languages
 	
