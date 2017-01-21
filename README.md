@@ -17,7 +17,7 @@ espeak, sox (sur gestionnaire de paquet debian):
 
 `source venv/bin/activate`
 
-* Installer, via pip3, `pysndfx` et `autobahn`
+* Installer le reste des dépendances (`autobahn`, `pysndfx`) avec pip3:
 
 `pip3 install -r requirements.txt`
 
