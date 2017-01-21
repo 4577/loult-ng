@@ -4,21 +4,26 @@ La partie client est en HTML/CSS/JS statique et la partie serveur en Python.
 
 * Installer nginx, python3-scipy, mbrola (avec voix fr/es/us/de), 
 espeak, sox (sur gestionnaire de paquet debian):
-`sudo apt-get install nginx python3-scipy python3-autobahn mbrola espeak sox \
-mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3-venv`
 
-mkdir -p loult/venv
-cd loult
-git clone https://github.com/4577/loult-ng.git
-python3 -m venv venv
-source venv/bin/activate
+`sudo apt-get install nginx python3-scipy python3-autobahn mbrola espeak sox mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3-venv`
+
+`mkdir -p loult/venv`
+`cd loult`
+`git clone https://github.com/4577/loult-ng.git`
+`python3 -m venv venv`
+`source venv/bin/activate`
 
 * Installer, via pip3, `pysndfx` et `autobahn`
-pip3 install -r requirements.txt
+
+`pip3 install -r requirements.txt`
+
 * Créer un fichier `salt.py` contenant `SALT = 'valeur arbitraire'`
 * Configurer nginx avec `loult.conf`, adapter le chemin de $static
-mv loult.conf /etc/nginx/site-available/
-ln -s /etc/nginx/site-available/ /etc/nginx/site-enabled
+
+`mv loult.conf /etc/nginx/site-available/`
+
+`ln -s /etc/nginx/site-available/ /etc/nginx/site-enabled`
+
 * Lancer `poke.py`
 
 # Détails sur le fonctionnement
