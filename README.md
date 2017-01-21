@@ -8,9 +8,13 @@ espeak, sox (sur gestionnaire de paquet debian):
 `sudo apt-get install nginx python3-scipy python3-autobahn mbrola espeak sox mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3-venv`
 
 `mkdir -p loult/venv`
+
 `cd loult`
+
 `git clone https://github.com/4577/loult-ng.git`
+
 `python3 -m venv venv`
+
 `source venv/bin/activate`
 
 * Installer, via pip3, `pysndfx` et `autobahn`
