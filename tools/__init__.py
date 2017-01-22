@@ -1,4 +1,4 @@
-from tools.effects import WpseEffect, SpoinkEffect
+from tools.effects import WpseEffect, SpoinkEffect, TurfuEffect
 from .unused_effects import ReversedEffect
 from .effects import Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, \
     GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect, \
@@ -16,9 +16,9 @@ AVAILABLE_EFFECTS = 1 * [] + \
                          SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia, SitcomEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
                          CrapweEffect, AmbianceEffect, SpoinkEffect ] + \
-                    3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect] + \
-                    4 * [WpseEffect]
-# AVAILABLE_EFFECTS = [MwfeEffect, TurboHangoul, CrapweEffect, SitcomEffect, WpseEffect, SpoinkEffect, GodSpeakingEffect] # single tools list used when testing
+                    3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect, WpseEffect, TurfuEffect] + \
+                    4 * []
+AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:
