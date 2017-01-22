@@ -246,6 +246,4 @@ def add_msg_html_tag(text : str) -> str:
     elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):
         text = re.sub(r'(https?://[^< ]*[^<*.,?! :])', r'<a href="\1" target="_blank">\1</a>', text)
 
-
-
     return text
