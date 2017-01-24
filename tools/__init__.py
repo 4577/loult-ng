@@ -18,7 +18,7 @@ AVAILABLE_EFFECTS = 1 * [] + \
                          CrapweEffect, AmbianceEffect, SpoinkEffect ] + \
                     3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect, WpseEffect, TurfuEffect] + \
                     4 * []
-AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
+# AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:
