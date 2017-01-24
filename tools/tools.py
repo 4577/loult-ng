@@ -240,7 +240,7 @@ def add_msg_html_tag(text : str) -> str:
             <param name="wmode" value="transparent"></param>
             <embed src="https://loult.family/player.swf?playMediaID=\2&autoplay=0"
             width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
-            </embed>\1</object>'''
+            </embed></object><a href="\1" target="_blank">Donne mou la vocarookles</a>'''
         text = re.sub(r'(?P<link>https?://vocaroo\.com/i/(?P<id>[0-9a-z]+))', vocaroo_player_tag, text,
                       flags=re.IGNORECASE)
     elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):
