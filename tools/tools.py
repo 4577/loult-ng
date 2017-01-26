@@ -247,12 +247,14 @@ def add_msg_html_tag(text : str) -> str:
         text = re.sub(r'(\*\*(.*?)\*\*)', r'<span class="spoiler">\2</span>', text)
 
     if re.search(r'(https?://vocaroo\.com/i/[0-9a-z]+)', text, flags=re.IGNORECASE):
-        vocaroo_player_tag= r'''<object width="148" height="44">
+        vocaroo_player_tag= r'''<object class="vocalink" width="148" height="44">
             <param name="movie" value="https://loult.family/player.swf?playMediaID=\2&autoplay=0"></param>
             <param name="wmode" value="transparent"></param>
             <embed src="https://loult.family/player.swf?playMediaID=\2&autoplay=0"
             width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
-            </embed></object><a href="\1" target="_blank">Donne mou la vocarookles</a>'''
+            </embed>
+            <a href="\1" target="_blank">Donne mou la vocarookles</a>
+            </object>'''
         text = re.sub(r'(?P<link>https?://vocaroo\.com/i/(?P<id>[0-9a-z]+))', vocaroo_player_tag, text,
                       flags=re.IGNORECASE)
     elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):
