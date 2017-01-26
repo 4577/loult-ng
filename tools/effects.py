@@ -370,6 +370,21 @@ class TurboHangoul(PhonemicEffect):
         return phonems
 
 
+#### Here are the voice effets ####
+
+class VoiceSpeedupEffect(VoiceEffect):
+    TIMEOUT = 150
+    NAME = "en stress"
+
+    def __init__(self):
+        super().__init__()
+        self.multiplier = random.uniform(1.5, 2.4)
+
+    def process(self, voice_params : VoiceParameters):
+        voice_params.speed = int(self.multiplier * voice_params.speed)
+        return voice_params
+
+
 #### Here are the audio effects ####
 
 
