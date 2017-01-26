@@ -188,36 +188,48 @@ class UtilitaryEffect:
 class SpoilerBipEffect(UtilitaryEffect):
     """If there are ** phonems markers in the text, replaces their phonemic render by
     an equally long beep. If not, just returns the text"""
+    _tags_phonems = {
+        "en" : ("k_hIN", "dZINk"),
+        "fr" : ("kiN", "ZiNk"),
+        "de" : ("kIN", "gINk"),
+        "es" : ("kin", "xink"),
+    }
     def __init__(self, renderer : AudioRenderer, voice_params : VoiceParameters):
         super().__init__()
         self.renderer = renderer
         self.voice_params = voice_params
 
-    def _gen_beep(self, duration : int):
+    def _gen_beep(self, duration : int, lang : str):
+        i_phonem = "i:" if lang == "de" else "i" # "i" phonem is not the same i german. Damn krauts
         return PhonemList(PhonemList([Phonem("b", 103),
-                                      Phonem("i", duration, [(0, 103 * 3), (80, 103 * 3), (100, 103 * 3)]),
+                                      Phonem(i_phonem, duration, [(0, 103 * 3), (80, 103 * 3), (100, 103 * 3)]),
                                       Phonem("p", 228)]))
 
     def process(self, text: str, lang : str) -> Union[str, PhonemList]:
-        # TODO : comment some stuff here
+        """Beeps out parts of the text that are tagged with double asterisks.
+        It basicaly replaces the opening and closig asterisk with two opening and closing 'stop words'
+        then finds the phonemic form of these two and replaces the phonems inside with an equivalently long beep"""
         occ_list = re.findall(r"\*\*.+?\*\*", text)
         if occ_list:
+            # replace the "**text**" by "king text gink"
             tagged_occ_list = [" king %s gink " % occ.strip("*") for occ in occ_list]
             for occ, tagged_occ in zip(occ_list, tagged_occ_list):
                 text = text.replace(occ, tagged_occ)
-
+            # getting the phonemic form of the text
             phonems = self.renderer.string_to_phonemes(text, lang, self.voice_params)
+            # then using a simple state machine (in_beep is the state), replaces the phonems between
+            # the right phonemic occurence with the phonems of a beep
             in_beep = False
             output, buffer = PhonemList([]), PhonemList([])
             while phonems:
-                if PhonemList(phonems[:3]).phonemes_str == "kiN" and not in_beep:
+                if PhonemList(phonems[:3]).phonemes_str == self._tags_phonems[lang][0] and not in_beep:
                     in_beep, buffer = True, PhonemList([])
                     phonems = PhonemList(phonems[3:])
-                elif PhonemList(phonems[:4]).phonemes_str == "ZiNk" and in_beep:
+                elif PhonemList(phonems[:4]).phonemes_str == self._tags_phonems[lang][1] and in_beep:
                     in_beep = False
                     # creating a beep of the buffer's duration
                     if buffer:
-                        output += self._gen_beep(sum([pho.duration for pho in buffer]))
+                        output += self._gen_beep(sum([pho.duration for pho in buffer]), lang)
                     phonems = phonems[4:]
                 elif not in_beep:
                     output.append(phonems.pop(0))

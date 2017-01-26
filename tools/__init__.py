@@ -1,4 +1,4 @@
-from tools.effects import WpseEffect, SpoinkEffect, TurfuEffect
+from tools.effects import WpseEffect, SpoinkEffect, TurfuEffect, AutotuneEffect
 from .unused_effects import ReversedEffect
 from .effects import Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, \
     GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect, \
@@ -17,7 +17,7 @@ AVAILABLE_EFFECTS = 1 * [] + \
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
                          CrapweEffect, AmbianceEffect, SpoinkEffect ] + \
                     3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect, WpseEffect, TurfuEffect] + \
-                    4 * []
+                    4 * [AutotuneEffect]
 # AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 
