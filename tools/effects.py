@@ -1,6 +1,7 @@
 import json
 import random
 from datetime import datetime
+from itertools import cycle
 from math import ceil, floor
 from os import path, listdir
 from typing import List
@@ -9,14 +10,15 @@ import numpy
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
 
+from tools.melody import chords_ratios, chord_progressions, get_harmonies
 from tools.phonems import PhonemList, Phonem, FrenchPhonems
 from tools.tools import VoiceParameters
 import tools
 from .tools import mix_tracks, get_sounds
 
 
-# TODO : effet théatre, effet speech random, effet beat, effet voix robot,
-# effet javanais, effet prwte aléatoir, effet
+# TODO : effet théatre, effet speech random, effet voix robot,
+# effet javanais
 
 
 class Effect:
@@ -95,7 +97,7 @@ class AudioEffect(Effect):
         pass
 
 
-#### Here are the text tools ####
+#### Here are the text effects ####
 
 class SnebwewEffect(ExplicitTextEffect):
     """Finds, using a simple heuristic, random nouns and changes them to snèbwèw"""
@@ -125,7 +127,6 @@ class SnebwewEffect(ExplicitTextEffect):
             reconstructed = reconstructed[:-1] + "ENNW"
 
         return reconstructed
-
 
 
 class SpoinkEffect(ExplicitTextEffect):
@@ -175,7 +176,7 @@ class SpeechMasterEffect(HiddenTextEffect):
         return reconstructed
 
 
-#### Here are the phonemic tools ####
+#### Here are the phonemic effects ####
 
 class PhonemicNwwoiwwEffect(PhonemicEffect):
     NAME = "nwwoiww"
@@ -243,7 +244,25 @@ class AccentMarseillaisEffect(PhonemicEffect):
                 reconstructed.append(phonem)
             else:
                 reconstructed.append(phonem)
-        print(str(reconstructed))
+        return reconstructed
+
+
+class StutterEffect(PhonemicEffect):
+    TIMEOUT = 150
+    NAME = ""
+
+    def process(self, phonems : PhonemList):
+        silence = Phonem("_", 61)
+        reconstructed = PhonemList([])
+        for i, phonem in enumerate(phonems):
+            if phonems[i].name in FrenchPhonems.CONSONANTS \
+                    and phonems[i+1].name in FrenchPhonems.VOWELS \
+                    and random.randint(1,3) == 1:
+                    reconstructed += [phonems[i], phonems[i+1]] * 2
+            elif phonem.name in FrenchPhonems.VOWELS and random.randint(1,3) == 1:
+                reconstructed += [phonem, silence, phonem]
+            else:
+                reconstructed.append(phonem)
         return reconstructed
 
 
@@ -272,24 +291,32 @@ class AutotuneEffect(PhonemicEffect):
     pitch_file = path.join(path.dirname(path.realpath(__file__)), "data/melody/pitches.json")
     NAME = "lou a du talent"
     TIMEOUT = 150
-    _melody = ["C4"] * 3 + ["D4", "E4", "C4", "D4", "E4", "D4"]
 
     def __init__(self):
         super().__init__()
         with open(self.pitch_file) as pitch_file:
             self.pitches = json.load(pitch_file)
+        self.progression = random.choice(chord_progressions)
+        self.octave = 3
+
+    def _get_note(self):
+        for chord in cycle(self.progression):
+            if chord.endswith("m"):
+                note, chord_type = chord.strip("m"), "minor"
+            else:
+                note, chord_type = chord, "major"
+
+            harmonies_ptich = get_harmonies(self.pitches[note + str(self.octave)], chord_type)
+            for _ in range(4):
+                yield random.choice(harmonies_ptich)
 
     def process(self, phonems : PhonemList):
-        melo = iter(self._melody)
+        notes = self._get_note()
         for pho in phonems:
             if pho.name in FrenchPhonems.VOWELS:
-                try:
-                    flpitch = self.pitches[next(melo)]
-                    pitch = floor(flpitch) if flpitch - int(flpitch) < 0.5 else ceil(flpitch)
-                    pho.set_from_pitches_list([pitch] * 2)
-                    pho.duration *= 2
-                except StopIteration:
-                    melo = iter(self._melody)
+                pitch = next(notes)
+                pho.set_from_pitches_list([pitch] * 2)
+                pho.duration *= 2
 
         return phonems
 
@@ -341,6 +368,21 @@ class TurboHangoul(PhonemicEffect):
                 phonem.set_from_pitches_list([364 - 10, 364])
 
         return phonems
+
+
+#### Here are the voice effets ####
+
+class VoiceSpeedupEffect(VoiceEffect):
+    TIMEOUT = 150
+    NAME = "en stress"
+
+    def __init__(self):
+        super().__init__()
+        self.multiplier = random.uniform(1.5, 2.4)
+
+    def process(self, voice_params : VoiceParameters):
+        voice_params.speed = int(self.multiplier * voice_params.speed)
+        return voice_params
 
 
 #### Here are the audio effects ####
@@ -571,7 +613,7 @@ class MwfeEffect(EffectGroup):
             if random.randint(0, 3) != 0:
                 text = text.upper()
                 if random.randint(0, 4) == 0:
-                    text = "MDR " + text
+                    text = random.choice(["MDR ", "WESH "]) + text
             else:
                 text = random.choice(self._mwfe_punchlines)
             return text
@@ -599,3 +641,15 @@ class GodSpeakingEffect(EffectGroup):
         with open(self._sound_file, "rb") as sndfile:
             monkey_patched.rate, monkey_patched.track_data = read(sndfile)
         return [ReverbManEffect(), monkey_patched]
+
+
+class TurfuEffect(EffectGroup):
+    TIMEOUT = 150
+    NAME = "du turfu"
+
+    @property
+    def effects(self):
+        hangoul, crapw = TurboHangoul(4), CrapweEffect(4)
+        hangoul._timeout = 150
+        crapw._timeout = 150
+        return [hangoul, crapw]
