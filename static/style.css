@@ -264,6 +264,10 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	font-family: monospace;
 }
 
+.vocalink {
+    vertical-align : middle;
+}
+
 .part {
 	color: #1AC;
 }

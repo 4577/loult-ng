@@ -2,9 +2,11 @@ La partie client est en HTML/CSS/JS statique et la partie serveur en Python.
 
 # Mise en place
 
-* Installer nginx, python3-scipy, mbrola (avec voix fr/es/us/de), 
+* Installer nginx, python3-scipy, le synthésiseur vocal mbrola, 
 espeak, sox (sur gestionnaire de paquet debian):
 `sudo apt-get install nginx python3-scipy  python3-autobahn mbrola espeak sox`
+* Vous pouvez installer les voix mbrola "à la main" mais c'est plus simple de juste faire
+`sudo apt-get install mbrola-{en,es,fr,us}*`
 * Installer, via pip3, `pysndfx` et `autobahn`
 * Créer un fichier `salt.py` contenant `SALT = 'valeur arbitraire'`
 * Configurer nginx avec `nginx.conf`, adapter le chemin de $static
