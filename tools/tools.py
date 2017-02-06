@@ -1,91 +1,25 @@
 import logging
 import re
+from datetime import datetime, timedelta
 from html import escape
 from io import BytesIO
-from os import listdir, path
 from struct import pack
 from subprocess import PIPE, run
 from typing import List, Union
 
 import numpy
-from numpy.lib import pad
 from scipy.io import wavfile
-from scipy.io.wavfile import read
 
+from config import FLOOD_DETECTION_WINDOW, FLOOD_DETECTION_MSG_PER_SEC
+from tools import pokemons
+from tools.audio_tools import resample
 from tools.phonems import PhonemList, Phonem
+from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+    EffectGroup, VoiceEffect
 
-import re
 
 class ToolsError(Exception):
     pass
-
-
-def mix_tracks(track1, track2, offset=None, align=None):
-    """Function that mixes two tracks of unequal lengths(represented by numpy arrays) together,
-    using an 'align' or an offset. Zero padding is added to the smallest track as to make it fit.
-
-    if offset is defined:
-    longest track :  [=============================]
-    smallest track : [0000000][================][00]
-                      offset
-    or
-    longest track :  [=============================][00]
-    smallest track : [000000000000000][================]
-                          offset
-
-    if align is defined:
-    left:
-    longest track :  [=============================]
-    smallest track : [=====================][000000]
-
-    right:
-    longest track :  [=============================]
-    smallest track : [000000][=====================]
-
-    center:
-    longest track :  [=============================]
-    smallest track : [000][===================][000]
-    """
-    short_t, long_t = (track1, track2) if len(track1) < len(track2) else (track2, track1)
-    diff = len(long_t) - len(short_t)
-
-    if offset is not None:
-        if len(long_t) - (len(short_t) + offset) >= 0:
-            padded_short_t = pad(short_t, (offset, diff - offset), "constant", constant_values=0.0)
-        else: # if offset + short > long, we have to padd the end of the long one
-            padded_short_t = pad(short_t, (offset, 0), "constant", constant_values=0.0)
-            long_t = pad(long_t, (0, offset - diff), "constant", constant_values=0.0)
-
-    elif align is not None and align in ["left", "right", "center"]:
-        if align == "right":
-            padded_short_t = pad(short_t, (diff, 0), "constant", constant_values=0.0)
-        elif align == "left":
-            padded_short_t = pad(short_t, (0, diff), "constant", constant_values=0.0)
-        elif align == "center":
-            left = diff // 2
-            right = left if diff % 2 == 0 else left + 1
-            padded_short_t = pad(short_t, (left, right), "constant", constant_values=0.0)
-    else:
-        raise ToolsError()
-
-    # the result vector's elements are c_i = a_i + b_i
-    return padded_short_t + long_t
-
-
-def get_sounds(dir: str) -> List[numpy.ndarray]:
-    sounds = []
-    for filename in listdir(dir):
-        realpath = path.join(dir, filename)
-        rate, data = read(realpath)
-        sounds.append(data)
-    return sounds
-
-
-def resample(wave_data : numpy.ndarray, sample_in, sample_out=16000):
-    """Uses sox to resample the wave data array"""
-    cmd = "sox -N -V1 -t f32 -r %s -c 1 - -t f32 -r %s -c 1 -" % (sample_in, sample_out)
-    output = run(cmd, shell=True, stdout=PIPE, stderr=PIPE, input=wave_data.tobytes(order="f")).stdout
-    return numpy.fromstring(output, dtype=numpy.float32)
 
 
 class VoiceParameters:
@@ -100,6 +34,64 @@ class VoiceParameters:
         return cls((cookie_hash[5] % 80) + 90, # speed
                    cookie_hash[0] % 100, # pitch
                    cookie_hash[1]) # voice_id
+
+
+class PokeParameters:
+
+    def __init__(self, color, poke_id):
+        self.color = color
+        self.poke_id = poke_id
+        self.pokename = pokemons.pokemon[self.poke_id]
+
+    @classmethod
+    def from_cookie_hash(cls, cookie_hash):
+        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
+        return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
+                   (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1) # poke id
+
+
+class UserState:
+    detection_window = timedelta(seconds=FLOOD_DETECTION_WINDOW)
+
+    def __init__(self):
+        self.effects = {cls: [] for cls in
+                        (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
+
+        self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
+        self.last_msgs_timestamps = [] #type:List[datetime]
+        self.has_been_warned = False # User has been warned he shouldn't flood
+        self.is_shadowmuted = False # User has been shadowmuted
+
+    def add_effect(self, effect: Effect):
+        """Adds an effect to one of the active tools list (depending on the effect type)"""
+        if isinstance(effect, EffectGroup):  # if the effect is a meta-effect (a group of several tools)
+            added_effects = effect.effects
+        else:
+            added_effects = [effect]
+
+        for efct in added_effects:
+            for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect):
+                if isinstance(efct, cls):
+                    if len(self.effects[cls]) == 5:  # only 5 effects of one time allowed at a time
+                        self.effects[cls].pop(0)
+                    self.effects[cls].append(efct)
+                    break
+
+    def log_msg(self):
+        # removing msg timestamps that are out of the detection window
+        now = datetime.now()
+        for current, i in enumerate(self.last_msgs_timestamps):
+            if now > current + self.detection_window:
+                continue
+            else:
+                self.last_msgs_timestamps = self.last_msgs_timestamps[i:]
+                break
+        # adding the current time to the msg list
+        self.last_msgs_timestamps.append()
+
+    @property
+    def is_flooding(self):
+        return len(self.last_msgs_timestamps) > FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
 
 
 class AudioRenderer:
@@ -134,7 +126,8 @@ class AudioRenderer:
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                        '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
-                       % (voice_params.speed, voice_params.pitch, lang, sex, text, volume, lang, voice, lang, voice)
+                       % (voice_params.speed, voice_params.pitch, lang, sex, text,
+                          volume, lang, voice, lang, voice)
         logging.debug("Running synth command %s" % synth_string)
         wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
         return self._wav_format(wav)
@@ -194,6 +187,7 @@ class SpoilerBipEffect(UtilitaryEffect):
         "de" : ("kIN", "gINk"),
         "es" : ("kin", "xink"),
     }
+
     def __init__(self, renderer : AudioRenderer, voice_params : VoiceParameters):
         super().__init__()
         self.renderer = renderer
@@ -247,14 +241,15 @@ def add_msg_html_tag(text : str) -> str:
         text = re.sub(r'(\*\*(.*?)\*\*)', r'<span class="spoiler">\2</span>', text)
 
     if re.search(r'(https?://vocaroo\.com/i/[0-9a-z]+)', text, flags=re.IGNORECASE):
-        vocaroo_player_tag= r'''<object class="vocalink" width="148" height="44">
+        vocaroo_player_tag= r'''
+        <object class="vocalink" width="148" height="44">
             <param name="movie" value="https://loult.family/player.swf?playMediaID=\2&autoplay=0"></param>
             <param name="wmode" value="transparent"></param>
             <embed src="https://loult.family/player.swf?playMediaID=\2&autoplay=0"
-            width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
+                width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
             </embed>
             <a href="\1" target="_blank">Donne mou la vocarookles</a>
-            </object>'''
+        </object>'''
         text = re.sub(r'(?P<link>https?://vocaroo\.com/i/(?P<id>[0-9a-z]+))', vocaroo_player_tag, text,
                       flags=re.IGNORECASE)
     elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):

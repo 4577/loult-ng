@@ -4,29 +4,27 @@ import logging
 import random
 from asyncio import get_event_loop
 from collections import OrderedDict
-from colorsys import hsv_to_rgb
 from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
 from html import escape
 from json import loads, dumps
-from os import urandom
+from os import urandom, path
 from re import sub
 from shlex import quote
-from struct import pack
 from time import time
 from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
-from config import pokemon, ATTACK_RESTING_TIME
+from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT
 from salt import SALT
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
-    EffectGroup, VoiceEffect
+     VoiceEffect
 from tools.phonems import PhonemList
-from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters
+from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
@@ -34,7 +32,6 @@ json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode(
 
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
-
 
     links_translation = {'fr': 'cliquez mes petits chatons',
                          'de': 'Klick drauf!',
@@ -45,18 +42,12 @@ class User:
         """Initiating a user using its cookie md5 hash"""
         self.audio_renderer = AudioRenderer()
         self.voice_params = VoiceParameters.from_cookie_hash(cookie_hash)
-        self.poke_id = (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemon) + 1
-        self.pokename = pokemon[self.poke_id]
-        self.color = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
-        self.color = '#' + pack('3B', *(int(255 * i) for i in self.color)).hex()
-
+        self.poke_params = PokeParameters.from_cookie_hash(cookie_hash)
         self.user_id = cookie_hash.hex()[-16:]
 
         self.channel = channel
         self.client = client
-        self.effects = {cls : [] for cls in
-                        (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
-        self.last_attack = datetime.now() # any user has to wait some time before attacking, after entering the chan
+        self.state = UserState()
         self._info = None
 
     def __hash__(self):
@@ -66,23 +57,9 @@ class User:
         return self.user_id == other.user_id
 
     def throw_dice(self, type="attack") -> Tuple[int, int]:
-        bonus = (datetime.now() - self.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
-        return random.randint(1,100), bonus
+        bonus = (datetime.now() - self.state.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
+        return random.randint(1, 100), bonus
 
-    def add_effect(self, effect : Effect):
-        """Adds an effect to one of the active tools list (depending on the effect type)"""
-        if isinstance(effect, EffectGroup): # if the effect is a meta-effect (a group of several tools)
-            added_effects = effect.effects
-        else:
-            added_effects = [effect]
-
-        for efct in added_effects:
-            for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect):
-                if isinstance(efct, cls):
-                    if len(self.effects[cls]) == 5: # only 5 effects of one time allowed at a time
-                        self.effects[cls].pop(0)
-                    self.effects[cls].append(efct)
-                    break
 
     @property
     def info(self):
@@ -90,14 +67,15 @@ class User:
             self._info = {
                 'userid': self.user_id,
                 'params': {
-                    'name': self.pokename,
-                    'img': '/pokemon/%s.gif' % str(self.poke_id).zfill(3),
-                    'color': self.color
+                    'name': self.poke_params.pokename,
+                    'img': '/pokemon/%s.gif' % str(self.poke_params.poke_id).zfill(3),
+                    'color': self.poke_params.color
                 }
             }
         return self._info
 
-    def apply_effects(self, input_obj, effect_list: List[Effect]):
+    @staticmethod
+    def apply_effects(input_obj, effect_list: List[Effect]):
         if effect_list:
             for effect in effect_list:
                 if effect.is_expired():
@@ -110,27 +88,27 @@ class User:
     def _vocode(self, text, lang) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
-        if self.effects[VoiceEffect]:
-            voice_params = self.apply_effects(self.voice_params, self.effects[VoiceEffect])
+        if self.state.effects[VoiceEffect]:
+            voice_params = self.apply_effects(self.voice_params, self.state.effects[VoiceEffect])
         else:
             voice_params = self.voice_params
 
         # apply the beep effect for spoilers
         beeped = SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
 
-        if isinstance(beeped, PhonemList) or self.effects[PhonemicEffect]:
+        if isinstance(beeped, PhonemList) or self.state.effects[PhonemicEffect]:
 
             modified_phonems = None
-            if isinstance(beeped, PhonemList) and self.effects[PhonemicEffect]:
+            if isinstance(beeped, PhonemList) and self.state.effects[PhonemicEffect]:
                 # if it's already a phonem list, we apply the effect diretcly
-                modified_phonems = self.apply_effects(beeped, self.effects[PhonemicEffect])
+                modified_phonems = self.apply_effects(beeped, self.state.effects[PhonemicEffect])
             elif isinstance(beeped, PhonemList):
                 # no effects, only the beeped phonem list
                 modified_phonems = beeped
-            elif self.effects[PhonemicEffect]:
+            elif self.state.effects[PhonemicEffect]:
                 # first running the text-to-phonems conversion, then applying the phonemic tools
                 phonems = self.audio_renderer.string_to_phonemes(text, lang, voice_params)
-                modified_phonems = self.apply_effects(phonems, self.effects[PhonemicEffect])
+                modified_phonems = self.apply_effects(phonems, self.state.effects[PhonemicEffect])
 
             #rendering audio using the phonemlist
             return self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
@@ -141,9 +119,9 @@ class User:
     def render_message(self, text, lang):
         cleaned_text = text[:500]
         # applying "explicit" effects (visible to the users)
-        displayed_text = self.apply_effects(cleaned_text, self.effects[ExplicitTextEffect])
+        displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
         # applying "hidden" texts effects (invisible on the chat, only heard in the audio)
-        rendered_text = self.apply_effects(displayed_text, self.effects[HiddenTextEffect])
+        rendered_text = self.apply_effects(displayed_text, self.state.effects[HiddenTextEffect])
         rendered_text = sub('(https?://[^ ]*[^.,?! :])', self.links_translation[lang], rendered_text)
         rendered_text = rendered_text.replace('#', 'hashtag ')
         rendered_text = quote(rendered_text.strip(' -"\'`$();:.'))
@@ -152,11 +130,11 @@ class User:
         wav = self._vocode(rendered_text, lang)
 
         # if there are effets in the audio_effect list, we run it
-        if self.effects[AudioEffect]:
+        if self.state.effects[AudioEffect]:
             # converting to f32 (more standard) and resampling to 16k if needed
             rate , data = self.audio_renderer.to_f32_16k(wav)
             # applying the effects pipeline to the sound
-            data = self.apply_effects(data, self.effects[AudioEffect])
+            data = self.apply_effects(data, self.state.effects[AudioEffect])
             # converting the sound's ndarray back to bytes
             wav = self.audio_renderer.to_wav_bytes(data, rate)
 
@@ -184,6 +162,14 @@ class LoultServer(WebSocketServerProtocol):
             retn = {'Set-Cookie': 'id=%s; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/' % ck}
 
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
+
+        if cookie_hash in loult_state.banned_cookies:
+            if datetime.now() < loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
+                self.sendClose()
+                return None, retn
+            else:
+                del loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
+
         self.cookie = cookie_hash
         self.channel_n = request.path.lower().split('/', 2)[-1]
         self.channel_n = sub("/.*", "", self.channel_n)
@@ -223,79 +209,137 @@ class LoultServer(WebSocketServerProtocol):
             if binary_payload:
                 client.sendMessage(binary_payload, isBinary=True)
 
-    def _msg_handler(self, msg_data : Dict):
+    def _handle_automute(self):
+        if self.user.state.has_been_warned: # user has already been warned. Shadowmuting him/her and notifying everyone
+            self.user.state.is_shadowmuted = True
+            self._broadcast_to_channel({'type': 'automute',
+                                        'event': 'automuted',
+                                        'flooder_id': self.user.user_id})
+            loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
+        else:
+            # resets the user's msg log, then warns the user
+            self.user.state.last_msgs_timestamps = []
+            self.user.state.has_been_warned = True
+            self.sendMessage(json({'type': 'automute',
+                                   'event': 'flood_warning'}))
+            alarm_filepath = path.join(path.dirname(path.realpath(__file__)), "tools/data/alerts/alarm.wav")
+            with open(alarm_filepath, "rb") as alarm_file:
+                self.sendMessage(alarm_file.read(), isBinary=True)
 
+    def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
         output_msg, wav = self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
 
-        # rate limit: if the previous message is less than 100 milliseconds from this one, we stop the broadcast
-        now = datetime.now()
-        if now - self.lasttxt <= timedelta(milliseconds=100):
-            return
-        self.lasttxt = now # updating with current time
+        # message is not sent to the others, but directly to the user
+        if self.user.state.is_shadowmuted:
+            now = time() * 1000
+            self.sendMessage(json({'type': 'msg',
+                                   'userid': self.user.user_id,
+                                   'msg': output_msg,
+                                   'date': now}))
+            self.sendMessage(wav, isBinary=True)
 
-        # estimating the end of the current voice render, to rate limit again
-        calc_sendend = max(self.sendend, now) + timedelta(seconds=len(wav) * 8 / 6000000)
-        synth = calc_sendend < now + timedelta(seconds=2.5)
-        if synth:
-            self.sendend = calc_sendend
+        elif self.user.state.is_flooding:
+            self._handle_automute()
 
-        # add output
-        output_msg = add_msg_html_tag(output_msg)
-        # send to the backlog
-        info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
+        else:
+            # rate limit: if the previous message is less than 100 milliseconds from this one, we stop the broadcast
+            now = datetime.now()
+            if now - self.lasttxt <= timedelta(milliseconds=100):
+                return
+            self.lasttxt = now # updating with current time
 
-        # broadcast message and rendered audio to all clients in the channel
-        self._broadcast_to_channel({'type': 'msg',
-                                    'userid': self.user.user_id,
-                                    'msg': output_msg,
-                                    'date': info['date']},
-                                   wav if synth else None)
+            # estimating the end of the current voice render, to rate limit again
+            calc_sendend = max(self.sendend, now) + timedelta(seconds=len(wav) * 8 / 6000000)
+            synth = calc_sendend < now + timedelta(seconds=2.5)
+            if synth:
+                self.sendend = calc_sendend
+
+            # add output
+            output_msg = add_msg_html_tag(output_msg)
+            # send to the backlog
+            info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
+
+            # broadcast message and rendered audio to all clients in the channel
+            self.user.state.log_msg()
+            self._broadcast_to_channel({'type': 'msg',
+                                        'userid': self.user.user_id,
+                                        'msg': output_msg,
+                                        'date': info['date']},
+                                       wav if synth else None)
+
+    def _handle_flooder_attack(self, flooder):
+        punition_msg, wav = self.user.render_message("CIVILISE TOI FILS DE PUTE", "fr")
+        now = time() * 1000
+        for _ in range(PUNITIVE_MSG_COUNT):
+            self.sendMessage(json({'type': 'msg',
+                                   'userid': self.user.user_id,
+                                   'msg': punition_msg,
+                                   'date': now}))
+            self.sendMessage(wav, isBinary=True)
+        self._broadcast_to_channel({'type': 'attack',
+                                    'date': now,
+                                    'event': 'attack',
+                                    'attacker_id': self.user.user_id,
+                                    'defender_id': flooder.id})
+        self._broadcast_to_channel({'type': 'attack',
+                                    'date': time() * 1000,
+                                    'event': 'effect',
+                                    'target_id': flooder.user_id,
+                                    'effect': "pillonage"})
 
     def _attack_handler(self, msg_data : Dict):
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
-        adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target", self.user.pokename),
+        adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target",
+                                                                                 self.user.poke_params.pokename),
                                                                     msg_data.get("order", 1) - 1)
 
         # checking if the target user is found, and if the current user has waited long enough to attack
-        if adversary is not None and (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.last_attack:
-            self._broadcast_to_channel({'type': 'attack',
-                                        'date': time() * 1000,
-                                        'event' : 'attack',
-                                        'attacker_id': self.user.user_id,
-                                        'defender_id': adversary_id})
+        if adversary is not None:
+            if adversary.state.is_shadowmuted:
+                # if targeted user is shadowmuted, just bombard him/her with the same message
+                self._handle_flooder_attack(adversary)
 
-            combat_sim = CombatSimulator()
-            combat_sim.run_attack(self.user, adversary, self.channel_obj)
-            self._broadcast_to_channel({'type': 'attack',
-                                        'date': time() * 1000,
-                                        'event': 'dice',
-                                        'attacker_dice' : combat_sim.atk_dice, "defender_dice" : combat_sim.def_dice,
-                                        'attacker_bonus' : combat_sim.atk_bonus, "defender_bonus" : combat_sim.def_bonus,
-                                        'attacker_id': self.user.user_id, 'defender_id': adversary_id})
-
-            if combat_sim.affected_users: # there are users affected by some effects
-                for user, effect in combat_sim.affected_users:
-                    self._broadcast_to_channel({'type': 'attack',
-                                                'date': time() * 1000,
-                                                'event': 'effect',
-                                                'target_id': user.user_id,
-                                                'effect': effect.name,
-                                                'timeout': effect.timeout})
-            else: # list is empty, no one was attacked
+            elif (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.state.last_attack:
                 self._broadcast_to_channel({'type': 'attack',
                                             'date': time() * 1000,
-                                            'event': 'nothing'})
+                                            'event' : 'attack',
+                                            'attacker_id': self.user.user_id,
+                                            'defender_id': adversary_id})
 
-            self.user.last_attack = datetime.now()
+                combat_sim = CombatSimulator()
+                combat_sim.run_attack(self.user, adversary, self.channel_obj)
+                self._broadcast_to_channel({'type': 'attack',
+                                            'date': time() * 1000,
+                                            'event': 'dice',
+                                            'attacker_dice' : combat_sim.atk_dice,
+                                            "defender_dice" : combat_sim.def_dice,
+                                            'attacker_bonus' : combat_sim.atk_bonus,
+                                            "defender_bonus" : combat_sim.def_bonus,
+                                            'attacker_id': self.user.user_id, 'defender_id': adversary_id})
+
+                if combat_sim.affected_users: # there are users affected by some effects
+                    for user, effect in combat_sim.affected_users:
+                        self._broadcast_to_channel({'type': 'attack',
+                                                    'date': time() * 1000,
+                                                    'event': 'effect',
+                                                    'target_id': user.user_id,
+                                                    'effect': effect.name,
+                                                    'timeout': effect.timeout})
+                else: # list is empty, no one was attacked
+                    self._broadcast_to_channel({'type': 'attack',
+                                                'date': time() * 1000,
+                                                'event': 'nothing'})
+
+                self.user.state.last_attack = datetime.now()
         else:
             self.sendMessage(json({'type': 'attack',
                                    'event': 'invalid'}))
 
     def _move_handler(self, msg_data : Dict):
-        # checking if all the necesary data is here
+        # checking if all the necessary data is here
         if not {"x", "y", "id"}.issubset(set(msg_data.keys())):
             return
         # signalling all users in channel that this user moved
@@ -410,6 +454,7 @@ class LoultServerState:
 
     def __init__(self):
         self.chans = {} # type:Dict[str,Channel]
+        self.banned_cookies = {} #type:Dict[str,datetime]
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict

@@ -15,7 +15,7 @@ from salt import SALT
 from tools.effects import AudioEffect, PhonemicEffect, AutotuneEffect, MwfeEffect, GodSpeakingEffect, WpseEffect, \
     SitcomEffect, TurboHangoul, CrapweEffect, TurfuEffect, StutterEffect, VoiceSpeedupEffect
 from tools.phonems import PhonemList, FrenchPhonems
-from tools.tools import mix_tracks
+from tools.audio_tools import mix_tracks
 
 logging.getLogger().setLevel(logging.DEBUG)
 
