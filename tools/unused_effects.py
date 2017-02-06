@@ -7,7 +7,7 @@ import numpy
 
 from .phonems import PhonemList
 from .effects import PhonemicEffect, AudioEffect
-from .tools import get_sounds
+from tools.audio_tools import get_sounds
 
 
 class PhonemicShuffleEffect(PhonemicEffect):
