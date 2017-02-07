@@ -17,6 +17,9 @@ from tools.phonems import PhonemList, Phonem
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
     EffectGroup, VoiceEffect
 
+from re import sub
+from shlex import quote
+
 
 class ToolsError(Exception):
     pass
@@ -256,3 +259,15 @@ def add_msg_html_tag(text : str) -> str:
         text = re.sub(r'(https?://[^< ]*[^<*.,?! :])', r'<a href="\1" target="_blank">\1</a>', text)
 
     return text
+
+
+links_translation = {'fr': 'cliquez mes petits chatons',
+                     'de': 'Klick drauf!',
+                     'es': 'Clico JAJAJA',
+                     'en': "Click it mate"}
+
+
+def prepare_text_for_tts(text : str, lang : str) -> str:
+    text = sub('(https?://[^ ]*[^.,?! :])', links_translation[lang], text)
+    text = text.replace('#', 'hashtag ')
+    return quote(text.strip(' -"\'`$();:.'))
