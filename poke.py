@@ -24,7 +24,8 @@ from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
 from tools.phonems import PhonemList
-from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState
+from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState, \
+    prepare_text_for_tts
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
@@ -32,11 +33,6 @@ json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode(
 
 class User:
     """Stores a user's state and parameters, which are also used to render the user's audio messages"""
-
-    links_translation = {'fr': 'cliquez mes petits chatons',
-                         'de': 'Klick drauf!',
-                         'es': 'Clico JAJAJA',
-                         'en': "Click it mate"}
 
     def __init__(self, cookie_hash, channel, client):
         """Initiating a user using its cookie md5 hash"""
@@ -122,9 +118,7 @@ class User:
         displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
         # applying "hidden" texts effects (invisible on the chat, only heard in the audio)
         rendered_text = self.apply_effects(displayed_text, self.state.effects[HiddenTextEffect])
-        rendered_text = sub('(https?://[^ ]*[^.,?! :])', self.links_translation[lang], rendered_text)
-        rendered_text = rendered_text.replace('#', 'hashtag ')
-        rendered_text = quote(rendered_text.strip(' -"\'`$();:.'))
+        rendered_text = prepare_text_for_tts(rendered_text, lang)
 
         # rendering the audio from the text
         wav = self._vocode(rendered_text, lang)
@@ -214,14 +208,16 @@ class LoultServer(WebSocketServerProtocol):
             self.user.state.is_shadowmuted = True
             self._broadcast_to_channel({'type': 'automute',
                                         'event': 'automuted',
-                                        'flooder_id': self.user.user_id})
+                                        'flooder_id': self.user.user_id,
+                                        'date' : time() * 1000})
             loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
         else:
             # resets the user's msg log, then warns the user
             self.user.state.last_msgs_timestamps = []
             self.user.state.has_been_warned = True
             self.sendMessage(json({'type': 'automute',
-                                   'event': 'flood_warning'}))
+                                   'event': 'flood_warning',
+                                   'date': time() * 1000}))
             alarm_filepath = path.join(path.dirname(path.realpath(__file__)), "tools/data/alerts/alarm.wav")
             with open(alarm_filepath, "rb") as alarm_file:
                 self.sendMessage(alarm_file.read(), isBinary=True)

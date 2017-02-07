@@ -431,6 +431,17 @@ document.addEventListener('DOMContentLoaded', function() {
 							break;
 						}
 					break;
+
+					case 'automute':
+						switch(msg['event']) {
+							case 'automuted':
+								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra 20 messages civilisateurs!', msg.date, 'log');
+							break;
+							case 'flood_warning':
+                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, 'log part');
+							break;
+						}
+					break;
 					
 					case 'userlist':
 						for(var i = 0; i < msg.users.length; i++)
@@ -448,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
 						if(!lastMuted)
 							addLine(users[msg.userid], msg.msg, msg.date, null);
 					break;
+
 				}
 			}
 			else if(!lastMuted && audio) {
