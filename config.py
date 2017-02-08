@@ -1,8 +1,8 @@
 # in seconds, the time a pokemon has to wait before being able to attack again
-ATTACK_RESTING_TIME = 30
+ATTACK_RESTING_TIME = 5
 
 # in seconds, the time during which a users's message are "remembered"
-FLOOD_DETECTION_WINDOW = 10
+FLOOD_DETECTION_WINDOW = 2
 
 # number of messages per second a user has to be sending (on average, during the detection window) to get
 # shadowmuted

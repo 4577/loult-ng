@@ -14,7 +14,6 @@ from tools.melody import chords_ratios, chord_progressions, get_harmonies
 from tools.phonems import PhonemList, Phonem, FrenchPhonems
 from tools.tools import VoiceParameters
 import tools
-from .tools import get_sounds
 from tools.audio_tools import mix_tracks, get_sounds
 
 
