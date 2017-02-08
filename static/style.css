@@ -47,13 +47,13 @@ header, #prefsttl {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#EEE', endColorstr='#FFF',GradientType=0);
 }
 
-h1 {
-	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
-	margin: 9px;
-	font-size: 25px;
-	font-weight: normal;
+header > span {
+	width: 155px;
+}
+
+header > span > img {
+	margin: 2px 25px 0;
+	height: 46px;
 }
 
 #sidebtns {
@@ -72,6 +72,7 @@ h1 {
 	    -ms-flex-pack: justify;
 	        justify-content: space-between;
 	padding: 0 11px;
+	margin-left: auto;
 }
 
 input[type=range] {
