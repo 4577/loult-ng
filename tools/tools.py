@@ -1,8 +1,11 @@
 import logging
 import re
+from colorsys import hsv_to_rgb
 from datetime import datetime, timedelta
 from html import escape
 from io import BytesIO
+from re import sub
+from shlex import quote
 from struct import pack
 from subprocess import PIPE, run
 from typing import List, Union
@@ -14,11 +17,6 @@ from config import FLOOD_DETECTION_WINDOW, FLOOD_DETECTION_MSG_PER_SEC
 from tools import pokemons
 from tools.audio_tools import resample
 from tools.phonems import PhonemList, Phonem
-from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
-    EffectGroup, VoiceEffect
-
-from re import sub
-from shlex import quote
 
 
 class ToolsError(Exception):
@@ -57,6 +55,9 @@ class UserState:
     detection_window = timedelta(seconds=FLOOD_DETECTION_WINDOW)
 
     def __init__(self):
+        from .effects import AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+            VoiceEffect
+
         self.effects = {cls: [] for cls in
                         (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
 
@@ -65,8 +66,11 @@ class UserState:
         self.has_been_warned = False # User has been warned he shouldn't flood
         self.is_shadowmuted = False # User has been shadowmuted
 
-    def add_effect(self, effect: Effect):
+    def add_effect(self, effect):
         """Adds an effect to one of the active tools list (depending on the effect type)"""
+        from .effects import EffectGroup, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+            VoiceEffect
+
         if isinstance(effect, EffectGroup):  # if the effect is a meta-effect (a group of several tools)
             added_effects = effect.effects
         else:
@@ -83,14 +87,14 @@ class UserState:
     def log_msg(self):
         # removing msg timestamps that are out of the detection window
         now = datetime.now()
-        for current, i in enumerate(self.last_msgs_timestamps):
+        for i, current in enumerate(self.last_msgs_timestamps):
             if now > current + self.detection_window:
                 continue
             else:
                 self.last_msgs_timestamps = self.last_msgs_timestamps[i:]
                 break
         # adding the current time to the msg list
-        self.last_msgs_timestamps.append()
+        self.last_msgs_timestamps.append(now)
 
     @property
     def is_flooding(self):

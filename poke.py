@@ -11,7 +11,6 @@ from html import escape
 from json import loads, dumps
 from os import urandom, path
 from re import sub
-from shlex import quote
 from time import time
 from typing import List, Dict, Set, Tuple
 
@@ -437,7 +436,7 @@ class Channel:
     def get_user_by_name(self, pokemon_name: str, order=0) -> (int, User):
 
         for user_id, user in self.users.items():
-            if user.pokename.lower() == pokemon_name.lower():
+            if user.poke_params.pokename.lower() == pokemon_name.lower():
                 if order <= 0:
                     return user_id, user
                 else:

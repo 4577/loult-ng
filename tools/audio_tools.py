@@ -6,8 +6,6 @@ import numpy
 from numpy import pad
 from scipy.io.wavfile import read
 
-from tools.tools import ToolsError
-
 
 def mix_tracks(track1, track2, offset=None, align=None):
     """Function that mixes two tracks of unequal lengths(represented by numpy arrays) together,
@@ -55,6 +53,7 @@ def mix_tracks(track1, track2, offset=None, align=None):
             right = left if diff % 2 == 0 else left + 1
             padded_short_t = pad(short_t, (left, right), "constant", constant_values=0.0)
     else:
+        from tools.tools import ToolsError
         raise ToolsError()
 
     # the result vector's elements are c_i = a_i + b_i
