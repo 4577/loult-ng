@@ -47,9 +47,5 @@ conséquent pour le serveur, mais plutot lourd pour le navigateur du flooder qui
 
 ## Todo
 
- * MàJ des users pour avoir un historique des messages et un indicateur de bann
- * MàJ du handler de message pour gérer un historique des messages de l'user
- * MàJ du hangler de message pour déclencher un bann quand l'user a trop flooder
- * MàJ du handler de message pour gérer les bannis shadowmute 
- * MàJ des attaques pours permettre l'attaque des bannis
- * Ajout des notifications et effets audios relatifs au bann 
+ * Modifier les users pour qu'ils aient une référence sur leurs clients connectés
+ * Réparer le bug des attaques sur l'utilisateur banni

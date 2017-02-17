@@ -41,7 +41,7 @@ class User:
         self.user_id = cookie_hash.hex()[-16:]
 
         self.channel = channel
-        self.client = client
+        self.clients = [client]
         self.state = UserState()
         self._info = None
 
@@ -263,20 +263,21 @@ class LoultServer(WebSocketServerProtocol):
                                         'date': info['date']},
                                        wav if synth else None)
 
-    def _handle_flooder_attack(self, flooder):
+    def _handle_flooder_attack(self, flooder : User):
         punition_msg, wav = self.user.render_message("CIVILISE TOI FILS DE PUTE", "fr")
         now = time() * 1000
         for _ in range(PUNITIVE_MSG_COUNT):
-            self.sendMessage(json({'type': 'msg',
-                                   'userid': self.user.user_id,
-                                   'msg': punition_msg,
-                                   'date': now}))
-            self.sendMessage(wav, isBinary=True)
+            for client in flooder.clients:
+                client.sendMessage(json({'type': 'msg',
+                                         'userid': self.user.user_id,
+                                         'msg': punition_msg,
+                                         'date': now}))
+                client.sendMessage(wav, isBinary=True)
         self._broadcast_to_channel({'type': 'attack',
                                     'date': now,
                                     'event': 'attack',
                                     'attacker_id': self.user.user_id,
-                                    'defender_id': flooder.id})
+                                    'defender_id': flooder.user_id})
         self._broadcast_to_channel({'type': 'attack',
                                     'date': time() * 1000,
                                     'event': 'effect',
@@ -373,7 +374,6 @@ class Channel:
         self.name = channel_name
         self.clients = set()  # type:Set[LoultServer]
         self.users = OrderedDict()  # type:OrderedDict[str, User]
-        self.refcnts = {}  # type:Dict[str,int]
         self.backlog = []  # type:List
 
     def _signal_user_connect(self, client: LoultServer, user: User):
@@ -391,13 +391,12 @@ class Channel:
 
     def channel_leave(self, client: LoultServer, user: User):
         try:
-            self.refcnts[user.user_id] -= 1
+            self.users[user.user_id].clients.remove(client)
 
             # if the user is not connected anymore, we signal its disconnect to the others
-            if self.refcnts[user.user_id] < 1:
+            if len(self.users[user.user_id].clients) < 1:
                 self.clients.discard(client)
                 del self.users[user.user_id]
-                del self.refcnts[user.user_id]
 
                 for client in self.clients:
                     self._signal_user_disconnect(client, user)
@@ -413,11 +412,10 @@ class Channel:
             for other_client in self.clients:
                 if other_client != client:
                     self._signal_user_connect(other_client, new_user)
-            self.refcnts[new_user.user_id] = 1
             self.users[new_user.user_id] = new_user
             return new_user
         else:
-            self.refcnts[new_user.user_id] += 1
+            self.users[new_user.user_id].clients.append(client)
             return self.users[new_user.user_id]  # returning an already existing instance of the user
 
     def log_to_backlog(self, user_id, msg: str):
