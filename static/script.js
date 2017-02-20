@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		label.appendChild(document.createTextNode(params.name));
 		label.style.color = params.color;
-		label.style.backgroundImage = 'url(".' + params.img + '")';
+		label.style.backgroundImage = 'url("' + params.img + '")';
 		label.className = 'left';
 		td.appendChild(label);
 		tr.appendChild(td);
