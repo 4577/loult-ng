@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			var label = document.createElement('label');
 			label.appendChild(document.createTextNode(pkmn.name));
 			label.style.color = pkmn.color;
-			label.style.backgroundImage = 'url(".' + pkmn.img + '")';
+			label.style.backgroundImage = 'url("' + pkmn.img + '")';
 			label.className = (left ? 'left' : 'right');
 			td.appendChild(label);
 		}
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		label.appendChild(document.createTextNode(params.name));
 		label.style.color = params.color;
-		label.style.backgroundImage = 'url(".' + params.img + '")';
+		label.style.backgroundImage = 'url("' + params.img + '")';
 		label.className = 'left';
 		td.appendChild(label);
 		tr.appendChild(td);
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		if(!params.you) {
 			var sound = document.createElement('img');
-			sound.src = (mute ? './img/mute.png' : './img/speaker.png');
+			sound.src = (mute ? '/img/mute.png' : '/img/speaker.png');
 			sound.className = 'sound';
 			td.appendChild(sound);
 			
@@ -99,12 +99,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				var mt = (muted.indexOf(userid) != -1);
 				if(!mt) {
 					muted.push(userid);
-					sound.src = './img/mute.png';
+					sound.src = '/img/mute.png';
 					tr.className = 'mute';
 				}
 				else {
 					muted.splice(muted.indexOf(userid), 1);
-					sound.src = './img/speaker.png';
+					sound.src = '/img/speaker.png';
 					tr.className = '';
 				}
 			};
@@ -266,11 +266,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		speaker.onclick = function() {
 			if(this.src.indexOf('mute') == -1) {
 				volume.gain.value = 0;
-				this.src = './img/mute.png';
+				this.src = '/img/mute.png';
 			}
 			else {
 				volume.gain.value = volrange.value / 100;
-				this.src = './img/speaker.png';
+				this.src = '/img/speaker.png';
 			}
 		};
 		volrange.oninput = function() {
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		var chatentry = document.getElementById('chatentry');
 		var img = document.createElement('img');
-        img.src = './img/micro_off.png';
+        img.src = '/img/micro_off.png';
 		chatentry.appendChild(img);
 		img.onclick = startDictation;
 		
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		function startDictation() {
 			if(recognizing) {
 				recognition.stop();
-				img.src = './img/micro_off.png';
+				img.src = '/img/micro_off.png';
 				return;
 			}
 			var l = 'en-US';
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				default:
 					l = 'en-US';
 			}
-			img.src = './img/micro_on.png';
+			img.src = '/img/micro_on.png';
 			recognition.lang = l;
 			recognition.start();
 			input.value = '';
