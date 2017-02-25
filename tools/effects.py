@@ -322,7 +322,7 @@ class AutotuneEffect(PhonemicEffect):
 
 
 class CrapweEffect(PhonemicEffect):
-    """Dilates random vowels and modifies the peach to go up and down"""
+    """Dilates random vowels and modifies the pitch to go up and down"""
     NAME = "crapwe force"
     TIMEOUT = 150
 

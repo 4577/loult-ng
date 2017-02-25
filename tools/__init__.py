@@ -13,7 +13,7 @@ import random
 # the multiplier for each tools list sets the "probability" of the effect
 AVAILABLE_EFFECTS = 1 * [] + \
                     2 * [GhostEffect, SnebwewEffect, ReverbManEffect, TouretteEffect, VenerEffect, VoiceSpeedupEffect,
-                         SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia, SitcomEffect,
+                         SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia,
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
                          CrapweEffect, AmbianceEffect, SpoinkEffect] + \
                     3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect, WpseEffect, TurfuEffect] + \
