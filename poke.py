@@ -80,7 +80,7 @@ class User:
 
         return input_obj
 
-    def _vocode(self, text, lang) -> bytes:
+    def _vocode(self, text: str, lang: str) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
         if self.state.effects[VoiceEffect]:
@@ -111,7 +111,7 @@ class User:
             # regular render
             return self.audio_renderer.string_to_audio(text, lang, voice_params)
 
-    def render_message(self, text, lang):
+    def render_message(self, text: str, lang: str):
         cleaned_text = text[:500]
         # applying "explicit" effects (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
