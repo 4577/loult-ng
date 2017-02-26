@@ -14,7 +14,7 @@ from tools.melody import chords_ratios, chord_progressions, get_harmonies
 from tools.phonems import PhonemList, Phonem, FrenchPhonems
 from tools.tools import VoiceParameters
 import tools
-from .tools import mix_tracks, get_sounds
+from tools.audio_tools import mix_tracks, get_sounds
 
 
 # TODO : effet théatre, effet speech random, effet voix robot,
@@ -322,7 +322,7 @@ class AutotuneEffect(PhonemicEffect):
 
 
 class CrapweEffect(PhonemicEffect):
-    """Dilates random vowels and modifies the peach to go up and down"""
+    """Dilates random vowels and modifies the pitch to go up and down"""
     NAME = "crapwe force"
     TIMEOUT = 150
 

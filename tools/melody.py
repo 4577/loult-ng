@@ -18,8 +18,8 @@ chord_progressions =[
 ]
 
 chords_ratios = {
-    "major" : [0, 4, 7],
-    "minor" : [0, 3, 7],
+    "major" : [0, 3, 6],
+    "minor" : [0, 2, 6],
 }
 
 

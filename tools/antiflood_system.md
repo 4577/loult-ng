@@ -44,3 +44,8 @@ Cette technique, en plus d'ête ludique, ne charge que peut le serveur: en effet
 nécessitent déjà 100 envois (et le serveur s'en sort très bien). Ainsi; 100 messages d'un coup sur un unique client n'est pas un poids
 conséquent pour le serveur, mais plutot lourd pour le navigateur du flooder qui va devoir traiter un sacré paquets de messages d'un coup
 (sans parler du lecteur audio qui devra mixer 100 tracks wav d'un coup).
+
+## Todo
+
+ * Modifier les users pour qu'ils aient une référence sur leurs clients connectés
+ * Réparer le bug des attaques sur l'utilisateur banni
