@@ -383,6 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 				else if(trimed.match(/^\/(en|es|fr|de)\s/i))
 					ws.send(JSON.stringify({type: 'msg', msg: trimed.substring(4), lang: trimed.substring(1, 3)}));
+				else if(trimed.match(/^\/(help|aide)$/i))
+				{
+					addLine('info', "/attack, /attaque : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", (new Date), 'part');
+					addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", (new Date), 'part');
+					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", (new Date), 'part');
+					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", (new Date), 'part');
+				}
 				else
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				
