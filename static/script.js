@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 				}
 			}
-			else if(!lastMuted && audio) {
+			else if(!lastMuted && audio && volume.gain.value > 0) {
 				context.decodeAudioData(msg.data, function(buf) {
 					var source = context.createBufferSource();
 					source.buffer = buf;
