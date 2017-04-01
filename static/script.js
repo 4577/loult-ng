@@ -376,12 +376,15 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		input.onkeydown = function(evt) {
 			if(evt.keyCode == 13 && input.value) {
-				if(input.value.match(/^\/atta(ck|que)\s/i)) {
-					splitted = input.value.split(' ');
+				var trimed = input.value.trim();
+				if(trimed.match(/^\/atta(ck|que)\s/i)) {
+					var splitted = trimed.split(' ');
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
+				else if(trimed.match(/^\/(en|es|fr|de)\s/i))
+					ws.send(JSON.stringify({type: 'msg', msg: trimed.substring(4), lang: trimed.substring(1, 3)}));
 				else
-					ws.send(JSON.stringify({type: 'msg', msg: input.value.trim(), lang: lang}));
+					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				
 				input.value = '';
 			}
