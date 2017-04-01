@@ -407,12 +407,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				
 				switch(msg.type) {
 					case 'connect':
-						addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', (new Date), 'log');
+						addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
 						addUser(msg.userid, msg.params);
 					break;
 					
 					case 'disconnect':
-						addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", (new Date), 'log part');
+						addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, 'log part');
 						delUser(msg.userid);
 					break;
 					
