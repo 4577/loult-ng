@@ -58,10 +58,12 @@ class TreeNode:
                     return current_child.text
                 else:
                     return current_child.find(phoneme_list)
+            else:
+                return self.find_random()
 
     def to_dict(self):
-        return { "children" : {pho: child.to_dict() for pho, child in self.children.items()},
-                 "leaves" : [leaf.text for leaf in self.leaves]}
+        return {"children" : {pho: child.to_dict() for pho, child in self.children.items()},
+                "leaves" : [leaf.text for leaf in self.leaves]}
 
 
 class RhymeTree(TreeNode):
@@ -82,6 +84,10 @@ class RhymeTree(TreeNode):
             return None
         else:
             return self.children[current_pho.name].find(string_phonemes)
+
+    def save(self, filepath):
+        with open(filepath, "wb") as picklefile:
+            pickle.dump(self, picklefile)
 
     @classmethod
     def from_pickle(cls, pickle_filepath):
@@ -105,7 +111,7 @@ class RhymeTree(TreeNode):
         return tree
 
     def to_dict(self):
-        return { pho : child.to_dict() for pho, child in self.children.items()}
+        return {pho : child.to_dict() for pho, child in self.children.items()}
 
 
 class Leaf:

@@ -45,6 +45,10 @@ class TestRhymeSearch(unittest.TestCase):
                 self.assertEqual(self.tree.find_rhyme(search_word), target)
 
     def test_random_rhyme(self):
-        self.assertIn(self.tree.find_rhyme("ire"), ["rire", "avenir", "sourire"])
+        single_rhymes_couples = [("peau", ["marteau", "bateau", "apollo", "polo"]),
+                                 ("ire", ["rire", "avenir", "sourire"])]
+        for search_word, target in single_rhymes_couples:
+            with self.subTest(search_word=search_word):
+                self.assertIn(self.tree.find_rhyme(search_word), target)
 
 
