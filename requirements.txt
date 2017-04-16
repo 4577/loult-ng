@@ -4,3 +4,4 @@ pysndfx>=0.1.0
 scipy>=0.18.1
 txaio>=2.5.2
 six>=1.10.0
+pyaudio>=0.2.11
