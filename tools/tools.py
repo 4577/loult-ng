@@ -85,16 +85,12 @@ class UserState:
                     break
 
     def log_msg(self):
-        # removing msg timestamps that are out of the detection window
         now = datetime.now()
-        for i, current in enumerate(self.last_msgs_timestamps):
-            if now > current + self.detection_window:
-                continue
-            else:
-                self.last_msgs_timestamps = self.last_msgs_timestamps[i:]
-                break
-        # adding the current time to the msg list
-        self.last_msgs_timestamps.append(now)
+        # removing msg timestamps that are out of the detection window
+        updated = [timestamp for timestamp in self.last_msgs_timestamps
+                   if timestamp + self.detection_window > now]
+        updated.append(now)
+        self.last_msgs_timestamps = updated
 
     @property
     def is_flooding(self):
