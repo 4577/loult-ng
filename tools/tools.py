@@ -85,20 +85,24 @@ class UserState:
                     break
 
     def log_msg(self):
-        # removing msg timestamps that are out of the detection window
         now = datetime.now()
-        for i, current in enumerate(self.last_msgs_timestamps):
-            if now > current + self.detection_window:
-                continue
-            else:
-                self.last_msgs_timestamps = self.last_msgs_timestamps[i:]
-                break
-        # adding the current time to the msg list
+        self._refresh_timestamps(now)
         self.last_msgs_timestamps.append(now)
 
     @property
     def is_flooding(self):
+        self._refresh_timestamps()
         return len(self.last_msgs_timestamps) > FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+
+    def _refresh_timestamps(self, now=None):
+        # now has to be a possible argument else there might me slight
+        # time differences between the current time of the calling function
+        # and this one's current time.
+        now = now if now else datetime.now()
+        # removing msg timestamps that are out of the detection window
+        updated = [timestamp for timestamp in self.last_msgs_timestamps
+                   if timestamp + self.detection_window > now]
+        self.last_msgs_timestamps = updated
 
 
 class AudioRenderer:
