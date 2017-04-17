@@ -4,7 +4,7 @@ La partie client est en HTML/CSS/JS statique et la partie serveur en Python.
 
 * Installer nginx, python3-scipy, le synthésiseur vocal mbrola, 
 espeak, sox (sur gestionnaire de paquet debian), ainsi que les voix mbrola:
-`sudo apt-get install nginx python3-scipy python3-autobahn mbrola espeak sox mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3-venv`
+`sudo apt-get install nginx python3-scipy python3-autobahn mbrola espeak sox mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3-venv portaudio19-dev`
 
 * Clonez le lou sur votre propre machine
 ```bash
