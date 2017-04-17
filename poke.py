@@ -234,8 +234,8 @@ class LoultServer(WebSocketServerProtocol):
                                    'date': now}))
             self.sendMessage(wav, isBinary=True)
 
-        #elif self.user.state.is_flooding:
-            #self._handle_automute()
+        elif self.user.state.is_flooding:
+            self._handle_automute()
 
         else:
             # rate limit: if the previous message is less than 100 milliseconds from this one, we stop the broadcast
