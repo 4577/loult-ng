@@ -79,12 +79,13 @@ class UserState:
         for efct in added_effects:
             for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect):
                 if isinstance(efct, cls):
-                    if len(self.effects[cls]) == 5:  # only 5 effects of one time allowed at a time
+                    if len(self.effects[cls]) == 5:  # only 5 effects of one type allowed at a time
                         self.effects[cls].pop(0)
                     self.effects[cls].append(efct)
                     break
 
     def log_msg(self):
+        """Add a timestamp for a user's message, and clears timestamps which are too old"""
         # removing msg timestamps that are out of the detection window
         now = datetime.now()
         for i, current in enumerate(self.last_msgs_timestamps):
