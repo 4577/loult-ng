@@ -376,12 +376,22 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		input.onkeydown = function(evt) {
 			if(evt.keyCode == 13 && input.value) {
-				if(input.value.match(/^\/atta(ck|que)\s/i)) {
-					splitted = input.value.split(' ');
+				var trimed = input.value.trim();
+				if(trimed.match(/^\/atta(ck|que)\s/i)) {
+					var splitted = trimed.split(' ');
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
+				else if(trimed.match(/^\/(en|es|fr|de)\s/i))
+					ws.send(JSON.stringify({type: 'msg', msg: trimed.substring(4), lang: trimed.substring(1, 3)}));
+				else if(trimed.match(/^\/(help|aide)$/i))
+				{
+					addLine('info', "/attack, /attaque : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", (new Date), 'part');
+					addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", (new Date), 'part');
+					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", (new Date), 'part');
+					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", (new Date), 'part');
+				}
 				else
-					ws.send(JSON.stringify({type: 'msg', msg: input.value.trim(), lang: lang}));
+					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				
 				input.value = '';
 			}
@@ -397,12 +407,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				
 				switch(msg.type) {
 					case 'connect':
-						addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', (new Date), 'log');
+						addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
 						addUser(msg.userid, msg.params);
 					break;
 					
 					case 'disconnect':
-						addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", (new Date), 'log part');
+						addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, 'log part');
 						delUser(msg.userid);
 					break;
 					
@@ -462,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 				}
 			}
-			else if(!lastMuted && audio) {
+			else if(!lastMuted && audio && volume.gain.value > 0) {
 				context.decodeAudioData(msg.data, function(buf) {
 					var source = context.createBufferSource();
 					source.buffer = buf;
