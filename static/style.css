@@ -180,12 +180,12 @@ td:first-child {
 	margin-top: 6px;
 }
 
-#chattbl td:nth-child(2) span, #chattbl td:nth-child(2) span * {
+.spoiler, .spoiler * {
 	background: #000;
 	color: #000;
 }
 
-#chattbl td:nth-child(2) span:hover, #chattbl td:nth-child(2) span:hover * {
+.spoiler:hover, .spoiler:hover * {
 	background: transparent;
 }
 
@@ -244,7 +244,7 @@ label.right {
 	opacity: 0.6;
 }
 
-a, #chattbl td:nth-child(2) span:hover a {
+a, .spoiler:hover a {
 	color: #06A;
 	text-decoration: none;
 }
@@ -259,7 +259,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	text-align: center;
 }
 
-.greentext {
+.greentext, .greentext .spoiler:hover {
 	color: #792;
 	font-family: monospace;
 }
@@ -322,8 +322,8 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	background: #FFF;
 	box-shadow: 0 0 15px #BBB;
 	line-height: 1.5em;
-	width: auto;
-	height: auto;
+	width: 720px;
+	height: 480px;
 }
 
 #window, #prefs input {
@@ -391,6 +391,8 @@ select {
 	#window {
 		padding: 40px;
 		max-height: none;
+		width: auto;
+		height: auto;
 	}
 
 	#prefs {
