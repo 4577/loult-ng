@@ -219,9 +219,7 @@ class LoultServer(WebSocketServerProtocol):
             self.sendMessage(json({'type': 'automute',
                                    'event': 'flood_warning',
                                    'date': time() * 1000}))
-            alarm_filepath = path.join(path.dirname(path.realpath(__file__)), "tools/data/alerts/alarm.wav")
-            with open(alarm_filepath, "rb") as alarm_file:
-                self.sendMessage(alarm_file.read(), isBinary=True)
+            self._send_sound("tools/data/alerts/alarm.wav")
 
     def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
@@ -266,8 +264,14 @@ class LoultServer(WebSocketServerProtocol):
                                         'date': info['date']},
                                        wav if synth else None)
 
+    def _send_sound(self, relative_path):
+        """Sends a wav file from a path relative to the current directory."""
+        full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
+        with open(full_path, "rb") as sound_file:
+            self.sendMessage(sound_file.read(), isBinary=True)
+
     def _handle_flooder_attack(self, flooder : User):
-        punition_msg, wav = self.user.render_message("CIVILISE TOI FILS DE PUTE", "fr")
+        punition_msg = "OH T KI LÀ"
         now = time() * 1000
         for _ in range(PUNITIVE_MSG_COUNT):
             for client in flooder.clients:
@@ -275,7 +279,7 @@ class LoultServer(WebSocketServerProtocol):
                                          'userid': self.user.user_id,
                                          'msg': punition_msg,
                                          'date': now}))
-                client.sendMessage(wav, isBinary=True)
+                self._send_sound("tools/data/alerts/ohtki.wav")
         self._broadcast_to_channel({'type': 'attack',
                                     'date': now,
                                     'event': 'attack',
