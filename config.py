@@ -8,6 +8,10 @@ FLOOD_DETECTION_WINDOW = 4
 # shadowmuted
 FLOOD_DETECTION_MSG_PER_SEC = 3
 
+# duration in seconds until a warned flooder
+# isn't considered a flooder anymore if they stop flooding
+FLOOD_WARNING_TIMEOUT = 5 * 60
+
 # Number of time a punitive message is sent to an attacked shadowmuted user
 PUNITIVE_MSG_COUNT = 50
 
