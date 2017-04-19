@@ -17,14 +17,15 @@ from typing import List, Dict, Set, Tuple
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT
+from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
+     BANNED_WORDS
 from salt import SALT
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
 from tools.phonems import PhonemList
 from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState, \
-    prepare_text_for_tts
+    prepare_text_for_tts, BannedWords
 
 # Alias with default parameters
 json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
@@ -136,10 +137,11 @@ class User:
 
 class LoultServer(WebSocketServerProtocol):
 
-    def __init__(self):
+    def __init__(self, banned_words=BANNED_WORDS):
         super().__init__()
         self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt = None, None, None, None, None
         self.cnx = False
+        self.banned_words = BannedWords(banned_words)
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
@@ -234,7 +236,8 @@ class LoultServer(WebSocketServerProtocol):
                                    'date': now}))
             self.sendMessage(wav, isBinary=True)
 
-        elif self.user.state.is_flooding:
+        elif (self.user.state.is_flooding or
+              self.banned_words(msg_data["msg"])):
             self._handle_automute()
 
         else:
@@ -445,7 +448,7 @@ class Channel:
 
 class LoultServerState:
 
-    def __init__(self):
+    def __init__(self, banned_words=BANNED_WORDS):
         self.chans = {} # type:Dict[str,Channel]
         self.banned_cookies = {} #type:Dict[str,datetime]
 

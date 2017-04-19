@@ -4,7 +4,7 @@ from colorsys import hsv_to_rgb
 from datetime import datetime, timedelta
 from html import escape
 from io import BytesIO
-from re import sub
+from re import sub, compile as regex
 from shlex import quote
 from struct import pack
 from subprocess import PIPE, run
@@ -263,6 +263,17 @@ class SpoilerBipEffect(UtilitaryEffect):
             return output
         else:
             return text
+
+
+class BannedWords(list):
+
+    words = None
+
+    def __init__(self, words):
+        self.words = [regex(word) for word in words]
+
+    def __call__(self, word):
+        return any(regex_word.fullmatch(word) for regex_word in self.words)
 
 
 def add_msg_html_tag(text : str) -> str:
