@@ -8,12 +8,17 @@ from re import sub
 from shlex import quote
 from struct import pack
 from subprocess import PIPE, run
+from asyncio import get_event_loop
 from typing import List, Union
 
 import numpy
 from scipy.io import wavfile
 
-from config import FLOOD_DETECTION_WINDOW, FLOOD_DETECTION_MSG_PER_SEC
+from config import (
+        FLOOD_DETECTION_WINDOW,
+        FLOOD_DETECTION_MSG_PER_SEC,
+        FLOOD_WARNING_TIMEOUT
+    )
 from tools import pokemons
 from tools.audio_tools import resample
 from tools.phonems import PhonemList, Phonem
@@ -65,6 +70,21 @@ class UserState:
         self.last_msgs_timestamps = [] #type:List[datetime]
         self.has_been_warned = False # User has been warned he shouldn't flood
         self.is_shadowmuted = False # User has been shadowmuted
+
+    def __setattr__(self, name, value):
+        object.__setattr__(self, name, value)
+        if name == "has_been_warned" and value:
+            # it's safe since the whole application only
+            # uses the default loop
+            loop = get_event_loop()
+            loop.call_later(FLOOD_WARNING_TIMEOUT, self._reset_warning)
+
+    def _reset_warning(self):
+        """
+        Helper with a better debug representation than
+        a lambda for use as a callback in the event loop.
+        """
+        self.has_been_warned = False
 
     def add_effect(self, effect):
         """Adds an effect to one of the active tools list (depending on the effect type)"""
