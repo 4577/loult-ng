@@ -219,7 +219,7 @@ class LoultServer(WebSocketServerProtocol):
             self.sendMessage(json({'type': 'automute',
                                    'event': 'flood_warning',
                                    'date': time() * 1000}))
-            self._send_sound("tools/data/alerts/alarm.wav")
+            self.send_sound("tools/data/alerts/alarm.wav")
 
     def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
@@ -264,7 +264,7 @@ class LoultServer(WebSocketServerProtocol):
                                         'date': info['date']},
                                        wav if synth else None)
 
-    def _send_sound(self, relative_path):
+    def send_sound(self, relative_path):
         """Sends a wav file from a path relative to the current directory."""
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
         with open(full_path, "rb") as sound_file:
@@ -279,7 +279,7 @@ class LoultServer(WebSocketServerProtocol):
                                          'userid': self.user.user_id,
                                          'msg': punition_msg,
                                          'date': now}))
-                self._send_sound("tools/data/alerts/ohtki.wav")
+                client.send_sound("tools/data/alerts/ohtki.wav")
         self._broadcast_to_channel({'type': 'attack',
                                     'date': now,
                                     'event': 'attack',
