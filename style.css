@@ -1,0 +1,537 @@
+div, header, input {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+html, body {
+	padding: 0;
+	margin: 0;
+	font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', Geneva, sans-serif;
+	font-size: 16px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	background: #f9f9f9;
+	color: #000;
+}
+
+*::-moz-selection {
+	background: #ACF;
+}
+*::selection {
+	background: #ACF;
+}
+
+header {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	min-height: 50px;
+	border-bottom: 1px solid #BBB;
+}
+
+header, #prefsttl {
+	background: #EEE;
+	background: -webkit-linear-gradient(top, #EEE 0%,#FFF 100%);
+	background: linear-gradient(to bottom, #EEE 0%,#FFF 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#EEE', endColorstr='#FFF',GradientType=0);
+}
+
+header > span {
+	width: 155px;
+}
+
+header > span > img {
+	margin: 2px 25px 0;
+	height: 46px;
+}
+
+#sidebtns {
+	height: 100%;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: row;
+	flex-direction: row;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	padding: 0 27px;
+	margin-left: auto;
+}
+
+input[type=range] {
+	vertical-align: middle;
+	margin-left: 5px;
+	width: 147px;
+}
+
+main {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	height: 100%;
+	min-height: 0;
+}
+
+#chat {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	min-width: 0;
+}
+
+#chatbox {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	overflow-y: auto;
+}
+
+#chatentry {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	min-height: 50px;
+	border-top: 1px solid #BBB;
+}
+
+#chatentry img {
+	padding: 12px 8px;
+}
+
+#input {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	height: 49px ;
+	font-size: 30px;
+	padding: 6px 0;
+	text-indent: 6px;
+	min-width: 0;
+	outline: 0;
+	border: 0;
+	background: transparent;
+}
+
+table {
+	border-collapse: collapse;
+	word-break: break-all;
+}
+
+td {
+	height: 20px;
+	padding: 0;
+}
+
+#chattbl td:first-child {
+	padding-left: 5px;
+}
+
+td:first-child {
+	min-width: 150px;
+}
+
+#chattbl tr:nth-child(odd) {
+	background: rgba(128, 128, 128, 0.1);
+}
+
+#chattbl td:not(:nth-child(2)) {
+	white-space: nowrap;
+}
+
+#chattbl td:nth-child(2) {
+	width: 99%;
+	padding: 8px;
+}
+
+#chattbl td:last-child {
+	font-size: 11px;
+	padding-right: 5px;
+	text-align: right;
+}
+
+#chattbl td:last-child span {
+	display: inline-block;
+	max-width: 0;
+	overflow: hidden;
+	margin-top: 6px;
+}
+
+.spoiler, .spoiler * {
+	background: #000;
+	color: #000;
+}
+
+.spoiler:hover, .spoiler:hover * {
+	background: transparent;
+}
+
+.show {
+	max-width: 99px !important;
+}
+
+#wrap {
+	height: 100%;
+	border-left: 1px solid #BBB;
+}
+
+#usertbl {
+	max-width: 150px;
+	margin: 0 5px;
+}
+
+#sidebtns, #userlist {
+	width: 185px;
+}
+
+#sidebtns img, #chatentry img {
+	height: 24px;
+	width: 24px;
+}
+
+#userlist {
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+label {
+	cursor: inherit;
+	display: block;
+	line-height: 36px;
+	background-repeat: no-repeat;
+}
+
+label.left {
+	padding-left: 40px;
+	padding-right: 0;
+	text-align: left;
+	background-position: left 0 bottom 5px;
+}
+
+label.right {
+	padding-left: 0;
+	padding-right: 40px;
+	text-align: right;
+	background-position: right 0 bottom 5px;
+}
+
+.sound {
+	margin-top:4px;
+}
+
+.backlog td,.mute > *, #chattbl td:last-child {
+	opacity: 0.6;
+}
+
+a {
+	color: #06A;
+	text-decoration: none;
+}
+
+.spoiler:hover a {
+	color: #06A !important;
+}
+
+a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs input:hover, #prefs label:hover, select:hover {
+	opacity: 0.8;
+	cursor: pointer;
+}
+
+.log {
+	color: #3C3;
+	text-align: center;
+}
+
+.greentext {
+	color: #792;
+	font-family: monospace;
+}
+
+.greentext .spoiler:hover {
+	color: #792 !important;
+}
+
+.vocalink {
+    vertical-align : middle;
+}
+
+.part {
+	color: #1AC;
+}
+
+.kick {
+	color: #F33;
+}
+
+#close:hover {
+	background: #F33 !important;
+}
+
+#underlay {
+	position: fixed;
+	opacity: 0.1;
+	z-index: 10;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+
+header, main, #overlay {
+	z-index: 20;
+}
+
+#overlay {
+	display: none;
+	-webkit-box-flex: 0;
+	-ms-flex: 0;
+	flex: 0;
+}
+
+#cover {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	opacity: 0.3;
+	background: #000;
+}
+
+.blur-in {
+	-webkit-animation: blur-in 450ms forwards;
+	animation: blur-in 450ms forwards;
+}
+@-webkit-keyframes blur-in {
+	0% { -webkit-filter: blur(0px); }
+	100% { -webkit-filter: blur(3px); }
+}
+@keyframes blur-in {
+	0% { -webkit-filter: blur(0px); filter: blur(0px); }
+	100% { -webkit-filter: blur(3px); filter: blur(3px); }
+}
+
+#window {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	max-width: 720px;
+	max-height: 480px;
+	margin: auto;
+	background: #f9f9f9;
+	box-shadow: 0 0 15px #BBB;
+	border: 1px solid #BBB;
+	line-height: 1.5em;
+	width: 720px;
+	height: 480px;
+}
+
+#window, #prefs input {
+	font-size: 25px;
+}
+
+#prefsttl {
+	border-bottom: 1px solid #BBB;
+	padding-left: 8px;
+	height: 40px;
+}
+
+#prefs {
+	position: absolute;
+	top: 40px;
+	bottom: 40px;
+	left: 0;
+	right: 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+}
+
+#prefs div {
+	padding: 10px 40px;
+}
+
+#prefs div:last-child {
+	text-align: center;
+}
+
+#prefs a {
+	text-decoration: underline;
+}
+
+#prefs label {
+	display: inline-block;
+	padding: 0 10px;
+	min-width: 80px;
+	width: 80px;
+}
+
+#prefs span {
+	display: inline-block;
+	width: 165px;
+	margin: 0 10px;
+	text-align: right;
+	white-space: nowrap;
+}
+
+#close {
+	cursor: pointer;
+	float: right;
+	text-align: center;
+	height: 39px;
+	width: 39px;
+	background: #EEE;
+	border-left: 1px solid #BBB;
+}
+
+select {
+	background: #f9f9f9;
+	border: none;
+	font-size: 25px;
+	padding: 0;
+	margin: 0;
+	outline: 0;
+}
+
+* {
+	-webkit-transition: background-color 150ms linear;
+	transition: background-color 150ms linear;
+}
+
+@media screen and (max-width: 720px) {
+	#window {
+		max-height: none;
+		width: auto;
+		height: auto;
+	}
+	
+	#prefs {
+		top: 80px;
+	}
+	
+	#prefs, select {
+		font-size: 16px;
+	}
+	
+	#prefs div {
+		padding: 10px;
+		margin: 0 auto;
+	}
+	
+	#prefs span {
+		width: 115px;
+	}
+	
+	#prefs label {
+		min-width: 60px;
+		width: 60px;
+	}
+}
+
+::-webkit-scrollbar-track, ::-webkit-scrollbar, ::-webkit-scrollbar-thumb {
+	border: 0;
+}
+
+::-webkit-scrollbar-track {
+	background-color: #EEE;
+	border-left: 1px solid #DDD;
+}
+
+::-webkit-scrollbar, ::-webkit-scrollbar-thumb {
+	background-color: #DDD;
+}
+
+@media screen and (max-width: 680px) {
+	#input {
+		padding: 20px 0px;
+		}
+	}
+	
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+	input[type=button] {
+		padding: 5px;
+	}
+}
+
+.night, .night #window, .night #input, .night select {
+	background: #222;
+	color: #EEE;
+}
+
+.night select, .night .spoiler:hover, .night .spoiler:hover * {
+	color: #EEE;
+}
+
+.night #close {
+    background: #333;
+}
+
+.night header, .night #prefsttl {
+	border-bottom: 1px solid #111;
+}
+
+.night #chatentry {
+	border-top: 1px solid #111;
+}
+
+.night #wrap, .night #close {
+	border-left: 1px solid #111;
+}
+
+.night #window {
+	border: 1px solid #111;
+}
+
+.night .backlog td, .mute > *, .night  #chattbl td:last-child {
+	opacity: 0.4;
+}
+
+.night header, .night #prefsttl {
+	background: #111;
+	background: -webkit-linear-gradient(top, #111 0%,#333 100%);
+	background: linear-gradient(to bottom, #111 0%,#333 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#111', endColorstr='#333',GradientType=0);
+}
+
+.night ::-webkit-scrollbar-track {
+	background-color: #333;
+	border-left: 1px solid #222;
+}
+
+.night ::-webkit-scrollbar, .night ::-webkit-scrollbar-thumb {
+	background-color: #222;
+}
