@@ -12,6 +12,7 @@ from json import loads, dumps
 from os import urandom, path
 from re import sub
 from time import time
+from functools import lru_cache
 from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
@@ -265,6 +266,7 @@ class LoultServer(WebSocketServerProtocol):
                                         'date': info['date']},
                                        wav if synth else None)
 
+    @lru_cache()
     def _open_sound_file(self, relative_path):
         """Sends a wav file from a path relative to the current directory."""
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
