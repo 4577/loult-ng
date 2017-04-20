@@ -234,7 +234,7 @@ class SpoilerBipEffect(UtilitaryEffect):
 
     def process(self, text: str, lang : str) -> Union[str, PhonemList]:
         """Beeps out parts of the text that are tagged with double asterisks.
-        It basicaly replaces the opening and closig asterisk with two opening and closing 'stop words'
+        It basicaly replaces the opening and closing asterisk with two opening and closing 'stop words'
         then finds the phonemic form of these two and replaces the phonems inside with an equivalently long beep"""
         occ_list = re.findall(r"\*\*.+?\*\*", text)
         if occ_list:
