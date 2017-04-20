@@ -324,8 +324,10 @@ class LoultServer(WebSocketServerProtocol):
             return
         elif adversary.state.is_shadowmuted:
             # if targeted user is shadowmuted, just bombard him/her with the same message
+            self.user.state.last_attack = datetime.now()
             self._handle_flooder_attack(adversary)
         else:
+            self.user.state.last_attack = datetime.now()
             self._broadcast_to_channel({'type': 'attack',
                                         'date': time() * 1000,
                                         'event' : 'attack',
@@ -356,7 +358,6 @@ class LoultServer(WebSocketServerProtocol):
                                             'date': time() * 1000,
                                             'event': 'nothing'})
 
-            self.user.state.last_attack = datetime.now()
 
     def _move_handler(self, msg_data : Dict):
         # checking if all the necessary data is here
