@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	var chattbl = document.getElementById('chattbl');
 	var usertbl = document.getElementById('usertbl');
 	var input = document.getElementById('input');
+	var night = (localStorage.night == 'true');
 	var left = (localStorage.left == 'true');
 	var dt = (localStorage.dt == 'true');
 	var hr = (localStorage.hr == 'true');
@@ -129,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	var cover = document.getElementById('cover');
 	var close = document.getElementById('close');
 	var rightbtn = document.getElementById('right');
+	var leftbtn = document.getElementById('left');
+	var daybtn = document.getElementById('day');
+	var nightbtn = document.getElementById('night');
 	var dtbtn = document.getElementById('dt');
 	var hrbtn = document.getElementById('hr');
 	// var ckwipe = document.getElementById('ckwipe');
@@ -151,18 +155,26 @@ document.addEventListener('DOMContentLoaded', function() {
 	close.onclick = closeWindow;
 	
 	rightbtn.checked = !left;
-	rightbtn.onchange = function(evt) {
-		left = !rightbtn.checked;
-		localStorage.left = left;
+	leftbtn.checked = left;
+	var align = function(evt) {
+		localStorage.left = left = !rightbtn.checked;
 		var rows = document.querySelectorAll('#chattbl td:first-child label');
 		for(var i = 0; i < rows.length; i++)
 			rows[i].className = (left ? 'left' : 'right');
 	};
+	rightbtn.onclick = leftbtn.onclick = align;
+	
+	daybtn.checked = !night;
+	nightbtn.checked = night;
+	var theme = function(evt) {
+		localStorage.night = night = !daybtn.checked;
+		document.body.className = (night ? 'night' : 'day');
+	};
+	daybtn.onclick = nightbtn.onclick = theme;
 	
 	dtbtn.checked = dt;
 	dtbtn.onchange = function(evt) {
-		dt = dtbtn.checked;
-		localStorage.dt = dt;
+		localStorage.dt = dt = dtbtn.checked;
 		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		var rows = document.querySelectorAll('#chattbl td:last-child span:first-child');
 		for(var i = 0; i < rows.length; i++)
@@ -172,8 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	hrbtn.checked = hr;
 	hrbtn.onchange = function(evt) {
-		hr = hrbtn.checked;
-		localStorage.hr = hr;
+		localStorage.hr = hr = hrbtn.checked;
 		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
 		var rows = document.querySelectorAll('#chattbl td:last-child span:last-child');
 		for(var i = 0; i < rows.length; i++)
@@ -390,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", (new Date), 'part');
 					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", (new Date), 'part');
 				}
-				else
+				else if(trimed.length)
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				
 				input.value = '';
@@ -497,5 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 	};
 	
+	theme();
 	wsConnect();
 });
