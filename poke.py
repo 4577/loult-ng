@@ -19,7 +19,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
-     BANNED_WORDS
+     BANNED_WORDS, SHELLING_RESTING_TIME
 from salt import SALT
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
@@ -316,18 +316,20 @@ class LoultServer(WebSocketServerProtocol):
         adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target",
                                                                                  self.user.poke_params.pokename),
                                                                     msg_data.get("order", 1) - 1)
+        now = datetime.now()
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is None:
             self.sendMessage(json({'type': 'attack', 'event': 'invalid'}))
-        elif datetime.now() - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME):
+        elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME) or
+              now - self.user.state.last_shelling < timedelta(seconds=SHELLING_RESTING_TIME)):
             return
         elif adversary.state.is_shadowmuted:
             # if targeted user is shadowmuted, just bombard him/her with the same message
-            self.user.state.last_attack = datetime.now()
+            self.user.state.last_shelling = now
             self._handle_flooder_attack(adversary)
         else:
-            self.user.state.last_attack = datetime.now()
+            self.user.state.last_attack = now
             self._broadcast_to_channel({'type': 'attack',
                                         'date': time() * 1000,
                                         'event' : 'attack',
