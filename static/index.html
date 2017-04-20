@@ -15,17 +15,12 @@
 				<img src="/img/logo.svg" alt="Lou.lt" id="Lou.lt">
 			</span>
 			<div id="sidebtns">
-				<select id="lang">
-					<option value="fr">FR</option>
-					<option value="en">EN</option>
-					<option value="es">ES</option>
-					<option value="de">DE</option>
-				</select>
 				<img src="/img/speaker.png" alt="Son" id="speaker">
 				<img src="/img/gear.png" alt="Réglages" id="gear">
 				<img src="/img/users.png" alt="Utilisateurs" id="userswitch">
 			</div>
 		</header>
+		<div id="underlay"></div>
 		<main id="main">
 			<div id="chat">
 				<div id="chatbox">
@@ -51,12 +46,20 @@
 					<div id="close">×</div>
 				</div>
 				<div id="prefs">
-					<div>Volume : <input type="range" value="100" id="volrange"></div>
-					<div><input type="checkbox" id="dt"><label for="dt">Date</label><input type="checkbox" id="hr"><label for="hr">Heure</label></div>
-					<div><input type="checkbox" id="right"><label for="right">Aligner les Pokémons à droite</label></div>
+					<div><span>Volume :</span><input type="range" value="100" id="volrange"></div>
+					<div><span>Langue :</span>
+						<select id="lang">
+							<option value="fr">FR</option>
+							<option value="en">EN</option>
+							<option value="es">ES</option>
+							<option value="de">DE</option>
+						</select>
+					</div>
+					<div><span>Thème :</span><input type="radio" name="theme" value="day" id="day"><label for="day">Jouw</label><input type="radio" name="theme" value="night" id="night"><label for="night">Nuiw</label></div>
+					<div><span>Affichage :</span><input type="checkbox" id="dt"><label for="dt">Date</label><input type="checkbox" id="hr"><label for="hr">Heure</label></div>
+					<div><span>Alignement :</span><input type="radio" name="align" value="right" id="right"><label for="right">Droite</label><input type="radio" name="align" value="left" id="left"><label for="left">Gauche</label></div>
 					<!--<div><input type="button" value="Supprimer mon cookie" id="ckwipe"></div>-->
-					<div><a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dictionnaire louspeak</a></div>
-					<div><a href="https://github.com/4577/loult-ng" target="_blank">Code source du site</a></div>
+					<div><a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dictionnaire</a> - <a href="https://github.com/4577/loult-ng" target="_blank">GitHub</a></div>
 				</div>
 			</div>
 		</div>
