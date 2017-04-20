@@ -2,6 +2,8 @@ import unittest
 from datetime import datetime, timedelta
 from tools.tools import UserState
 from config import FLOOD_DETECTION_MSG_PER_SEC, FLOOD_DETECTION_WINDOW
+from tools.tools import BannedWords
+
 
 class TestUserState(unittest.TestCase):
 
@@ -35,6 +37,18 @@ class TestUserState(unittest.TestCase):
         for i in range(flood_nb):
             user_state.log_msg()
         self.assertFalse(user_state.is_flooding)
+
+
+class TestBannedWords(unittest.TestCase):
+
+    def test_match_simple(self):
+        word_list = [".*stuff.*", "^[0-9]{2}.*"]
+        banned_words = BannedWords(word_list)
+        self.assertTrue(banned_words("something stuff and things"))
+        self.assertFalse(banned_words("something stuf and things"))
+        self.assertTrue(banned_words("10 something"))
+        self.assertFalse(banned_words("1 something"))
+
 
 if __name__ == "__main__":
     unittest.main()

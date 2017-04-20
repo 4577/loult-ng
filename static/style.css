@@ -14,8 +14,8 @@ html, body {
 	display: flex;
 	-webkit-box-orient: vertical;
 	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	-ms-flex-direction: column;
+	flex-direction: column;
 	height: 100%;
 	width: 100%;
 	background: #f9f9f9;
@@ -31,8 +31,8 @@ html, body {
 
 header {
 	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	-ms-flex: 1;
+	flex: 1;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -63,15 +63,15 @@ header > span > img {
 	display: flex;
 	-webkit-box-orient: horizontal;
 	-webkit-box-direction: normal;
-	    -ms-flex-direction: row;
-	        flex-direction: row;
+	-ms-flex-direction: row;
+	flex-direction: row;
 	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	-ms-flex-align: center;
+	align-items: center;
 	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
-	padding: 0 11px;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	padding: 0 27px;
 	margin-left: auto;
 }
 
@@ -91,22 +91,22 @@ main {
 
 #chat {
 	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	-ms-flex: 1;
+	flex: 1;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
 	-webkit-box-orient: vertical;
 	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	-ms-flex-direction: column;
+	flex-direction: column;
 	min-width: 0;
 }
 
 #chatbox {
 	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	-ms-flex: 1;
+	flex: 1;
 	overflow-y: auto;
 }
 
@@ -124,8 +124,8 @@ main {
 
 #input {
 	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	-ms-flex: 1;
+	flex: 1;
 	height: 49px ;
 	font-size: 30px;
 	padding: 6px 0;
@@ -155,12 +155,11 @@ td:first-child {
 }
 
 #chattbl tr:nth-child(odd) {
-	background: #FFF;
+	background: rgba(128, 128, 128, 0.1);
 }
 
 #chattbl td:not(:nth-child(2)) {
 	white-space: nowrap;
-	text-align: right;
 }
 
 #chattbl td:nth-child(2) {
@@ -171,6 +170,7 @@ td:first-child {
 #chattbl td:last-child {
 	font-size: 11px;
 	padding-right: 5px;
+	text-align: right;
 }
 
 #chattbl td:last-child span {
@@ -219,7 +219,7 @@ td:first-child {
 
 label {
 	cursor: inherit;
-	display: inline-block;
+	display: block;
 	line-height: 36px;
 	background-repeat: no-repeat;
 }
@@ -227,12 +227,14 @@ label {
 label.left {
 	padding-left: 40px;
 	padding-right: 0;
+	text-align: left;
 	background-position: left 0 bottom 5px;
 }
 
 label.right {
 	padding-left: 0;
 	padding-right: 40px;
+	text-align: right;
 	background-position: right 0 bottom 5px;
 }
 
@@ -244,9 +246,13 @@ label.right {
 	opacity: 0.6;
 }
 
-a, .spoiler:hover a {
+a {
 	color: #06A;
 	text-decoration: none;
+}
+
+.spoiler:hover a {
+	color: #06A !important;
 }
 
 a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs input:hover, #prefs label:hover, select:hover {
@@ -259,9 +265,13 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	text-align: center;
 }
 
-.greentext, .greentext .spoiler:hover {
+.greentext {
 	color: #792;
 	font-family: monospace;
+}
+
+.greentext .spoiler:hover {
+	color: #792 !important;
 }
 
 .vocalink {
@@ -277,14 +287,30 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 }
 
 #close:hover {
-	background: #F33;
+	background: #F33 !important;
+}
+
+#underlay {
+	position: fixed;
+	opacity: 0.1;
+	z-index: 10;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+
+header, main, #overlay {
+	z-index: 20;
 }
 
 #overlay {
 	display: none;
 	-webkit-box-flex: 0;
-	    -ms-flex: 0;
-	        flex: 0;
+	-ms-flex: 0;
+	flex: 0;
 }
 
 #cover {
@@ -319,8 +345,9 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	max-width: 720px;
 	max-height: 480px;
 	margin: auto;
-	background: #FFF;
+	background: #f9f9f9;
 	box-shadow: 0 0 15px #BBB;
+	border: 1px solid #BBB;
 	line-height: 1.5em;
 	width: 720px;
 	height: 480px;
@@ -347,15 +374,19 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	display: flex;
 	-webkit-box-orient: vertical;
 	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	-ms-flex-direction: column;
+	flex-direction: column;
 	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	-ms-flex-pack: center;
+	justify-content: center;
 }
 
 #prefs div {
 	padding: 10px 40px;
+}
+
+#prefs div:last-child {
+	text-align: center;
 }
 
 #prefs a {
@@ -363,7 +394,18 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 }
 
 #prefs label {
+	display: inline-block;
 	padding: 0 10px;
+	min-width: 80px;
+	width: 80px;
+}
+
+#prefs span {
+	display: inline-block;
+	width: 165px;
+	margin: 0 10px;
+	text-align: right;
+	white-space: nowrap;
 }
 
 #close {
@@ -374,30 +416,63 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	width: 39px;
 	background: #EEE;
 	border-left: 1px solid #BBB;
-	-webkit-transition: background-color 150ms linear;
-	transition: background-color 150ms linear;
 }
 
 select {
-	background: transparent;
+	background: #f9f9f9;
 	border: none;
-	font-size: 20px;
+	font-size: 25px;
 	padding: 0;
 	margin: 0;
 	outline: 0;
 }
 
+* {
+	-webkit-transition: background-color 150ms linear;
+	transition: background-color 150ms linear;
+}
+
 @media screen and (max-width: 720px) {
 	#window {
-		padding: 40px;
 		max-height: none;
 		width: auto;
 		height: auto;
 	}
-
+	
 	#prefs {
 		top: 80px;
 	}
+	
+	#prefs, select {
+		font-size: 16px;
+	}
+	
+	#prefs div {
+		padding: 10px;
+		margin: 0 auto;
+	}
+	
+	#prefs span {
+		width: 115px;
+	}
+	
+	#prefs label {
+		min-width: 60px;
+		width: 60px;
+	}
+}
+
+::-webkit-scrollbar-track, ::-webkit-scrollbar, ::-webkit-scrollbar-thumb {
+	border: 0;
+}
+
+::-webkit-scrollbar-track {
+	background-color: #EEE;
+	border-left: 1px solid #DDD;
+}
+
+::-webkit-scrollbar, ::-webkit-scrollbar-thumb {
+	background-color: #DDD;
 }
 
 @media screen and (max-width: 680px) {
@@ -405,9 +480,58 @@ select {
 		padding: 20px 0px;
 		}
 	}
-
+	
 @media screen and (-webkit-min-device-pixel-ratio:0) {
 	input[type=button] {
 		padding: 5px;
 	}
+}
+
+.night, .night #window, .night #input, .night select {
+	background: #222;
+	color: #EEE;
+}
+
+.night select, .night .spoiler:hover, .night .spoiler:hover * {
+	color: #EEE;
+}
+
+.night #close {
+    background: #333;
+}
+
+.night header, .night #prefsttl {
+	border-bottom: 1px solid #111;
+}
+
+.night #chatentry {
+	border-top: 1px solid #111;
+}
+
+.night #wrap, .night #close {
+	border-left: 1px solid #111;
+}
+
+.night #window {
+	border: 1px solid #111;
+}
+
+.night .backlog td, .mute > *, .night  #chattbl td:last-child {
+	opacity: 0.4;
+}
+
+.night header, .night #prefsttl {
+	background: #111;
+	background: -webkit-linear-gradient(top, #111 0%,#333 100%);
+	background: linear-gradient(to bottom, #111 0%,#333 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#111', endColorstr='#333',GradientType=0);
+}
+
+.night ::-webkit-scrollbar-track {
+	background-color: #333;
+	border-left: 1px solid #222;
+}
+
+.night ::-webkit-scrollbar, .night ::-webkit-scrollbar-thumb {
+	background-color: #222;
 }
