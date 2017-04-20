@@ -496,10 +496,6 @@ select {
 	color: #EEE;
 }
 
-.night #chattbl tr:nth-child(odd) {
-	background: rgba(100, 100, 100, 0.1);
-}
-
 .night #close {
     background: #333;
 }
