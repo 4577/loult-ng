@@ -12,6 +12,7 @@ from json import loads, dumps
 from os import urandom, path
 from re import sub
 from time import time
+from functools import lru_cache
 from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
@@ -265,6 +266,7 @@ class LoultServer(WebSocketServerProtocol):
                                         'date': info['date']},
                                        wav if synth else None)
 
+    @lru_cache()
     def _open_sound_file(self, relative_path):
         """Sends a wav file from a path relative to the current directory."""
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
@@ -277,21 +279,24 @@ class LoultServer(WebSocketServerProtocol):
         now = time() * 1000
         loop = get_event_loop()
 
-        async def punish(client):
+        async def punish(flooder, count):
             """
-            It's defined here to create a closure instead of
-            having to pass many arguments.
+            Yes, it's a recursive asynchronous function.
+            If it weren't, this function would stall everything
+            until it completes. It's defined here to create a
+            closure instead of having to pass many arguments.
             """
-            client.sendMessage(json({'type': 'msg',
-                                     'userid': self.user.user_id,
-                                     'msg': punition_msg,
-                                     'date': now}))
-            client.sendMessage(punition_sound, isBinary=True)
+            if count > 0 and flooder in self.channel_obj.users.values():
+                for client in flooder.clients:
+                    client.sendMessage(json({'type': 'msg',
+                                             'userid': self.user.user_id,
+                                             'msg': punition_msg,
+                                             'date': now}))
+                    client.sendMessage(punition_sound, isBinary=True)
+                loop.create_task(punish(flooder, count - 1))
 
-
-        for _ in range(PUNITIVE_MSG_COUNT):
-            for client in flooder.clients:
-                loop.create_task(punish(client))
+        # recursion launched here
+        loop.create_task(punish(flooder, PUNITIVE_MSG_COUNT))
 
         self._broadcast_to_channel({'type': 'attack',
                                     'date': now,
@@ -313,46 +318,46 @@ class LoultServer(WebSocketServerProtocol):
                                                                     msg_data.get("order", 1) - 1)
 
         # checking if the target user is found, and if the current user has waited long enough to attack
-        if adversary is not None:
-            if adversary.state.is_shadowmuted:
-                # if targeted user is shadowmuted, just bombard him/her with the same message
-                self._handle_flooder_attack(adversary)
+        if adversary is None:
+            self.sendMessage(json({'type': 'attack', 'event': 'invalid'}))
+        elif datetime.now() - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME):
+            return
+        elif adversary.state.is_shadowmuted:
+            # if targeted user is shadowmuted, just bombard him/her with the same message
+            self.user.state.last_attack = datetime.now()
+            self._handle_flooder_attack(adversary)
+        else:
+            self.user.state.last_attack = datetime.now()
+            self._broadcast_to_channel({'type': 'attack',
+                                        'date': time() * 1000,
+                                        'event' : 'attack',
+                                        'attacker_id': self.user.user_id,
+                                        'defender_id': adversary_id})
 
-            elif (datetime.now() - timedelta(seconds=ATTACK_RESTING_TIME)) > self.user.state.last_attack:
-                self._broadcast_to_channel({'type': 'attack',
-                                            'date': time() * 1000,
-                                            'event' : 'attack',
-                                            'attacker_id': self.user.user_id,
-                                            'defender_id': adversary_id})
+            combat_sim = CombatSimulator()
+            combat_sim.run_attack(self.user, adversary, self.channel_obj)
+            self._broadcast_to_channel({'type': 'attack',
+                                        'date': time() * 1000,
+                                        'event': 'dice',
+                                        'attacker_dice' : combat_sim.atk_dice,
+                                        "defender_dice" : combat_sim.def_dice,
+                                        'attacker_bonus' : combat_sim.atk_bonus,
+                                        "defender_bonus" : combat_sim.def_bonus,
+                                        'attacker_id': self.user.user_id, 'defender_id': adversary_id})
 
-                combat_sim = CombatSimulator()
-                combat_sim.run_attack(self.user, adversary, self.channel_obj)
-                self._broadcast_to_channel({'type': 'attack',
-                                            'date': time() * 1000,
-                                            'event': 'dice',
-                                            'attacker_dice' : combat_sim.atk_dice,
-                                            "defender_dice" : combat_sim.def_dice,
-                                            'attacker_bonus' : combat_sim.atk_bonus,
-                                            "defender_bonus" : combat_sim.def_bonus,
-                                            'attacker_id': self.user.user_id, 'defender_id': adversary_id})
-
-                if combat_sim.affected_users: # there are users affected by some effects
-                    for user, effect in combat_sim.affected_users:
-                        self._broadcast_to_channel({'type': 'attack',
-                                                    'date': time() * 1000,
-                                                    'event': 'effect',
-                                                    'target_id': user.user_id,
-                                                    'effect': effect.name,
-                                                    'timeout': effect.timeout})
-                else: # list is empty, no one was attacked
+            if combat_sim.affected_users: # there are users affected by some effects
+                for user, effect in combat_sim.affected_users:
                     self._broadcast_to_channel({'type': 'attack',
                                                 'date': time() * 1000,
-                                                'event': 'nothing'})
+                                                'event': 'effect',
+                                                'target_id': user.user_id,
+                                                'effect': effect.name,
+                                                'timeout': effect.timeout})
+            else: # list is empty, no one was attacked
+                self._broadcast_to_channel({'type': 'attack',
+                                            'date': time() * 1000,
+                                            'event': 'nothing'})
 
-                self.user.state.last_attack = datetime.now()
-        else:
-            self.sendMessage(json({'type': 'attack',
-                                   'event': 'invalid'}))
 
     def _move_handler(self, msg_data : Dict):
         # checking if all the necessary data is here
