@@ -219,7 +219,8 @@ class LoultServer(WebSocketServerProtocol):
             self.sendMessage(json({'type': 'automute',
                                    'event': 'flood_warning',
                                    'date': time() * 1000}))
-            self.send_sound("tools/data/alerts/alarm.wav")
+            alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
+            self.sendMessage(alarm_sound, isBinary=True)
 
     def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
@@ -264,22 +265,34 @@ class LoultServer(WebSocketServerProtocol):
                                         'date': info['date']},
                                        wav if synth else None)
 
-    def send_sound(self, relative_path):
+    def _open_sound_file(self, relative_path):
         """Sends a wav file from a path relative to the current directory."""
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
         with open(full_path, "rb") as sound_file:
-            self.sendMessage(sound_file.read(), isBinary=True)
+            return sound_file.read()
 
     def _handle_flooder_attack(self, flooder : User):
         punition_msg = "OH T KI LÀ"
+        punition_sound = self._open_sound_file("tools/data/alerts/ohtki.wav")
         now = time() * 1000
+        loop = get_event_loop()
+
+        async def punish(client):
+            """
+            It's defined here to create a closure instead of
+            having to pass many arguments.
+            """
+            client.sendMessage(json({'type': 'msg',
+                                     'userid': self.user.user_id,
+                                     'msg': punition_msg,
+                                     'date': now}))
+            client.sendMessage(punition_sound, isBinary=True)
+
+
         for _ in range(PUNITIVE_MSG_COUNT):
             for client in flooder.clients:
-                client.sendMessage(json({'type': 'msg',
-                                         'userid': self.user.user_id,
-                                         'msg': punition_msg,
-                                         'date': now}))
-                client.send_sound("tools/data/alerts/ohtki.wav")
+                loop.create_task(punish(client))
+
         self._broadcast_to_channel({'type': 'attack',
                                     'date': now,
                                     'event': 'attack',
