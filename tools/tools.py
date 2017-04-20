@@ -57,6 +57,7 @@ class PokeParameters:
 
 
 class UserState:
+
     detection_window = timedelta(seconds=FLOOD_DETECTION_WINDOW)
 
     def __init__(self):
@@ -67,6 +68,7 @@ class UserState:
                         (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
 
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
+        self.last_shelling = datetime.now() # last flooder attack, user has to wait too
         self.last_msgs_timestamps = [] #type:List[datetime]
         self.has_been_warned = False # User has been warned he shouldn't flood
         self.is_shadowmuted = False # User has been shadowmuted
