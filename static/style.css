@@ -155,7 +155,7 @@ td:first-child {
 }
 
 #chattbl tr:nth-child(odd) {
-	background: #FFF;
+	background: rgba(128, 128, 128, 0.1);
 }
 
 #chattbl td:not(:nth-child(2)) {
@@ -246,9 +246,13 @@ label.right {
 	opacity: 0.6;
 }
 
-a, .spoiler:hover a {
+a {
 	color: #06A;
 	text-decoration: none;
+}
+
+.spoiler:hover a {
+	color: #06A !important;
 }
 
 a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs input:hover, #prefs label:hover, select:hover {
@@ -261,9 +265,13 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	text-align: center;
 }
 
-.greentext, .greentext .spoiler:hover {
+.greentext {
 	color: #792;
 	font-family: monospace;
+}
+
+.greentext .spoiler:hover {
+	color: #792 !important;
 }
 
 .vocalink {
@@ -280,6 +288,22 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 
 #close:hover {
 	background: #F33 !important;
+}
+
+#underlay {
+	position: fixed;
+	opacity: 0.1;
+	z-index: 10;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+
+header, main, #overlay {
+	z-index: 20;
 }
 
 #overlay {
@@ -321,7 +345,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 	max-width: 720px;
 	max-height: 480px;
 	margin: auto;
-	background: #FFF;
+	background: #f9f9f9;
 	box-shadow: 0 0 15px #BBB;
 	border: 1px solid #BBB;
 	line-height: 1.5em;
@@ -395,7 +419,7 @@ a:hover, .sound:hover, #sidebtns > img:hover, #chatentry > img:hover, #prefs inp
 }
 
 select {
-	background: transparent;
+	background: #f9f9f9;
 	border: none;
 	font-size: 25px;
 	padding: 0;
@@ -463,16 +487,20 @@ select {
 	}
 }
 
-.night, .night #window, .night #input {
+.night, .night #window, .night #input, .night select {
 	background: #222;
 	color: #EEE;
 }
 
-.night select {
+.night select, .night .spoiler:hover, .night .spoiler:hover * {
 	color: #EEE;
 }
 
-.night #chattbl tr:nth-child(odd), .night #close {
+.night #chattbl tr:nth-child(odd) {
+	background: rgba(100, 100, 100, 0.1);
+}
+
+.night #close {
     background: #333;
 }
 

@@ -110,8 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 			};
 		}
-		else
+		else {
+			var underlay = document.getElementById('underlay');
+			underlay.style.backgroundImage = 'url("dev/pokemon/' + params.img.match(/\d{3}/)[0] + '.png")';
 			you = userid;
+		}
 		
 		tr.appendChild(td);
 		usertbl.appendChild(tr);
@@ -198,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			rows[i].className = ((dt && hr) ? 'show' : '');
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
-	}
+	};
 	
 	// ckwipe.onclick = function(evt) {
 		// evt.preventDefault();
@@ -261,6 +264,13 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// Sound and volume
 	
+	var changeVolume = function() {
+		if(speaker.src.indexOf('mute') == -1) {
+			volume.gain.value = volrange.value / 100;
+			localStorage.volume = volume.gain.value;
+		}
+	};
+	
 	if(audio)
 	{
 		var speaker = document.getElementById('speaker');
@@ -284,12 +294,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				this.src = '/img/speaker.png';
 			}
 		};
-		volrange.oninput = function() {
-			if(speaker.src.indexOf('mute') == -1) {
-				volume.gain.value = volrange.value / 100;
-				localStorage.volume = volume.gain.value;
-			}
-		};
+		
+		volrange.oninput = changeVolume;
 	}
 	
 	// Speech
@@ -337,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
 		};
 		
-		function startDictation() {
+		var startDictation = function () {
 			if(recognizing) {
 				recognition.stop();
 				img.src = '/img/micro_off.png';
@@ -361,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			recognition.lang = l;
 			recognition.start();
 			input.value = '';
-		}
+		};
 	}
 	
 	// Users list display
@@ -393,11 +399,15 @@ document.addEventListener('DOMContentLoaded', function() {
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
 				else if(trimed.match(/^\/(en|es|fr|de)\s/i))
-					ws.send(JSON.stringify({type: 'msg', msg: trimed.substring(4), lang: trimed.substring(1, 3)}));
-				else if(trimed.match(/^\/(help|aide)$/i))
-				{
-					addLine('info', "/attack, /attaque : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", (new Date), 'part');
+					ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 3)}));
+				else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i)) {
+					volrange.value = trimed.match(/\d+$/i)[0];
+					changeVolume();
+				}
+				else if(trimed.match(/^\/(help|aide)$/i)) {
+					addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", (new Date), 'part');
 					addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", (new Date), 'part');
+					addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", (new Date), 'part');
 					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", (new Date), 'part');
 					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", (new Date), 'part');
 				}
@@ -415,16 +425,21 @@ document.addEventListener('DOMContentLoaded', function() {
 		ws.onmessage = function(msg) {
 			if(typeof msg.data == 'string') {
 				msg = JSON.parse(msg.data);
+				lastMuted = (muted.indexOf(msg.userid) != -1);
 				
 				switch(msg.type) {
 					case 'connect':
-						addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
-						addUser(msg.userid, msg.params);
+						if(!lastMuted) {
+							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
+							addUser(msg.userid, msg.params);
+						}
 					break;
 					
 					case 'disconnect':
-						addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, 'log part');
-						delUser(msg.userid);
+						if(!lastMuted) {
+							addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, 'log part');
+							delUser(msg.userid);
+						}
 					break;
 					
 					case 'attack':
@@ -456,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'automute':
 						switch(msg['event']) {
 							case 'automuted':
-								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra 20 messages civilisateurs!', msg.date, 'log');
+								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
 							break;
 							case 'flood_warning':
                                 addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, 'log part');
@@ -476,7 +491,6 @@ document.addEventListener('DOMContentLoaded', function() {
 					break;
 					
 					case 'msg':
-						lastMuted = (muted.indexOf(msg.userid) != -1);
 						if(!lastMuted)
 							addLine(users[msg.userid], msg.msg, msg.date, null);
 					break;
