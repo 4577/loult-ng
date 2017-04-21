@@ -21,7 +21,8 @@ class FrenchPhonems:
     VOWELS = ORALS | NASAL_WOVELS | INDETERMINATE_WOVELS
     _all = VOWELS | CONSONANTS
 
-    def __contains__(self, item):
+    @classmethod
+    def __contains__(cls, item):
         return item in self._all
 
 

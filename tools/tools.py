@@ -99,12 +99,14 @@ class UserState:
         for efct in added_effects:
             for cls in (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect):
                 if isinstance(efct, cls):
-                    if len(self.effects[cls]) == 5:  # only 5 effects of one time allowed at a time
+                    if len(self.effects[cls]) == 5:  # only 5 effects of one type allowed at a time
                         self.effects[cls].pop(0)
                     self.effects[cls].append(efct)
                     break
 
     def log_msg(self):
+        """Add a timestamp for a user's message, and clears timestamps which are too old"""
+        # removing msg timestamps that are out of the detection window
         now = datetime.now()
         self._refresh_timestamps(now)
         self.last_msgs_timestamps.append(now)
@@ -232,7 +234,7 @@ class SpoilerBipEffect(UtilitaryEffect):
 
     def process(self, text: str, lang : str) -> Union[str, PhonemList]:
         """Beeps out parts of the text that are tagged with double asterisks.
-        It basicaly replaces the opening and closig asterisk with two opening and closing 'stop words'
+        It basicaly replaces the opening and closing asterisk with two opening and closing 'stop words'
         then finds the phonemic form of these two and replaces the phonems inside with an equivalently long beep"""
         occ_list = re.findall(r"\*\*.+?\*\*", text)
         if occ_list:
