@@ -370,6 +370,17 @@ class TurboHangoul(PhonemicEffect):
         return phonems
 
 
+class GrandSpeechMasterEffect(PhonemicEffect):
+    NAME = "grand maître de l'élocution"
+    TIMEOUT = 150
+
+    def process(self, phonems: PhonemList):
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems._all:
+                phonem.duration = int(phonem.duration * (random.random() * 4 + 0.7))
+
+        return phonems
+
 #### Here are the voice effets ####
 
 class VoiceSpeedupEffect(VoiceEffect):
