@@ -1,22 +1,22 @@
-from tools.effects import WpseEffect, SpoinkEffect, TurfuEffect, AutotuneEffect, VoiceSpeedupEffect
 from .unused_effects import ReversedEffect
-from .effects import Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, \
-    GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect, \
-    PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, \
-    VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, BeatsEffect, VenerEffect ,\
-    VieuxPortEffect, GodSpeakingEffect
+from .effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect,
+                      GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect,
+                      PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect,
+                      VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, BeatsEffect,
+                      VenerEffect, VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect, TurfuEffect,
+                      AutotuneEffect, VoiceSpeedupEffect, StutterEffect, GrandSpeechMasterEffect)
 from .effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
 from .phonems import PhonemList
 
 
 import random
 # the multiplier for each tools list sets the "probability" of the effect
-AVAILABLE_EFFECTS = 1 * [] + \
+AVAILABLE_EFFECTS = 1 * [TurfuEffect] + \
                     2 * [GhostEffect, SnebwewEffect, ReverbManEffect, TouretteEffect, VenerEffect, VoiceSpeedupEffect,
                          SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia,
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
-                         CrapweEffect, AmbianceEffect, SpoinkEffect] + \
-                    3 * [TurboHangoul, BeatsEffect, GodSpeakingEffect, WpseEffect, TurfuEffect] + \
+                         CrapweEffect, AmbianceEffect, SpoinkEffect, BeatsEffect] + \
+                    3 * [TurboHangoul, GodSpeakingEffect, WpseEffect, StutterEffect, GrandSpeechMasterEffect] + \
                     4 * [AutotuneEffect]
 # AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
