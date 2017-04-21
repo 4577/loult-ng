@@ -57,7 +57,6 @@ class User:
         bonus = (datetime.now() - self.state.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
         return random.randint(1, 100), bonus
 
-
     @property
     def info(self):
         if self._info is None:
@@ -126,7 +125,7 @@ class User:
 
         # if there are effets in the audio_effect list, we run it
         if self.state.effects[AudioEffect]:
-            # converting to f32 (more standard) and resampling to 16k if needed
+            # converting to f32 (more standard) and resampling to 16k if needed, and converting to a ndarray
             rate , data = self.audio_renderer.to_f32_16k(wav)
             # applying the effects pipeline to the sound
             data = self.apply_effects(data, self.state.effects[AudioEffect])
@@ -276,6 +275,7 @@ class LoultServer(WebSocketServerProtocol):
     def _handle_flooder_attack(self, flooder : User):
         punition_msg = "OH T KI LÀ"
         punition_sound = self._open_sound_file("tools/data/alerts/ohtki.wav")
+        cannon_sound = self._open_sound_file("tools/data/alerts/ion_cannon.wav")
         now = time() * 1000
         loop = get_event_loop()
 
@@ -308,6 +308,7 @@ class LoultServer(WebSocketServerProtocol):
                                     'event': 'effect',
                                     'target_id': flooder.user_id,
                                     'effect': "pillonage"})
+        self._broadcast_to_channel({}, cannon_sound)
 
     def _attack_handler(self, msg_data : Dict):
         # cleaning up none values in case of fuckups

@@ -13,7 +13,7 @@ from scipy.io.wavfile import read
 from poke import User
 from salt import SALT
 from tools.effects import AudioEffect, PhonemicEffect, AutotuneEffect, MwfeEffect, GodSpeakingEffect, WpseEffect, \
-    SitcomEffect, TurboHangoul, CrapweEffect, TurfuEffect, StutterEffect, VoiceSpeedupEffect
+    SitcomEffect, TurboHangoul, CrapweEffect, TurfuEffect, StutterEffect, VoiceSpeedupEffect, GrandSpeechMasterEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.audio_tools import mix_tracks
 
@@ -73,14 +73,14 @@ class SpeechDeformation(PhonemicEffect):
                 phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 40) for i in range(4)])
         return phonems
 
-fake_cookie = md5(("622526c6b024c0062930283193b39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("622526c024c0062930233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [AutotuneEffect()]:
-    user.add_effect(effect)
+for effect in [GrandSpeechMasterEffect()]:
+    user.state.add_effect(effect)
 
-# text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
-# text, wav = user.render_message("ouais ouais ouais on fait les fous ouais on s'enjaille ben poto tu prends à droite direction ta mère moi j'texplique tel que c'est je cherche pas à enrober ma bite de vernis de pute comme certaines pédales du coin là t'as vu ce que tu me racontes ma va chier debout mon gars t'as déjà les chaussures pleinesde merde de ton parcours dans la vie putain tu sais pas à quel point j'ai envie de t'aider frère mais t'es trop con genre tête de con va tu fais le fier mais gars moi je m'en cure le nez", "fr")
-text, wav = user.render_message("non mais mec on va mettre les choses à plat au clair au calme tout de suite là je t'ai dit tu viens faire le chaud mais genre tu crois t'as cru ou bien fin ça me fait bien rire là c'est bien fendard ton ptit numéro de genre ouais jsuis un solide et tout mais tu vois ta gueule elle est sur tes épaules mais ça trompepersonne bâtard je m'en carreles couilles sur lesoreilles de tes épaules ma gueule ouais t'as bien compris moi aussi je peux m'ebalancer les sacs à noisette", "fr")
+text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
+# text, wav = user.render_message("**BIP**" , "fr")
+# text, wav = user.render_message("non mais mec on va mettre les choses à plat au clair au calme tout de suite là je t'ai dit tu viens faire le chaud mais genre tu crois t'as cru ou bien fin ça me fait bien rire là c'est bien fendard ton ptit numéro de genre ouais jsuis un solide et tout mais tu vois ta gueule elle est sur tes épaules mais ça trompepersonne bâtard je m'en carreles couilles sur lesoreilles de tes épaules ma gueule ouais t'as bien compris moi aussi je peux m'ebalancer les sacs à noisette", "fr")
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
