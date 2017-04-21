@@ -27,3 +27,5 @@ BAN_TIME = 1
 # containing the word "Trump", but won't match "Trumped".
 # For case insensitivity, use (?i) before your regex.
 BANNED_WORDS = [r"(?i).*\bTrump\b.*", r"(?i).*\bfag(got)?\b.*"]
+
+MOD_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
