@@ -3,7 +3,7 @@
 import logging
 import random
 from asyncio import get_event_loop
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
@@ -13,14 +13,16 @@ from os import urandom, path
 from re import sub
 from time import time
 from functools import lru_cache
+from itertools import chain
 from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
-     BANNED_WORDS
+     BANNED_WORDS, SHELLING_RESTING_TIME, MOD_COOKIES
 from salt import SALT
+from tools.slowban import slowban, SlowbanFail
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
@@ -139,13 +141,14 @@ class LoultServer(WebSocketServerProtocol):
 
     def __init__(self, banned_words=BANNED_WORDS):
         super().__init__()
-        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt = None, None, None, None, None
+        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt, self.ip = None, None, None, None, None, None
         self.cnx = False
         self.banned_words = BannedWords(banned_words)
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        logging.info("Client connecting: {0}".format(request.peer))
+        ip = request.peer.split(':')[1]
+        logging.info("Client connecting: {0}".format(ip))
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
         # telling the client to store it with a Set-Cookie header
@@ -170,6 +173,7 @@ class LoultServer(WebSocketServerProtocol):
         self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
+        self.ip = ip
 
         return None, retn
 
@@ -317,18 +321,20 @@ class LoultServer(WebSocketServerProtocol):
         adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target",
                                                                                  self.user.poke_params.pokename),
                                                                     msg_data.get("order", 1) - 1)
+        now = datetime.now()
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is None:
             self.sendMessage(json({'type': 'attack', 'event': 'invalid'}))
-        elif datetime.now() - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME):
+        elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME) or
+              now - self.user.state.last_shelling < timedelta(seconds=SHELLING_RESTING_TIME)):
             return
         elif adversary.state.is_shadowmuted:
             # if targeted user is shadowmuted, just bombard him/her with the same message
-            self.user.state.last_attack = datetime.now()
+            self.user.state.last_shelling = now
             self._handle_flooder_attack(adversary)
         else:
-            self.user.state.last_attack = datetime.now()
+            self.user.state.last_attack = now
             self._broadcast_to_channel({'type': 'attack',
                                         'date': time() * 1000,
                                         'event' : 'attack',
@@ -371,6 +377,40 @@ class LoultServer(WebSocketServerProtocol):
                                     'x' : float(msg_data['x']),
                                     'y' : float(msg_data['y'])})
 
+    async def _slowban_handler(self, msg_data : Dict):
+        user_id = msg_data['userid']
+
+        if self.cookie not in MOD_COOKIES:
+            self.sendMessage(json({
+                    'type': 'slowban',
+                    'state': 'unauthorized',
+                    'userid': user_id,
+                    'date': time() * 1000,
+                }))
+            return
+
+        connected_list = (client.ip for client in self.channel_obj.clients
+                          if client.user.user_id == user_id)
+        backlog_list = (ip for userid, ip in loult_state.ip_backlog
+                        if userid == user_id)
+        todo = tuple(chain(connected_list, backlog_list))
+
+        try:
+            state = await slowban(todo, msg_data['state'])
+            self.sendMessage(json({
+                'type': 'slowban',
+                'state': state,
+                'userid': user_id,
+                'date': time() * 1000,
+            }))
+        except SlowbanFail as err:
+            self.sendMessage(json({
+                'type': 'slowban',
+                'state': err.state,
+                'userid': user_id,
+                'date': time() * 1000,
+            }))
+
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         msg = loads(payload.decode('utf8'))
@@ -387,8 +427,16 @@ class LoultServer(WebSocketServerProtocol):
             # when a user moves
             self._move_handler(msg)
 
+        elif msg["type"] == "slowban":
+            loop = get_event_loop()
+            loop.create_task(self._slowban_handler(msg))
+
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
+
+        # This lets moderators ban an user even after their disconnection
+        loult_state.ip_backlog.append((self.user.user_id, self.ip))
+
         if hasattr(self, 'cnx') and self.cnx:
             self.channel_obj.channel_leave(self, self.user)
 
@@ -474,6 +522,7 @@ class LoultServerState:
     def __init__(self, banned_words=BANNED_WORDS):
         self.chans = {} # type:Dict[str,Channel]
         self.banned_cookies = {} #type:Dict[str,datetime]
+        self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
