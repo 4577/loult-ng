@@ -83,7 +83,7 @@ class User:
 
         return input_obj
 
-    def _vocode(self, text: str, lang: str) -> bytes:
+    async def _vocode(self, text: str, lang: str) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
         if self.state.effects[VoiceEffect]:
@@ -105,16 +105,16 @@ class User:
                 modified_phonems = beeped
             elif self.state.effects[PhonemicEffect]:
                 # first running the text-to-phonems conversion, then applying the phonemic tools
-                phonems = self.audio_renderer.string_to_phonemes(text, lang, voice_params)
+                phonems = await self.audio_renderer.string_to_phonemes(text, lang, voice_params)
                 modified_phonems = self.apply_effects(phonems, self.state.effects[PhonemicEffect])
 
             #rendering audio using the phonemlist
-            return self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
+            return await self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
         else:
             # regular render
-            return self.audio_renderer.string_to_audio(text, lang, voice_params)
+            return await self.audio_renderer.string_to_audio(text, lang, voice_params)
 
-    def render_message(self, text: str, lang: str):
+    async def render_message(self, text: str, lang: str):
         cleaned_text = text[:500]
         # applying "explicit" effects (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
@@ -123,7 +123,7 @@ class User:
         rendered_text = prepare_text_for_tts(rendered_text, lang)
 
         # rendering the audio from the text
-        wav = self._vocode(rendered_text, lang)
+        wav = await self._vocode(rendered_text, lang)
 
         # if there are effets in the audio_effect list, we run it
         if self.state.effects[AudioEffect]:
@@ -226,9 +226,9 @@ class LoultServer(WebSocketServerProtocol):
             alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
             self.sendMessage(alarm_sound, isBinary=True)
 
-    def _msg_handler(self, msg_data : Dict):
+    async def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
-        output_msg, wav = self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
+        output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
 
         # message is not sent to the others, but directly to the user
         if self.user.state.is_shadowmuted:
@@ -414,10 +414,11 @@ class LoultServer(WebSocketServerProtocol):
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         msg = loads(payload.decode('utf8'))
+        loop = get_event_loop()
 
         if msg['type'] == 'msg':
             # when the message is just a simple text message (regular chat)
-            self._msg_handler(msg)
+            loop.create_task(self._msg_handler(msg))
 
         elif msg["type"] == "attack":
             # when the current client attacks someone else
@@ -428,7 +429,6 @@ class LoultServer(WebSocketServerProtocol):
             self._move_handler(msg)
 
         elif msg["type"] == "slowban":
-            loop = get_event_loop()
             loop.create_task(self._slowban_handler(msg))
 
     def onClose(self, wasClean, code, reason):

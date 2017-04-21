@@ -1,5 +1,6 @@
 from os import listdir, path
-from subprocess import run, PIPE
+from asyncio import create_subprocess_shell
+from asyncio.subprocess import PIPE
 from typing import List
 
 import numpy
@@ -69,8 +70,9 @@ def get_sounds(dir: str) -> List[numpy.ndarray]:
     return sounds
 
 
-def resample(wave_data : numpy.ndarray, sample_in, sample_out=16000):
+async def resample(wave_data : numpy.ndarray, sample_in, sample_out=16000):
     """Uses sox to resample the wave data array"""
     cmd = "sox -N -V1 -t f32 -r %s -c 1 - -t f32 -r %s -c 1 -" % (sample_in, sample_out)
-    output = run(cmd, shell=True, stdout=PIPE, stderr=PIPE, input=wave_data.tobytes(order="f")).stdout
+    process = await create_subprocess_shell(cmd, stdin=PIPE, stdout=PIPE)
+    output, err = await process.communicate(input=wave_data.tobytes(order="f"))
     return numpy.fromstring(output, dtype=numpy.float32)
