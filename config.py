@@ -1,6 +1,9 @@
 # in seconds, the time a pokemon has to wait before being able to attack again
 ATTACK_RESTING_TIME = 30
 
+# time in seconds before an user must wait before shelling a flooder again
+SHELLING_RESTING_TIME = 10
+
 # in seconds, the time during which a users's message are "remembered"
 FLOOD_DETECTION_WINDOW = 4
 
@@ -24,3 +27,5 @@ BAN_TIME = 1
 # containing the word "Trump", but won't match "Trumped".
 # For case insensitivity, use (?i) before your regex.
 BANNED_WORDS = [r"(?i).*\bTrump\b.*", r"(?i).*\bfag(got)?\b.*"]
+
+MOD_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
