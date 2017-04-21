@@ -12,8 +12,8 @@ from itertools import product
 # which you should do unless you want to break sudo AND *root login*.
 
 commands = [
-        'sudo iptables -I  INPUT -m statistic --mode random --probability 0.90 -s "{ip}" -j DROP',
-        'sudo iptables -I OUTPUT -m statistic --mode random --probability 0.90 -s "{ip}" -j DROP',
+        'iptables -I  INPUT -m statistic --mode random --probability 0.90 -s "{ip}" -j DROP',
+        'iptables -I OUTPUT -m statistic --mode random --probability 0.90 -s "{ip}" -j DROP',
     ]
 
 del_commands = [cmd.replace(" -I ", " -D ") for cmd in commands]
