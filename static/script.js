@@ -387,12 +387,13 @@ document.addEventListener('DOMContentLoaded', function() {
 	var wsConnect = function() {
 		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
 		// ws = new WebSocket('ws://loult.family/socket' + location.pathname);
-		
-		var lastMuted = false;
 		ws.binaryType = 'arraybuffer';
 		
+		var lastMuted = false;
+		var lastMsg;
+		
 		input.onkeydown = function(evt) {
-			if(evt.keyCode == 13 && input.value) {
+			if(evt.keyCode === 13 && input.value) {
 				var trimed = input.value.trim();
 				if(trimed.match(/^\/atta(ck|que)\s/i)) {
 					var splitted = trimed.split(' ');
@@ -415,7 +416,15 @@ document.addEventListener('DOMContentLoaded', function() {
 				else if(trimed.length)
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				
+				lastMsg = input.value;
 				input.value = '';
+			}
+			else if(evt.keyCode === 38 || evt.keyCode === 40) {
+				evt.preventDefault();
+				if(input.value)
+					input.value = '';
+				else if(lastMsg)
+					input.value = lastMsg;
 			}
 		};
 		
