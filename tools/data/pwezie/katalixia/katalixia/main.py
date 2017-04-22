@@ -48,13 +48,13 @@ class TreeNode:
     def find_random(self):
         if self.leaves and (randint(0, self.child_leaves_count + len(self.leaves)) >= self.child_leaves_count
                             or not self.children):
-            return random.choice(self.leaves).text
+            return random.choice(self.leaves)
 
         else:
             children_list, weights = zip(*[(child, child.total_leaves_count) for child in self.children.values()])
             rnd_child = weighted_choice(children_list, weights)
             if isinstance(rnd_child, Leaf):
-                return rnd_child.text
+                return rnd_child
             else:
                 return rnd_child.find_random()
 
@@ -66,7 +66,7 @@ class TreeNode:
             if current_pho in self.children:
                 current_child = self.children[current_pho]
                 if isinstance(current_child, Leaf):
-                    return current_child.text
+                    return current_child
                 else:
                     return current_child.find(phoneme_list)
             else:
@@ -84,8 +84,10 @@ class RhymeTree(TreeNode):
         self.voice = Voice(lang=rhyming_lang)
         self.children = dict() # type:Dict[str,Union[TreeNode, Leaf]]
 
-    def insert_rhyme(self, rhyme_string):
+    def insert_rhyme(self, rhyme_string, data=None):
         new_leaf = Leaf.from_string(rhyme_string.strip(), self.voice)
+        if data is not None:
+            new_leaf.data = data
         if new_leaf is not None:
             self.insert(new_leaf, 1)
         else:
@@ -133,7 +135,14 @@ class Leaf:
     def __init__(self, string, phonemic_form):
         self.text = string
         self.phonemes = phonemic_form # type:List[str]
-        self.total_leaves_count = 1
+        self.total_leaves_count = 1 # here for recursion in the tree
+        self.data = None
+
+    def __repr__(self):
+        return "Leaf( %s )" % self.text
+
+    def __str__(self):
+        return self.text
 
     @staticmethod
     def clean_silences(phoneme_list):
