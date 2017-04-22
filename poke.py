@@ -66,7 +66,7 @@ class User:
                 'userid': self.user_id,
                 'params': {
                     'name': self.poke_params.pokename,
-                    'img': '/pokemon/%s.gif' % str(self.poke_params.poke_id).zfill(3),
+                    'img': str(self.poke_params.poke_id).zfill(3),
                     'color': self.poke_params.color
                 }
             }
