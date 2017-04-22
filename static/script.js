@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			var label = document.createElement('label');
 			label.appendChild(document.createTextNode(pkmn.name));
 			label.style.color = pkmn.color;
-			label.style.backgroundImage = 'url("' + pkmn.img + '")';
+			label.style.backgroundImage = 'url("/pokemon/' + pkmn.img + '.gif")';
 			label.className = (left ? 'left' : 'right');
 			td.appendChild(label);
 		}
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		label.appendChild(document.createTextNode(params.name));
 		label.style.color = params.color;
-		label.style.backgroundImage = 'url("' + params.img + '")';
+		label.style.backgroundImage = 'url("/pokemon/' + params.img + '.gif")';
 		label.className = 'left';
 		td.appendChild(label);
 		tr.appendChild(td);
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 		else {
 			var underlay = document.getElementById('underlay');
-			underlay.style.backgroundImage = 'url("dev/pokemon/' + params.img.match(/\d{3}/)[0] + '.png")';
+			underlay.style.backgroundImage = 'url("/dev/pokemon/' + params.img + '.png")';
 			you = userid;
 		}
 		
@@ -399,17 +399,18 @@ document.addEventListener('DOMContentLoaded', function() {
 					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
 				}
 				else if(trimed.match(/^\/(en|es|fr|de)\s/i))
-					ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 3)}));
+					ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2)}));
 				else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i)) {
 					volrange.value = trimed.match(/\d+$/i)[0];
 					changeVolume();
 				}
 				else if(trimed.match(/^\/(help|aide)$/i)) {
-					addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", (new Date), 'part');
-					addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", (new Date), 'part');
-					addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", (new Date), 'part');
-					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", (new Date), 'part');
-					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", (new Date), 'part');
+					var d = new Date;
+					addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, 'part');
+					addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, 'part');
+					addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, 'part');
+					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
+					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", d, 'part');
 				}
 				else if(trimed.length)
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
@@ -428,6 +429,11 @@ document.addEventListener('DOMContentLoaded', function() {
 				lastMuted = (muted.indexOf(msg.userid) != -1);
 				
 				switch(msg.type) {
+					case 'msg':
+						if(!lastMuted)
+							addLine(users[msg.userid], msg.msg, msg.date, null);
+					break;
+					
 					case 'connect':
 						if(!lastMuted) {
 							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
@@ -489,12 +495,6 @@ document.addEventListener('DOMContentLoaded', function() {
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
 						addLine('info', 'Vous êtes connecté', (new Date), 'log');
 					break;
-					
-					case 'msg':
-						if(!lastMuted)
-							addLine(users[msg.userid], msg.msg, msg.date, null);
-					break;
-
 				}
 			}
 			else if(!lastMuted && audio && volume.gain.value > 0) {
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			for(var i in users)
 				delUser(i);
 			
-			addLine('info', 'Déconnecté, réessai...', (new Date), 'log part');
+			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), 'log part');
 			
 			window.setTimeout(wsConnect, waitTime);
 			waitTime = Math.min(waitTime * 2, 120000);
