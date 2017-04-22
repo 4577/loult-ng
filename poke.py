@@ -379,6 +379,10 @@ class LoultServer(WebSocketServerProtocol):
 
     async def _slowban_handler(self, msg_data : Dict):
         user_id = msg_data['userid']
+        state = msg_data['state']
+        # This key is mandatory, but we'll let the slowban function
+        # and its try/except block handle that
+        rate = msg_data.get('rate', None)
 
         if self.cookie not in MOD_COOKIES:
             self.sendMessage(json({
@@ -396,7 +400,7 @@ class LoultServer(WebSocketServerProtocol):
         todo = tuple(chain(connected_list, backlog_list))
 
         try:
-            state = await slowban(todo, msg_data['state'])
+            state = await slowban(todo, state, rate)
             self.sendMessage(json({
                 'type': 'slowban',
                 'state': state,
