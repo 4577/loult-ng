@@ -92,7 +92,7 @@ class User:
             voice_params = self.voice_params
 
         # apply the beep effect for spoilers
-        beeped = SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
+        beeped = await SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
 
         if isinstance(beeped, PhonemList) or self.state.effects[PhonemicEffect]:
 
