@@ -10,10 +10,9 @@ from itertools import product
 # <user> ALL=(ALL) ALL, NOPASSWD: /sbin/iptables
 # If you made a mistake, visudo will tell you and ask you to correct it,
 # which you should do unless you want to break sudo AND *root login*.
-
 commands = [
-        'iptables -I  INPUT -m statistic --mode random --probability 0.90 -s "{ip}" -j DROP',
-        'iptables -I OUTPUT -m statistic --mode random --probability 0.90 -s "{ip}" -j DROP',
+        'iptables -I  INPUT -m statistic --mode random --probability 0.{rate} -s "{ip}" -j DROP',
+        'iptables -I OUTPUT -m statistic --mode random --probability 0.{rate} -s "{ip}" -j DROP',
     ]
 
 del_commands = [cmd.replace(" -I ", " -D ") for cmd in commands]
@@ -28,9 +27,16 @@ class SlowbanFail(Exception):
         self.state = state
 
 
-async def slowban(ip_list, state):
+async def slowban(ip_list, state, rate):
+    try:
+        rate = int(rate)
+    except TypeError:
+        raise SlowbanFail('rate_wrong_type_or_missing')
+
     if len(ip_list) == 0:
         raise SlowbanFail('wrong_userid')
+    elif not 1 <= rate <= 99:
+        raise SlowbanFail('rate_wrong_value')
     elif state == 'apply':
         cmds = commands
     elif state == 'remove':
@@ -39,7 +45,7 @@ async def slowban(ip_list, state):
         raise SlowbanFail('wrong_command')
 
     for ip, cmd_tpl in product(ip_list, cmds):
-        cmd = cmd_tpl.format(ip=ip)
+        cmd = cmd_tpl.format(ip=ip, rate=rate)
         process = await create_subprocess_shell(cmd)
         code = await process.wait()
         if code != 0:
