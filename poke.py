@@ -2,7 +2,7 @@
 #-*- encoding: Utf-8 -*-
 import logging
 import random
-from asyncio import get_event_loop, iscoroutinefunction as iscoroutine
+from asyncio import get_event_loop
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -560,7 +560,13 @@ if __name__ == "__main__":
 
     factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
     factory.protocol = LoultServer
-    factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
+    # Allow 4KiB max size for messages, in a single frame.
+    factory.setProtocolOptions(
+            autoPingInterval=60,
+            autoPingTimeout=30,
+            maxFramePayloadSize=4096,
+            maxMessagePayloadSize=4096,
+        )
 
     coro = loop.create_server(factory, '127.0.0.1', 9000)
     server = loop.run_until_complete(coro)
