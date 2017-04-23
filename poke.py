@@ -2,7 +2,7 @@
 #-*- encoding: Utf-8 -*-
 import logging
 import random
-from asyncio import get_event_loop
+from asyncio import get_event_loop, iscoroutinefunction as iscoroutine
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -12,7 +12,7 @@ import json
 from os import urandom, path
 from re import sub
 from time import time
-from functools import lru_cache
+from functools import lru_cache, wraps
 from itertools import chain
 from typing import List, Dict, Set, Tuple
 
@@ -138,6 +138,18 @@ class User:
         return displayed_text, wav
 
 
+def auto_close(method):
+    @wraps(method)
+    async def wrapped(*args, **kwargs):
+        self = args[0]
+        try:
+            return await method(*args, **kwargs)
+        except Exception as err:
+            self.sendClose(code=4000, reason=str(err))
+            raise err
+    return wrapped
+
+
 class LoultServer(WebSocketServerProtocol):
 
     def __init__(self, banned_words=BANNED_WORDS):
@@ -226,6 +238,7 @@ class LoultServer(WebSocketServerProtocol):
             alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
             self.send_binary(alarm_sound)
 
+    @auto_close
     async def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
         output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
@@ -304,7 +317,8 @@ class LoultServer(WebSocketServerProtocol):
                                    effect='pillonage')
         self._broadcast_to_channel(cannon_sound)
 
-    def _attack_handler(self, msg_data : Dict):
+    @auto_close
+    async def _attack_handler(self, msg_data : Dict):
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
@@ -353,7 +367,8 @@ class LoultServer(WebSocketServerProtocol):
                                            event='nothing')
 
 
-    def _move_handler(self, msg_data : Dict):
+    @auto_close
+    async def _move_handler(self, msg_data : Dict):
         # checking if all the necessary data is here
         if not {"x", "y", "id"}.issubset(set(msg_data.keys())):
             return
@@ -364,6 +379,7 @@ class LoultServer(WebSocketServerProtocol):
                                    x=float(msg_data['x']),
                                    y=float(msg_data['y']))
 
+    @auto_close
     async def _ban_handler(self, msg_data : Dict):
         user_id = msg_data['userid']
         ban_type = msg_data['type']
@@ -402,7 +418,14 @@ class LoultServer(WebSocketServerProtocol):
 
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
-        msg = json.loads(payload.decode('utf8'))
+        if isBinary:
+            return self.sendClose(code=4002,
+                                  reason='Binary data is not accepted')
+        try:
+            msg = json.loads(payload.decode('utf8'))
+        except json.JSONDecodeError:
+            return self.sendClose(code=4001, reason='Malformed JSON.')
+
         loop = get_event_loop()
 
         if msg['type'] == 'msg':
@@ -411,14 +434,18 @@ class LoultServer(WebSocketServerProtocol):
 
         elif msg["type"] == "attack":
             # when the current client attacks someone else
-            self._attack_handler(msg)
+            loop.create_task(self._attack_handler(msg))
 
         elif msg["type"] == "move":
             # when a user moves
-            self._move_handler(msg)
+            loop.create_task(self._move_handler(msg))
 
         elif msg["type"] in Ban.ban_types:
             loop.create_task(self._ban_handler(msg))
+
+        else:
+            return self.sendClose(code=4003,
+                                  reason='Unrecognized command type.')
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
