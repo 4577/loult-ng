@@ -17,9 +17,10 @@ if __name__ == "__main__":
         all_freqs = []
         for row in csv_reader:
             if row["4_cgram"] == "NOM":
-                avg_freq = sum([float(row[field]) for field in freq_fields]) / 4
-                all_freqs.append(avg_freq)
-                if avg_freq > 0.205:
+                # avg_freq = sum([float(row[field]) for field in freq_fields]) / 4
+                # all_freqs.append(avg_freq)
+                # if avg_freq > 0.205:
+                if row["1_ortho"] != row["3_lemme"]:
                     csv_writer.writerow({"ortho" : row["1_ortho"],
                                          "genre" : row["5_genre"],
                                          "nombre" : row["6_nombre"],
