@@ -1,4 +1,5 @@
 import json
+import pickle
 import random
 from datetime import datetime
 from itertools import cycle
@@ -92,6 +93,7 @@ class VoiceEffect(Effect):
 
 
 class AudioEffect(Effect):
+    """Modifies the audio file, after the mbrola rendering"""
 
     def process(self, wave_data: numpy.ndarray) -> numpy.ndarray:
         pass
@@ -143,6 +145,40 @@ class SpoinkEffect(ExplicitTextEffect):
         else:
             text = random.choice(self._spoink_punchlines)
         return text
+
+
+class PoiloEffect(ExplicitTextEffect):
+    NAME = "poil au snèbwèw"
+    TIMEOUT = 180
+
+    tree_pickle = path.join(path.dirname(path.realpath(__file__)),
+                            "data/pwezie/rhyme_tree.pckl")
+
+    article_mapping = {("m", "s") : "au",
+                       ("m", "p") : "aux",
+                       ("f", "s") : "à la",
+                       ("f", "p") : "aux"}
+
+    def __init__(self):
+        super().__init__()
+        with open(self.tree_pickle, "rb") as pkfile:
+            self.rtree = pickle.load(pkfile)
+
+    def process(self, text : str):
+        splitted = text.strip("?! ,:").split()
+        if splitted:
+            rhyme = self.rtree.find_rhyme(text)
+            if rhyme is not None:
+                if splitted[-1][0] in ["aoeiuyéèê"]:
+                    article = "à l'"
+                else:
+                    try:
+                        article = self.article_mapping[(rhyme.data["genre"], rhyme.data["nombre"])]
+                    except KeyError:
+                        article = "au"
+                return text + " poil %s %s" % (article, rhyme.text)
+
+        return text # default to "pass"
 
 
 class TouretteEffect(HiddenTextEffect):
@@ -249,7 +285,7 @@ class AccentMarseillaisEffect(PhonemicEffect):
 
 class StutterEffect(PhonemicEffect):
     TIMEOUT = 150
-    NAME = ""
+    NAME = "be be te"
 
     def process(self, phonems : PhonemList):
         silence = Phonem("_", 61)
@@ -415,18 +451,26 @@ class ReverbManEffect(AudioEffect):
     def process(self, wave_data: numpy.ndarray):
         wave_data = numpy.concatenate([wave_data, numpy.zeros(16000, wave_data.dtype)])
         apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
-        return apply_audio_effects(wave_data)
+        return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
 
 
 class GhostEffect(AudioEffect):
     """Adds a ghostly effect"""
-    NAME="stalker"
+    NAME = "stalker"
     TIMEOUT = 120
 
     def process(self, wave_data: numpy.ndarray):
         reverb, reverse = ReverbManEffect(), tools.ReversedEffect()
         return reverse.process(reverb.process(reverse.process(wave_data)))
 
+
+class RobotVoiceEffect(AudioEffect):
+    NAME = "13-NRV"
+    TIMEOUT = 150
+
+    def process(self, wave_data: numpy.ndarray):
+        apply_audio_effects = AudioEffectsChain().pitch(200).tremolo(500).delay(0.6, 0.8, [33],[0.9])
+        return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
 
 class AmbianceEffect(AudioEffect):
     """Adds a random mood to the audio"""
