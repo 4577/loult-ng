@@ -338,7 +338,6 @@ class LoultServer(WebSocketServerProtocol):
             self.user.state.last_shelling = now
             self._handle_flooder_attack(adversary)
         else:
-            self.user.state.last_attack = now
             self._broadcast_to_channel(type='attack', date=time() * 1000,
                                        event='attack',
                                        attacker_id=self.user.user_id,
@@ -346,6 +345,10 @@ class LoultServer(WebSocketServerProtocol):
 
             combat_sim = CombatSimulator()
             combat_sim.run_attack(self.user, adversary, self.channel_obj)
+            # combat_sim uses the last attack time to compute the bonus,
+            # so it must be updated after the running the attack.
+            self.user.state.last_attack = now
+
             self._broadcast_to_channel(type='attack', date=time() * 1000,
                                        event='dice',
                                        attacker_dice=combat_sim.atk_dice,
