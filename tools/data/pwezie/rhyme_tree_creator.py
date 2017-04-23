@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
-from os import path
 import csv
 import pickle
-from tools.data.pwezie.katalixia.katalixia import RhymeTree
+from os import path
+
+from katalixia import RhymeTree
 
 #### /!\ /!\ /!\ Doit être lancé depuis la racine du dépot /!\ /!\ /!\
 
@@ -14,9 +15,9 @@ if __name__ == "__main__":
 
     with open(WORDS_FILE) as words_csv:
         reader = csv.DictReader(words_csv, delimiter='\t')
-        rhyme_tree = RhymeTree()
+        rhyme_tree = RhymeTree(rhyming_lang="fr")
         for row in reader:
             rhyme_tree.insert_rhyme(row["ortho"], {"genre" : row["genre"], "nombre" : row["nombre"]})
 
-    with open(PICKLED_TREE, "rb") as pckl_file:
+    with open(PICKLED_TREE, "wb") as pckl_file:
         pickle.dump(rhyme_tree, pckl_file)
