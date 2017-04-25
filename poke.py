@@ -292,7 +292,7 @@ class LoultServer(WebSocketServerProtocol):
         now = time() * 1000
         loop = get_event_loop()
 
-        async def punish(flooder, count):
+        def punish(flooder, count):
             """
             Yes, it's a recursive asynchronous function.
             If it weren't, this function would stall everything
@@ -304,10 +304,10 @@ class LoultServer(WebSocketServerProtocol):
                     client.send_json(type='msg', userid=self.user.user_id,
                                      msg=punition_msg, date=now)
                     client.send_binary(punition_sound)
-                loop.create_task(punish(flooder, count - 1))
+                loop.call_soon(punish, flooder, count - 1)
 
         # recursion launched here
-        loop.create_task(punish(flooder, PUNITIVE_MSG_COUNT))
+        loop.call_soon(punish, flooder, PUNITIVE_MSG_COUNT)
 
         self._broadcast_to_channel(type='attack', date=now, event='attack',
                                    attacker_id=self.user.user_id,
