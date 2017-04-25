@@ -2,7 +2,7 @@
 #-*- encoding: Utf-8 -*-
 import logging
 import random
-from asyncio import get_event_loop
+from asyncio import get_event_loop, ensure_future
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -429,22 +429,20 @@ class LoultServer(WebSocketServerProtocol):
         except json.JSONDecodeError:
             return self.sendClose(code=4001, reason='Malformed JSON.')
 
-        loop = get_event_loop()
-
         if msg['type'] == 'msg':
             # when the message is just a simple text message (regular chat)
-            loop.create_task(self._msg_handler(msg))
+            ensure_future(self._msg_handler(msg))
 
         elif msg["type"] == "attack":
             # when the current client attacks someone else
-            loop.create_task(self._attack_handler(msg))
+            ensure_future(self._attack_handler(msg))
 
         elif msg["type"] == "move":
             # when a user moves
-            loop.create_task(self._move_handler(msg))
+            ensure_future(self._move_handler(msg))
 
         elif msg["type"] in Ban.ban_types:
-            loop.create_task(self._ban_handler(msg))
+            ensure_future(self._ban_handler(msg))
 
         else:
             return self.sendClose(code=4003,
