@@ -1,7 +1,7 @@
 from .unused_effects import ReversedEffect
 from .effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, RobotVoiceEffect,
                       GhostEffect, SpeechMasterEffect, AmbianceEffect, SitcomEffect, PoiloEffect,
-                      PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect,
+                      PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, GaDoSEffect,
                       VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, BeatsEffect,
                       VenerEffect, VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect, TurfuEffect,
                       AutotuneEffect, VoiceSpeedupEffect, StutterEffect, GrandSpeechMasterEffect)
@@ -17,7 +17,7 @@ AVAILABLE_EFFECTS = 1 * [TurfuEffect] + \
                          PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
                          CrapweEffect, AmbianceEffect, SpoinkEffect, BeatsEffect] + \
                     3 * [TurboHangoul, GodSpeakingEffect, WpseEffect, StutterEffect, GrandSpeechMasterEffect] + \
-                    4 * [AutotuneEffect, RobotVoiceEffect, PoiloEffect]
+                    4 * [AutotuneEffect, RobotVoiceEffect, PoiloEffect, GaDoSEffect]
 # AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 
