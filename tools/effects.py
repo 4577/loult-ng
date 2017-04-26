@@ -473,7 +473,9 @@ class RobotVoiceEffect(AudioEffect):
         apply_audio_effects = AudioEffectsChain().pitch(200).tremolo(500).delay(0.6, 0.8, [33],[0.9])
         return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
 
+
 class GaDoSEffect(AudioEffect):
+    """Adds pitch-shifted versions of the track to itself to create a scary effect"""
     NAME = "glwe dwse"
     TIMEOUT = 150
 
@@ -481,9 +483,11 @@ class GaDoSEffect(AudioEffect):
         effects_partials = [partial(AudioEffectsChain().pitch(pitch),
                                     sample_in=16000, sample_out=16000)
                             for pitch in [200, 100, -100, -200]]
-        reverb = AudioEffectsChain().reverb(reverberance=50, hf_damping=100)
+        reverb = AudioEffectsChain().reverb(reverberance=50, hf_damping=100).gain(-5)
+        repitched_arrays = [effect(wave_data) for effect in effects_partials]
+        min_len = min(map(len, repitched_arrays))
 
-        return reverb(sum([effect(wave_data) for effect in effects_partials]),
+        return reverb(sum([audio_array[:min_len] for audio_array in repitched_arrays]),
                       sample_in=16000, sample_out=16000)
 
 class AmbianceEffect(AudioEffect):
