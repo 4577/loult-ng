@@ -4,19 +4,17 @@ import random
 from datetime import datetime
 from functools import partial
 from itertools import cycle
-from math import ceil, floor
 from os import path, listdir
 from typing import List
 
 import numpy
+import tools
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
-
-from tools.melody import chords_ratios, chord_progressions, get_harmonies
+from tools.audio_tools import mix_tracks, get_sounds
+from tools.melody import chord_progressions, get_harmonies
 from tools.phonems import PhonemList, Phonem, FrenchPhonems
 from tools.tools import VoiceParameters
-import tools
-from tools.audio_tools import mix_tracks, get_sounds
 
 
 # TODO : effet théatre, effet speech random, effet voix robot,
@@ -168,7 +166,7 @@ class PoiloEffect(ExplicitTextEffect):
     def process(self, text : str):
         splitted = text.strip("?! ,:").split()
         if splitted:
-            rhyme = self.rtree.find_rhyme(text)
+            rhyme = self.rtree.find_rhyme(splitted[-1])
             if rhyme is not None:
                 if splitted[-1][0] in ["aoeiuyéèê"]:
                     article = "à l'"
@@ -418,7 +416,31 @@ class GrandSpeechMasterEffect(PhonemicEffect):
 
         return phonems
 
+
+class PitchRandomizerEffect(PhonemicEffect):
+    TIMEOUT = 150
+    NAME = "problèmes de gorge"
+    _multiplier_range = 0.6
+    _delimiters_per_phonems = 5
+
+    def process(self, phonems : PhonemList):
+        delimiters = list({random.randint(1, len(phonems))
+                           for _ in range(len(phonems) // self._delimiters_per_phonems)})
+        delimiters.sort()
+        delim_idx = 0
+        current_multiplier = 1
+        print(phonems)
+        for i, phonem in enumerate(phonems):
+            if delim_idx < len(delimiters) and i == delimiters[delim_idx]:
+                delim_idx += 1
+                current_multiplier = random.random() * self._multiplier_range * (1 if random.randint(0,1) else -1) + 1
+            phonem.pitch_modifiers = [(duration, int(pitch * current_multiplier))
+                                      for duration, pitch in phonem.pitch_modifiers]
+        print(phonems)
+        return phonems
+
 #### Here are the voice effets ####
+
 
 class VoiceSpeedupEffect(VoiceEffect):
     TIMEOUT = 150
@@ -475,7 +497,8 @@ class RobotVoiceEffect(AudioEffect):
 
 
 class GaDoSEffect(AudioEffect):
-    """Adds pitch-shifted versions of the track to itself to create a scary effect"""
+    """Adds pitch-shifted versions of the track to itself to create a scary effectPUTAIN
+    """
     NAME = "glwe dwse"
     TIMEOUT = 150
 
@@ -496,7 +519,7 @@ class AmbianceEffect(AudioEffect):
     TIMEOUT = 180
     effects_mapping = {
         "starwars_mood" : ("lasèw", 0.1),
-        "bonfire_mood" : ("les feux de l'amouw", 0.6),
+        # "bonfire_mood" : ("les feux de l'amouw", 0.6),
         "seastorm_mood" : ("bretagne", 0.08),
         "war_mood" : ("wesh yé ou ryan ce pd", 0.2),
     }
@@ -550,39 +573,8 @@ class BeatsEffect(AudioEffect):
             return wave_data
 
 
-class SitcomEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/sitcom")
-    _subfolders = ["laugh_track", "boo", "applaud"]
-    NAME = "sitcom"
-    TIMEOUT = 150
-
-    def __init__(self):
-        super().__init__()
-        self.tracks = dict()
-        for subfolder in self._subfolders:
-            self.tracks[subfolder] = get_sounds(path.join(self.main_dir, subfolder))
-            # sorting by length
-            self.tracks[subfolder].sort(key = lambda s: len(s))
-
-    def find_nearest(self, track_list, value):
-        nearest_bigger_index = next((i for i, x in enumerate(track_list) if len(x) > value), None)
-        return nearest_bigger_index - 1 if nearest_bigger_index > 0 else 0
-
-    def process(self, wave_data: numpy.ndarray):
-        if random.randint(0,1):
-            randoum = random.randint(1, 3)
-            if randoum == 1:
-                wave_data = numpy.concatenate((wave_data, random.choice(self.tracks["laugh_track"])))
-            elif randoum == 2:
-                wave_data = numpy.concatenate((wave_data, random.choice(self.tracks["applaud"])))
-            elif randoum == 3:
-                boo_track_id = self.find_nearest(self.tracks["boo"], len(wave_data))
-                wave_data = mix_tracks(wave_data, self.tracks["boo"][boo_track_id], align="right")
-
-        return wave_data
-
-
 class WpseEffect(AudioEffect):
+    """Adds or inserts funny sounds to the input sound, at random places"""
     main_dir = path.join(path.dirname(path.realpath(__file__)), "data/maturity")
     subfolders = ["burps", "prout"]
     NAME = "c pas moi lol"
@@ -603,21 +595,6 @@ class WpseEffect(AudioEffect):
 
         return wave_data
 
-
-class WpseEffectTwo(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/burps")
-    NAME = "élite du web"
-    TIMEOUT = 130
-
-    def __init__(self):
-        super().__init__()
-        self.samples = get_sounds(self.main_dir)
-
-    def process(self, wave_data: numpy.ndarray):
-        if random.randint(1, 2) == 1:
-            sample = random.choice(self.samples) * 0.3
-
-        return wave_data
 
 #### Here are the effects groups ####
 
