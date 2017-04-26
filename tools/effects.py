@@ -2,6 +2,7 @@ import json
 import pickle
 import random
 from datetime import datetime
+from functools import partial
 from itertools import cycle
 from math import ceil, floor
 from os import path, listdir
@@ -471,6 +472,19 @@ class RobotVoiceEffect(AudioEffect):
     def process(self, wave_data: numpy.ndarray):
         apply_audio_effects = AudioEffectsChain().pitch(200).tremolo(500).delay(0.6, 0.8, [33],[0.9])
         return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
+
+class GaDoSEffect(AudioEffect):
+    NAME = "glwe dwse"
+    TIMEOUT = 150
+
+    def process(self, wave_data: numpy.ndarray):
+        effects_partials = [partial(AudioEffectsChain().pitch(pitch),
+                                    sample_in=16000, sample_out=16000)
+                            for pitch in [200, 100, -100, -200]]
+        reverb = AudioEffectsChain().reverb(reverberance=50, hf_damping=100)
+
+        return reverb(sum([effect(wave_data) for effect in effects_partials]),
+                      sample_in=16000, sample_out=16000)
 
 class AmbianceEffect(AudioEffect):
     """Adds a random mood to the audio"""
