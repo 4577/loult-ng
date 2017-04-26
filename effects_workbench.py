@@ -80,7 +80,7 @@ for effect in [PoiloEffect(), GaDoSEffect()]:
     user.state.add_effect(effect)
 
 text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
-text, wav = user.render_message("salut moi c'est patrick" , "fr")
+text, wav = user.render_message("AaaaaaAAAAaaaaAAAaaaAAAaaAAAAaaAAAAA" , "fr")
 # text, wav = user.render_message("non mais mec on va mettre les choses à plat au clair au calme tout de suite là je t'ai dit tu viens faire le chaud mais genre tu crois t'as cru ou bien fin ça me fait bien rire là c'est bien fendard ton ptit numéro de genre ouais jsuis un solide et tout mais tu vois ta gueule elle est sur tes épaules mais ça trompepersonne bâtard je m'en carreles couilles sur lesoreilles de tes épaules ma gueule ouais t'as bien compris moi aussi je peux m'ebalancer les sacs à noisette", "fr")
 print("Text : ", text)
 
