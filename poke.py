@@ -152,11 +152,11 @@ def auto_close(method):
 
 class LoultServer(WebSocketServerProtocol):
 
-    def __init__(self, banned_words=BANNED_WORDS):
+    def __init__(self):
         super().__init__()
         self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt, self.ip = None, None, None, None, None, None
         self.cnx = False
-        self.banned_words = BannedWords(banned_words)
+        self.banned_words = BannedWords(BANNED_WORDS)
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
@@ -530,7 +530,7 @@ class Channel:
 
 class LoultServerState:
 
-    def __init__(self, banned_words=BANNED_WORDS):
+    def __init__(self):
         self.chans = {} # type:Dict[str,Channel]
         self.banned_cookies = {} #type:Dict[str,datetime]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
