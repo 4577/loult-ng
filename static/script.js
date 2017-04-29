@@ -456,6 +456,10 @@ document.addEventListener('DOMContentLoaded', function() {
 							delUser(msg.userid);
 						}
 					break;
+
+					case 'shutdown':
+						addLine('info', 'ripw le serveur ennw', msg.date, 'log part')
+					break;
 					
 					case 'attack':
 						switch(msg['event']) {
