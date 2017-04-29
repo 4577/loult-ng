@@ -572,4 +572,13 @@ if __name__ == "__main__":
     coro = loop.create_server(factory, '127.0.0.1', 9000)
     server = loop.run_until_complete(coro)
 
-    loop.run_forever()
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        logging.info('Shutting down all connections...')
+        now = time() * 1000
+        for client in chain.from_iterable((channel.clients for channel in loult_state.chans.values())):
+            client.send_json(type='shutdown', date=now)
+            client.sendClose(code=1000, reason='Server shutting down.')
+        loop.close()
+        print('aplse')
