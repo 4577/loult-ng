@@ -14,6 +14,7 @@ from re import sub
 from time import time
 from functools import lru_cache, wraps
 from itertools import chain
+import traceback
 from typing import List, Dict, Set, Tuple
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
@@ -146,7 +147,8 @@ def auto_close(method):
             return await method(*args, **kwargs)
         except Exception as err:
             self.sendClose(code=4000, reason=str(err))
-            raise err
+            logging.error('{} has raised an exception "{}"'.format(self, err))
+            logging.debug(err, exc_info=True)
     return wrapped
 
 
@@ -161,7 +163,7 @@ class LoultServer(WebSocketServerProtocol):
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
         ip = request.peer.split(':')[1]
-        logging.info("Client connecting: {0}".format(ip))
+        logging.info("{0} is attempting a connection".format(ip))
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
         # telling the client to store it with a Set-Cookie header
@@ -190,15 +192,15 @@ class LoultServer(WebSocketServerProtocol):
 
         return None, retn
 
+    def __repr__(self):
+        tpl = 'client {userid} with IP {ip}'
+        return tpl.format(userid=self.user.user_id, ip=self.ip)
+
     def onOpen(self):
         """Triggered once the WSS is opened. Mainly consists of registering the user in the channel, and
         sending the channel's information (connected users and the backlog) to the user"""
-        print("WebSocket connection open.")
-
         # telling the  connected users'register to register the current user in the current channel
         self.channel_obj, self.user = loult_state.channel_connect(self, self.cookie, self.channel_n)
-
-        self.cnx = True  # connected!
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
         my_userlist = OrderedDict([(user_id , deepcopy(user.info))
@@ -206,8 +208,10 @@ class LoultServer(WebSocketServerProtocol):
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.send_json(type='userlist', users=list(my_userlist.values()))
-
         self.send_json(type='backlog', msgs=self.channel_obj.backlog)
+
+        self.cnx = True  # connected!
+        logging.info(self.__repr__() + " has fully open a connection.")
 
     def send_json(self, **kwargs):
         self.sendMessage(encode_json(kwargs), isBinary=False)
@@ -252,6 +256,7 @@ class LoultServer(WebSocketServerProtocol):
 
         elif (self.user.state.is_flooding or
               self.banned_words(msg_data["msg"])):
+            logging.info(self.__repr__() + " has been detected as a flooder")
             self._handle_automute()
 
         else:
@@ -457,7 +462,8 @@ class LoultServer(WebSocketServerProtocol):
         if hasattr(self, 'cnx') and self.cnx:
             self.channel_obj.channel_leave(self, self.user)
 
-        logging.info("WebSocket connection closed: {0}".format(reason))
+        msg = 'client {} left with reason "{}"' if reason else 'client {} left'
+        logging.info(msg.format(self, reason))
 
 
 class Channel:
