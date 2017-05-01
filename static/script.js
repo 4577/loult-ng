@@ -394,6 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
 						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
 						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, 'part');
 					}
+					else
+						ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				}
 				else if(trimed.length)
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
