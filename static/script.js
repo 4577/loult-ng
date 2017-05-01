@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		sp = document.createElement('span');
 		if(dt && hr)
 			sp.className = 'show';
-		sp.appendChild(document.createTextNode(',Â '));
+		sp.appendChild(document.createTextNode(' '));
 		td.appendChild(sp);
 		
 		sp = document.createElement('span');
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		if(!params.you) {
 			var sound = document.createElement('div');
-			sound.appendChild(document.createTextNode('ðŸ“£'));
+			sound.appendChild(document.createTextNode('📣'));
 			sound.className = 'btn';
 			td.appendChild(sound);
 			
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		var chatentry = document.getElementById('chatentry');
 		var div = document.createElement('div');
 		div.className = 'btn';
-		div.appendChild(document.createTextNode('ðŸŽ¤'));
+		div.appendChild(document.createTextNode('🎤'));
 		chatentry.appendChild(div);
 		div.onclick = function () {
 			if(recognizing) {
@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
 						addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, 'part');
 						addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, 'part');
 						if(audio)
-							addLine('info', "/volume, /vol : RÃ©gler le volume rapidement. Exemple : /volume 50", d, 'part');
+							addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, 'part');
 						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
 						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, 'part');
 					}
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					
 					case 'connect':
 						if(!lastMuted) {
-							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaÃ®t !', msg.date, 'log');
+							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
 							addUser(msg.userid, msg.params);
 						}
 					break;
@@ -448,16 +448,16 @@ document.addEventListener('DOMContentLoaded', function() {
 								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !', msg.date, 'log');
 							break;
 							case 'effect':
-								addLine('info', users[msg.target_id].name + " est maintenant affectÃ© par l'effet " + msg.effect + ' !', msg.date, 'log');
+								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
 								if(msg.target_id == you)
 								{
 									var d = new Date(msg.date);
 									d.setSeconds(d.getSeconds() + msg.timeout);
-									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminÃ©.', d, 'log part'); }, msg.timeout * 1000);
+									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, 'log part'); }, msg.timeout * 1000);
 								}
 							break;
 							case 'invalid':
-								addLine('info', "Impossible d'attaquer pour le moment, ou pokÃ©mon invalide", msg.date, 'log part');
+								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, 'log part');
 							break;
 							case 'nothing':
 								addLine('info', 'Il ne se passe rien...', msg.date, 'log part');
@@ -468,10 +468,10 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'automute':
 						switch(msg['event']) {
 							case 'automuted':
-								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a Ã©tÃ© mutÃ©, toute attaque Ã  son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
+								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
 							break;
 							case 'flood_warning':
-                                addLine('info', 'Attention, vous avez Ã©tÃ© dÃ©tectÃ© comme flooder. Dernier avertissement.', msg.date, 'log part');
+                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, 'log part');
 							break;
 						}
 					break;
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'backlog':
 						for(var i = 0; i < msg.msgs.length; i++)
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
-						addLine('info', 'Vous Ãªtes connectÃ©', (new Date), 'log');
+						addLine('info', 'Vous êtes connecté', (new Date), 'log');
 					break;
 				}
 			}
@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			for(var i in users)
 				delUser(i);
 			
-			addLine('info', 'Vous Ãªtes dÃ©connectÃ©, rÃ©essai...', (new Date), 'log part');
+			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), 'log part');
 			
 			window.setTimeout(wsConnect, waitTime);
 			waitTime = Math.min(waitTime * 2, 120000);
