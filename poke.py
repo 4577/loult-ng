@@ -2,7 +2,8 @@
 #-*- encoding: Utf-8 -*-
 import logging
 import random
-from asyncio import get_event_loop, ensure_future
+from asyncio import get_event_loop, set_event_loop_policy, \
+        get_event_loop_policy, ensure_future
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -11,14 +12,13 @@ from html import escape
 import json
 from os import urandom, path
 from re import sub
-from time import time
+from time import time, sleep
 from functools import lru_cache, wraps
 from itertools import chain
 import traceback
 from typing import List, Dict, Set, Tuple
 
-from autobahn.asyncio.websocket import WebSocketServerProtocol, \
-    WebSocketServerFactory
+from autobahn.websocket.types import ConnectionDeny
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
      BANNED_WORDS, SHELLING_RESTING_TIME, MOD_COOKIES
@@ -152,7 +152,7 @@ def auto_close(method):
     return wrapped
 
 
-class LoultServer(WebSocketServerProtocol):
+class LoultServer:
 
     def __init__(self):
         super().__init__()
@@ -178,8 +178,7 @@ class LoultServer(WebSocketServerProtocol):
 
         if cookie_hash in loult_state.banned_cookies:
             if datetime.now() < loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
-                self.sendClose()
-                return None, retn
+                raise ConnectionDeny(403, 'You are temporarily banned for flooding.')
             else:
                 del loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
 
@@ -350,10 +349,6 @@ class LoultServer(WebSocketServerProtocol):
 
             combat_sim = CombatSimulator()
             combat_sim.run_attack(self.user, adversary, self.channel_obj)
-            # combat_sim uses the last attack time to compute the bonus,
-            # so it must be updated after the running the attack.
-            self.user.state.last_attack = now
-
             self._broadcast_to_channel(type='attack', date=time() * 1000,
                                        event='dice',
                                        attacker_dice=combat_sim.atk_dice,
@@ -373,6 +368,10 @@ class LoultServer(WebSocketServerProtocol):
             else: # list is empty, no one was attacked
                 self._broadcast_to_channel(type='attack', date=time() * 1000,
                                            event='nothing')
+
+            # combat_sim uses the last attack time to compute the bonus,
+            # so it must be updated after the running the attack.
+            self.user.state.last_attack = now
 
 
     @auto_close
@@ -455,11 +454,9 @@ class LoultServer(WebSocketServerProtocol):
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
-
-        # This lets moderators ban an user even after their disconnection
-        loult_state.ip_backlog.append((self.user.user_id, self.ip))
-
-        if hasattr(self, 'cnx') and self.cnx:
+        if self.cnx:
+            # This lets moderators ban an user even after their disconnection
+            loult_state.ip_backlog.append((self.user.user_id, self.ip))
             self.channel_obj.channel_leave(self, self.user)
 
         msg = 'client {} left with reason "{}"' if reason else 'client {} left'
@@ -555,6 +552,26 @@ loult_state = LoultServerState()
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
+
+    try:
+        asyncio_policy = get_event_loop_policy()
+        import uvloop
+        # Make sure to set uvloop as the default before importing anything
+        # from autobahn else it won't use uvloop
+        set_event_loop_policy(uvloop.EventLoopPolicy())
+        logging.info("uvloop's event loop succesfully activated.")
+    except:
+        set_event_loop_policy(asyncio_policy)
+        logging.info("Failed to use uvloop, falling back to asyncio's event loop.")
+    finally:
+        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+            WebSocketServerFactory
+
+
+    class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
+        pass
+
+
     loop = get_event_loop()
 
     try:
@@ -564,9 +581,8 @@ if __name__ == "__main__":
         loult_state.can_ban = False
         logging.warning("ipset command dosen't work; bans are disabled.")
 
-
     factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
-    factory.protocol = LoultServer
+    factory.protocol = AutobahnLoultServer
     # Allow 4KiB max size for messages, in a single frame.
     factory.setProtocolOptions(
             autoPingInterval=60,
@@ -582,9 +598,7 @@ if __name__ == "__main__":
         loop.run_forever()
     except KeyboardInterrupt:
         logging.info('Shutting down all connections...')
-        now = time() * 1000
         for client in chain.from_iterable((channel.clients for channel in loult_state.chans.values())):
-            client.send_json(type='shutdown', date=now)
             client.sendClose(code=1000, reason='Server shutting down.')
         loop.close()
         print('aplse')

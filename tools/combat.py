@@ -2,12 +2,14 @@ from typing import Tuple
 import random
 
 from tools import get_random_effect
-from tools.effects import TouretteEffect, VenerEffect, CrapweEffect, TurboHangoul, MwfeEffect, WpseEffect
+from tools.effects import (TouretteEffect, VenerEffect, CrapweEffect, TurboHangoul, MwfeEffect, WpseEffect,
+                           GrandSpeechMasterEffect)
 
 
 class CombatSimulator:
 
-    _global_effects = [TouretteEffect, VenerEffect, CrapweEffect, TurboHangoul, MwfeEffect, WpseEffect]
+    _global_effects = [TouretteEffect, VenerEffect, CrapweEffect, TurboHangoul, MwfeEffect, WpseEffect,
+                       GrandSpeechMasterEffect]
 
     def __init__(self):
         self._affected_users = []
