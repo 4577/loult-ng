@@ -77,6 +77,17 @@ S'il y a plusieurs pokémons à ce nom dans le chat, on peut rajouter son numér
 Ce qui attaquera le 3ème Taupiqueur dans la liste
 * On peut paramétrer le "temps de récupération" entre les attaques dans config.py (en seconde)
 
+# Codes d'erreur
+
+L'application définit des codes d'erreurs spéciaux lors de la fermeture forcée d'un websocket :
+
+| code | signification             |
+|------|---------------------------|
+| 4000 | Erreur inattendue         |
+| 4001 | JSON malformé             |
+| 4002 | Données binaires refusées |
+| 4003 | Type de commande inconnu  |
+
 
 D'après une œuvre de *@DrEmixam*.
 
