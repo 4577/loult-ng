@@ -294,7 +294,7 @@ a:hover, .sound:hover, .btn:hover, #prefs input:hover, #prefs label:hover, selec
 }
 
 .off:before {
-	content: 'ðŸš«';
+	content: '🚫';
 	position: absolute;
 }
 
