@@ -2,7 +2,8 @@
 #-*- encoding: Utf-8 -*-
 import logging
 import random
-from asyncio import get_event_loop
+from asyncio import get_event_loop, set_event_loop_policy, \
+        get_event_loop_policy
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -17,8 +18,6 @@ from itertools import chain
 from typing import List, Dict, Set, Tuple
 
 from autobahn.websocket.types import ConnectionDeny
-from autobahn.asyncio.websocket import WebSocketServerProtocol, \
-    WebSocketServerFactory
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
      BANNED_WORDS, SHELLING_RESTING_TIME, MOD_COOKIES
@@ -138,7 +137,7 @@ class User:
         return displayed_text, wav
 
 
-class LoultServer(WebSocketServerProtocol):
+class LoultServer:
 
     def __init__(self, banned_words=BANNED_WORDS):
         super().__init__()
@@ -538,6 +537,26 @@ loult_state = LoultServerState()
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
+
+    try:
+        asyncio_policy = get_event_loop_policy()
+        import uvloop
+        # Make sure to set uvloop as the default before importing anything
+        # from autobahn else it won't use uvloop
+        set_event_loop_policy(uvloop.EventLoopPolicy())
+        logging.info("uvloop's event loop succesfully activated.")
+    except:
+        set_event_loop_policy(asyncio_policy)
+        logging.info("Failed to use uvloop, falling back to asyncio's event loop.")
+    finally:
+        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+            WebSocketServerFactory
+
+
+    class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
+        pass
+
+
     loop = get_event_loop()
 
     try:
@@ -547,9 +566,8 @@ if __name__ == "__main__":
         loult_state.can_ban = False
         logging.warning("ipset command dosen't work; bans are disabled.")
 
-
     factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
-    factory.protocol = LoultServer
+    factory.protocol = AutobahnLoultServer
     factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
 
     coro = loop.create_server(factory, '127.0.0.1', 9000)
