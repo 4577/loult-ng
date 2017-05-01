@@ -328,7 +328,6 @@ class LoultServer(WebSocketServerProtocol):
             self.user.state.last_attack = datetime.now()
             self._handle_flooder_attack(adversary)
         else:
-            self.user.state.last_attack = datetime.now()
             self._broadcast_to_channel({'type': 'attack',
                                         'date': time() * 1000,
                                         'event' : 'attack',
@@ -345,6 +344,7 @@ class LoultServer(WebSocketServerProtocol):
                                         'attacker_bonus' : combat_sim.atk_bonus,
                                         "defender_bonus" : combat_sim.def_bonus,
                                         'attacker_id': self.user.user_id, 'defender_id': adversary_id})
+            self.user.state.last_attack = datetime.now()
 
             if combat_sim.affected_users: # there are users affected by some effects
                 for user, effect in combat_sim.affected_users:
