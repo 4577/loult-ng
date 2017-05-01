@@ -23,6 +23,11 @@ source venv/bin/activate
 
 `pip3 install -r requirements.txt`
 
+Si vous le souhaitez, installez `uvloop`, une boucle évènementielle
+alternative à celle d'`asyncio` et plus rapide:
+
+`pip3 install uvloop`
+
 * Créer un fichier `salt.py` contenant `SALT = 'valeur arbitraire'`
 * Configurer nginx avec `loult.conf`, adapter le chemin de $static
 
