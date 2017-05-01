@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	var users = {};
 	var muted = [];
 	var you = null;
+	var lastMsg;
 	var ws;
 	
 	// DOM-related functions
@@ -43,24 +44,22 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		var dat = (new Date(datemsg)).toLocaleDateString().replace(/ /, '\xa0');
 		var sp = document.createElement('span');
 		if(dt)
 			sp.className = 'show';
-		sp.appendChild(document.createTextNode(dat));
+		sp.appendChild(document.createTextNode((new Date(datemsg)).toLocaleDateString()));
 		td.appendChild(sp);
 		
 		sp = document.createElement('span');
 		if(dt && hr)
 			sp.className = 'show';
-		sp.appendChild(document.createTextNode(',\xa0'));
+		sp.appendChild(document.createTextNode(',Â '));
 		td.appendChild(sp);
-
-		dat = (new Date(datemsg)).toLocaleTimeString().replace(/ /, '\xa0');
+		
 		sp = document.createElement('span');
 		if(hr)
 			sp.className = 'show';
-		sp.appendChild(document.createTextNode(dat));
+		sp.appendChild(document.createTextNode((new Date(datemsg)).toLocaleTimeString()));
 		td.appendChild(sp);
 		tr.appendChild(td);
 		
@@ -91,22 +90,20 @@ document.addEventListener('DOMContentLoaded', function() {
 		td = document.createElement('td');
 		
 		if(!params.you) {
-			var sound = document.createElement('img');
-			sound.src = (mute ? '/img/mute.png' : '/img/speaker.png');
-			sound.className = 'sound';
+			var sound = document.createElement('div');
+			sound.appendChild(document.createTextNode('ðŸ“£'));
+			sound.className = 'btn';
 			td.appendChild(sound);
 			
 			sound.onmousedown = function() {
 				var mt = (muted.indexOf(userid) != -1);
 				if(!mt) {
 					muted.push(userid);
-					sound.src = '/img/mute.png';
-					tr.className = 'mute';
+					sound.className = 'btn off';
 				}
 				else {
 					muted.splice(muted.indexOf(userid), 1);
-					sound.src = '/img/speaker.png';
-					tr.className = '';
+					sound.className = 'btn';
 				}
 			};
 		}
@@ -264,15 +261,13 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// Sound and volume
 	
-	var changeVolume = function() {
-		if(speaker.src.indexOf('mute') == -1) {
-			volume.gain.value = volrange.value / 100;
-			localStorage.volume = volume.gain.value;
-		}
-	};
-	
 	if(audio)
 	{
+		var changeVolume = function() {
+			volume.gain.value = volrange.value * 0.01;
+			localStorage.volume = volume.gain.value;
+		};
+		
 		var speaker = document.getElementById('speaker');
 		var volrange = document.getElementById('volrange');
 		var context = new (window.AudioContext || webkitAudioContext)();
@@ -285,13 +280,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 		
 		speaker.onclick = function() {
-			if(this.src.indexOf('mute') == -1) {
+			if(volume.gain.value > 0) {
 				volume.gain.value = 0;
-				this.src = '/img/mute.png';
+				speaker.className = 'btn off';
 			}
 			else {
-				volume.gain.value = volrange.value / 100;
-				this.src = '/img/speaker.png';
+				volume.gain.value = volrange.value * 0.01;
+				speaker.className = 'btn';
 			}
 		};
 		
@@ -305,10 +300,21 @@ document.addEventListener('DOMContentLoaded', function() {
 		var recognizing = false;
 		
 		var chatentry = document.getElementById('chatentry');
-		var img = document.createElement('img');
-        img.src = '/img/micro_off.png';
-		chatentry.appendChild(img);
-		img.onclick = startDictation;
+		var div = document.createElement('div');
+		div.className = 'btn';
+		div.appendChild(document.createTextNode('ðŸŽ¤'));
+		chatentry.appendChild(div);
+		div.onclick = function () {
+			if(recognizing) {
+				recognition.stop();
+				div.className = 'btn';
+				return;
+			}
+			div.className = 'btn kick';
+			recognition.lang = lang + '-' + ((lang === 'en') ? 'US' : lang.toUpperCase());
+			recognition.start();
+			input.value = '';
+		};
 		
 		recognition.continuous = true;
 		recognition.interimResults = true;
@@ -327,46 +333,20 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		recognition.onresult = function(event) {
 			var interim_transcript = '';
-			for(var i = event.resultIndex; i < event.results.length; i++) {
+			for(var i = event.resultIndex; i < event.results.length; i++)
 				if(event.results[i].isFinal) {
 					var m = input.value.trim();
-					if(m.length > 0) {
+					if(m.length) {
 						ws.send(JSON.stringify({type: 'msg', msg: m, lang: lang}));
+						lastMsg = input.value;
 						input.value = '';
 					}
 				}
-				else {
+				else
 					interim_transcript += event.results[i][0].transcript;
-				}
-			}
+			
 			input.value = interim_transcript.trim();
 			input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
-		};
-		
-		var startDictation = function () {
-			if(recognizing) {
-				recognition.stop();
-				img.src = '/img/micro_off.png';
-				return;
-			}
-			var l = 'en-US';
-			switch(lang) {
-				case 'fr':
-					l = 'fr-FR';
-				break;
-				case 'es':
-					l = 'es-ES';
-				break;
-				case 'de':
-					l = 'de-DE';
-				break;
-				default:
-					l = 'en-US';
-			}
-			img.src = '/img/micro_on.png';
-			recognition.lang = l;
-			recognition.start();
-			input.value = '';
 		};
 	}
 	
@@ -390,28 +370,30 @@ document.addEventListener('DOMContentLoaded', function() {
 		ws.binaryType = 'arraybuffer';
 		
 		var lastMuted = false;
-		var lastMsg;
 		
 		input.onkeydown = function(evt) {
 			if(evt.keyCode === 13 && input.value) {
 				var trimed = input.value.trim();
-				if(trimed.match(/^\/atta(ck|que)\s/i)) {
-					var splitted = trimed.split(' ');
-					ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
-				}
-				else if(trimed.match(/^\/(en|es|fr|de)\s/i))
-					ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2)}));
-				else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i)) {
-					volrange.value = trimed.match(/\d+$/i)[0];
-					changeVolume();
-				}
-				else if(trimed.match(/^\/(help|aide)$/i)) {
-					var d = new Date;
-					addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, 'part');
-					addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, 'part');
-					addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, 'part');
-					addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
-					addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **mec sympa** !", d, 'part');
+				if(trimed.charAt(0) === '/') {
+					if(trimed.match(/^\/atta(ck|que)\s/i)) {
+						var splitted = trimed.split(' ');
+						ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
+					}
+					else if(trimed.match(/^\/(en|es|fr|de)\s/i))
+						ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2)}));
+					else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i) && audio) {
+						volrange.value = trimed.match(/\d+$/i)[0];
+						changeVolume();
+					}
+					else if(trimed.match(/^\/(help|aide)$/i)) {
+						var d = new Date;
+						addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, 'part');
+						addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, 'part');
+						if(audio)
+							addLine('info', "/volume, /vol : RÃ©gler le volume rapidement. Exemple : /volume 50", d, 'part');
+						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
+						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, 'part');
+					}
 				}
 				else if(trimed.length)
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
@@ -445,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					
 					case 'connect':
 						if(!lastMuted) {
-							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
+							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaÃ®t !', msg.date, 'log');
 							addUser(msg.userid, msg.params);
 						}
 					break;
@@ -466,16 +448,16 @@ document.addEventListener('DOMContentLoaded', function() {
 								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !', msg.date, 'log');
 							break;
 							case 'effect':
-								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
+								addLine('info', users[msg.target_id].name + " est maintenant affectÃ© par l'effet " + msg.effect + ' !', msg.date, 'log');
 								if(msg.target_id == you)
 								{
 									var d = new Date(msg.date);
 									d.setSeconds(d.getSeconds() + msg.timeout);
-									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, 'log part'); }, msg.timeout * 1000);
+									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminÃ©.', d, 'log part'); }, msg.timeout * 1000);
 								}
 							break;
 							case 'invalid':
-								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, 'log part');
+								addLine('info', "Impossible d'attaquer pour le moment, ou pokÃ©mon invalide", msg.date, 'log part');
 							break;
 							case 'nothing':
 								addLine('info', 'Il ne se passe rien...', msg.date, 'log part');
@@ -486,10 +468,10 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'automute':
 						switch(msg['event']) {
 							case 'automuted':
-								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
+								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a Ã©tÃ© mutÃ©, toute attaque Ã  son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
 							break;
 							case 'flood_warning':
-                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, 'log part');
+                                addLine('info', 'Attention, vous avez Ã©tÃ© dÃ©tectÃ© comme flooder. Dernier avertissement.', msg.date, 'log part');
 							break;
 						}
 					break;
@@ -502,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					case 'backlog':
 						for(var i = 0; i < msg.msgs.length; i++)
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
-						addLine('info', 'Vous êtes connecté', (new Date), 'log');
+						addLine('info', 'Vous Ãªtes connectÃ©', (new Date), 'log');
 					break;
 				}
 			}
@@ -524,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			for(var i in users)
 				delUser(i);
 			
-			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), 'log part');
+			addLine('info', 'Vous Ãªtes dÃ©connectÃ©, rÃ©essai...', (new Date), 'log part');
 			
 			window.setTimeout(wsConnect, waitTime);
 			waitTime = Math.min(waitTime * 2, 120000);
