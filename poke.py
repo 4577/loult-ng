@@ -3,17 +3,17 @@
 import logging
 import random
 from asyncio import get_event_loop, set_event_loop_policy, \
-        get_event_loop_policy
+        get_event_loop_policy, ensure_future
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
 from html import escape
-from json import loads, dumps
+import json
 from os import urandom, path
 from re import sub
-from time import time
-from functools import lru_cache
+from time import time, sleep
+from functools import lru_cache, wraps
 from itertools import chain
 from typing import List, Dict, Set, Tuple
 
@@ -30,8 +30,9 @@ from tools.phonems import PhonemList
 from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState, \
     prepare_text_for_tts, BannedWords
 
-# Alias with default parameters
-json = lambda obj: dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf8')
+
+def encode_json(data):
+    return json.dumps(data, ensure_ascii=False).encode('utf-8')
 
 
 class User:
@@ -137,13 +138,25 @@ class User:
         return displayed_text, wav
 
 
+def auto_close(method):
+    @wraps(method)
+    async def wrapped(*args, **kwargs):
+        self = args[0]
+        try:
+            return await method(*args, **kwargs)
+        except Exception as err:
+            self.sendClose(code=4000, reason=str(err))
+            raise err
+    return wrapped
+
+
 class LoultServer:
 
-    def __init__(self, banned_words=BANNED_WORDS):
+    def __init__(self):
         super().__init__()
         self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt, self.ip = None, None, None, None, None, None
         self.cnx = False
-        self.banned_words = BannedWords(banned_words)
+        self.banned_words = BannedWords(BANNED_WORDS)
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
@@ -191,40 +204,40 @@ class LoultServer:
                                    for user_id, user in self.channel_obj.users.items()])
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
-        self.sendMessage(json({
-            'type': 'userlist',
-            'users': list(my_userlist.values())
-        }))
+        self.send_json(type='userlist', users=list(my_userlist.values()))
 
-        self.sendMessage(json({
-            'type': 'backlog',
-            'msgs': self.channel_obj.backlog
-        }))
+        self.send_json(type='backlog', msgs=self.channel_obj.backlog)
 
-    def _broadcast_to_channel(self, msg_dict, binary_payload=None):
+    def send_json(self, **kwargs):
+        self.sendMessage(encode_json(kwargs), isBinary=False)
+
+    def send_binary(self, payload):
+        self.sendMessage(payload, isBinary=True)
+
+    def _broadcast_to_channel(self, binary_payload=None, **kwargs):
+        msg = encode_json(kwargs)
         for client in self.channel_obj.clients:
-            client.sendMessage(json(msg_dict))
+            client.sendMessage(msg)
             if binary_payload:
-                client.sendMessage(binary_payload, isBinary=True)
+                client.send_binary(binary_payload)
 
     def _handle_automute(self):
         if self.user.state.has_been_warned: # user has already been warned. Shadowmuting him/her and notifying everyone
             self.user.state.is_shadowmuted = True
-            self._broadcast_to_channel({'type': 'automute',
-                                        'event': 'automuted',
-                                        'flooder_id': self.user.user_id,
-                                        'date' : time() * 1000})
+            self._broadcast_to_channel(type='automute', event='automuted',
+                                       flooder_id=self.user.user_id,
+                                       date=time() * 1000)
             loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
         else:
             # resets the user's msg log, then warns the user
             self.user.state.last_msgs_timestamps = []
             self.user.state.has_been_warned = True
-            self.sendMessage(json({'type': 'automute',
-                                   'event': 'flood_warning',
-                                   'date': time() * 1000}))
+            self.send_json(type='automute', event='flood_warning',
+                           date=time() * 1000)
             alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
-            self.sendMessage(alarm_sound, isBinary=True)
+            self.send_binary(alarm_sound)
 
+    @auto_close
     async def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
         output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
@@ -232,11 +245,9 @@ class LoultServer:
         # message is not sent to the others, but directly to the user
         if self.user.state.is_shadowmuted:
             now = time() * 1000
-            self.sendMessage(json({'type': 'msg',
-                                   'userid': self.user.user_id,
-                                   'msg': output_msg,
-                                   'date': now}))
-            self.sendMessage(wav, isBinary=True)
+            self.send_json(type='msg', userid=self.user.user_id,
+                           msg=output_msg, date=now)
+            self.send_binary(wav)
 
         elif (self.user.state.is_flooding or
               self.banned_words(msg_data["msg"])):
@@ -262,11 +273,9 @@ class LoultServer:
 
             # broadcast message and rendered audio to all clients in the channel
             self.user.state.log_msg()
-            self._broadcast_to_channel({'type': 'msg',
-                                        'userid': self.user.user_id,
-                                        'msg': output_msg,
-                                        'date': info['date']},
-                                       wav if synth else None)
+            self._broadcast_to_channel(type='msg', userid=self.user.user_id,
+                                       msg=output_msg, date=info['date'],
+                                       binary_payload=wav if synth else None)
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
@@ -282,7 +291,7 @@ class LoultServer:
         now = time() * 1000
         loop = get_event_loop()
 
-        async def punish(flooder, count):
+        def punish(flooder, count):
             """
             Yes, it's a recursive asynchronous function.
             If it weren't, this function would stall everything
@@ -291,29 +300,24 @@ class LoultServer:
             """
             if count > 0 and flooder in self.channel_obj.users.values():
                 for client in flooder.clients:
-                    client.sendMessage(json({'type': 'msg',
-                                             'userid': self.user.user_id,
-                                             'msg': punition_msg,
-                                             'date': now}))
-                    client.sendMessage(punition_sound, isBinary=True)
-                loop.create_task(punish(flooder, count - 1))
+                    client.send_json(type='msg', userid=self.user.user_id,
+                                     msg=punition_msg, date=now)
+                    client.send_binary(punition_sound)
+                loop.call_soon(punish, flooder, count - 1)
 
         # recursion launched here
-        loop.create_task(punish(flooder, PUNITIVE_MSG_COUNT))
+        loop.call_soon(punish, flooder, PUNITIVE_MSG_COUNT)
 
-        self._broadcast_to_channel({'type': 'attack',
-                                    'date': now,
-                                    'event': 'attack',
-                                    'attacker_id': self.user.user_id,
-                                    'defender_id': flooder.user_id})
-        self._broadcast_to_channel({'type': 'attack',
-                                    'date': time() * 1000,
-                                    'event': 'effect',
-                                    'target_id': flooder.user_id,
-                                    'effect': "pillonage"})
-        self._broadcast_to_channel({}, cannon_sound)
+        self._broadcast_to_channel(type='attack', date=now, event='attack',
+                                   attacker_id=self.user.user_id,
+                                   defender_id=flooder.user_id)
+        self._broadcast_to_channel(type='attack', date=time() * 1000,
+                                   event='effect', target_id=flooder.user_id,
+                                   effect='pillonage')
+        self._broadcast_to_channel(cannon_sound)
 
-    def _attack_handler(self, msg_data : Dict):
+    @auto_close
+    async def _attack_handler(self, msg_data : Dict):
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
@@ -324,7 +328,7 @@ class LoultServer:
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is None:
-            self.sendMessage(json({'type': 'attack', 'event': 'invalid'}))
+            self.send_json(type='attack', event='invalid')
         elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME) or
               now - self.user.state.last_shelling < timedelta(seconds=SHELLING_RESTING_TIME)):
             return
@@ -333,49 +337,51 @@ class LoultServer:
             self.user.state.last_shelling = now
             self._handle_flooder_attack(adversary)
         else:
-            self.user.state.last_attack = now
-            self._broadcast_to_channel({'type': 'attack',
-                                        'date': time() * 1000,
-                                        'event' : 'attack',
-                                        'attacker_id': self.user.user_id,
-                                        'defender_id': adversary_id})
+            self._broadcast_to_channel(type='attack', date=time() * 1000,
+                                       event='attack',
+                                       attacker_id=self.user.user_id,
+                                       defender_id=adversary_id)
 
             combat_sim = CombatSimulator()
             combat_sim.run_attack(self.user, adversary, self.channel_obj)
-            self._broadcast_to_channel({'type': 'attack',
-                                        'date': time() * 1000,
-                                        'event': 'dice',
-                                        'attacker_dice' : combat_sim.atk_dice,
-                                        "defender_dice" : combat_sim.def_dice,
-                                        'attacker_bonus' : combat_sim.atk_bonus,
-                                        "defender_bonus" : combat_sim.def_bonus,
-                                        'attacker_id': self.user.user_id, 'defender_id': adversary_id})
+            # combat_sim uses the last attack time to compute the bonus,
+            # so it must be updated after the running the attack.
+            self.user.state.last_attack = now
+
+            self._broadcast_to_channel(type='attack', date=time() * 1000,
+                                       event='dice',
+                                       attacker_dice=combat_sim.atk_dice,
+                                       defender_dice=combat_sim.def_dice,
+                                       attacker_bonus=combat_sim.atk_bonus,
+                                       defender_bonus=combat_sim.def_bonus,
+                                       attacker_id=self.user.user_id,
+                                       defender_id=adversary_id)
 
             if combat_sim.affected_users: # there are users affected by some effects
                 for user, effect in combat_sim.affected_users:
-                    self._broadcast_to_channel({'type': 'attack',
-                                                'date': time() * 1000,
-                                                'event': 'effect',
-                                                'target_id': user.user_id,
-                                                'effect': effect.name,
-                                                'timeout': effect.timeout})
+                    self._broadcast_to_channel(type='attack', date=time() * 1000,
+                                               event='effect',
+                                               target_id=user.user_id,
+                                               effect=effect.name,
+                                               timeout=effect.timeout)
             else: # list is empty, no one was attacked
-                self._broadcast_to_channel({'type': 'attack',
-                                            'date': time() * 1000,
-                                            'event': 'nothing'})
+                self._broadcast_to_channel(type='attack', date=time() * 1000,
+                                           event='nothing')
 
 
-    def _move_handler(self, msg_data : Dict):
+    @auto_close
+    async def _move_handler(self, msg_data : Dict):
         # checking if all the necessary data is here
         if not {"x", "y", "id"}.issubset(set(msg_data.keys())):
             return
         # signalling all users in channel that this user moved
-        self._broadcast_to_channel({'type' : 'move',
-                                    'id' : escape(msg_data['id'][:12]),
-                                    'userid': self.user.user_id,
-                                    'x' : float(msg_data['x']),
-                                    'y' : float(msg_data['y'])})
+        self._broadcast_to_channel(type='move',
+                                   id=escape(msg_data['id'][:12]),
+                                   userid=self.user.user_id,
+                                   x=float(msg_data['x']),
+                                   y=float(msg_data['y']))
 
+    @auto_close
     async def _ban_handler(self, msg_data : Dict):
         user_id = msg_data['userid']
         ban_type = msg_data['type']
@@ -385,13 +391,13 @@ class LoultServer:
 
         if not loult_state.can_ban:
             info['state'] = 'ban_system_disabled'
-            return self.sendMessage(json(info))
+            return self.send_json(**info)
 
         if self.cookie not in MOD_COOKIES:
             info['state'] = 'unauthorized'
             logging.info('Unauthorized access to ban tools from IP %s.'
                          % self.ip)
-            return self.sendMessage(json(info))
+            return self.send_json(**info)
 
         connected_list = (client.ip for client in self.channel_obj.clients
                           if client.user.user_id == user_id)
@@ -406,31 +412,40 @@ class LoultServer:
             ban = Ban(ban_type, state, timeout)
             info['state'] = await ban(todo)
             logging.info(log_msg.format(**info, ip=todo))
-            self.sendMessage(json(info))
+            self.send_json(**info)
         except BanFail as err:
             info['state'] = err.state
             logging.info(log_msg.format(**info, ip=todo))
-            self.sendMessage(json(info))
+            self.send_json(**info)
 
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
-        msg = loads(payload.decode('utf8'))
-        loop = get_event_loop()
+        if isBinary:
+            return self.sendClose(code=4002,
+                                  reason='Binary data is not accepted')
+        try:
+            msg = json.loads(payload.decode('utf8'))
+        except json.JSONDecodeError:
+            return self.sendClose(code=4001, reason='Malformed JSON.')
 
         if msg['type'] == 'msg':
             # when the message is just a simple text message (regular chat)
-            loop.create_task(self._msg_handler(msg))
+            ensure_future(self._msg_handler(msg))
 
         elif msg["type"] == "attack":
             # when the current client attacks someone else
-            self._attack_handler(msg)
+            ensure_future(self._attack_handler(msg))
 
         elif msg["type"] == "move":
             # when a user moves
-            self._move_handler(msg)
+            ensure_future(self._move_handler(msg))
 
         elif msg["type"] in Ban.ban_types:
-            loop.create_task(self._ban_handler(msg))
+            ensure_future(self._ban_handler(msg))
+
+        else:
+            return self.sendClose(code=4003,
+                                  reason='Unrecognized command type.')
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
@@ -450,17 +465,11 @@ class Channel:
         self.backlog = []  # type:List
 
     def _signal_user_connect(self, client: LoultServer, user: User):
-        client.sendMessage(json({
-            'type': 'connect',
-            'date': time() * 1000,
-            **user.info}))
+        client.send_json(type='connect', date=time() * 1000, **user.info)
 
     def _signal_user_disconnect(self, client: LoultServer, user: User):
-        client.sendMessage(json({
-            'type': 'disconnect',
-            'date': time() * 1000,
-            'userid': user.user_id
-        }))
+        client.send_json(type='disconnect', date=time() * 1000,
+                         userid=user.user_id)
 
     def channel_leave(self, client: LoultServer, user: User):
         try:
@@ -518,7 +527,7 @@ class Channel:
 
 class LoultServerState:
 
-    def __init__(self, banned_words=BANNED_WORDS):
+    def __init__(self):
         self.chans = {} # type:Dict[str,Channel]
         self.banned_cookies = {} #type:Dict[str,datetime]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
@@ -568,10 +577,22 @@ if __name__ == "__main__":
 
     factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
     factory.protocol = AutobahnLoultServer
-    factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
+    # Allow 4KiB max size for messages, in a single frame.
+    factory.setProtocolOptions(
+            autoPingInterval=60,
+            autoPingTimeout=30,
+            maxFramePayloadSize=4096,
+            maxMessagePayloadSize=4096,
+        )
 
     coro = loop.create_server(factory, '127.0.0.1', 9000)
     server = loop.run_until_complete(coro)
 
-    loop.run_forever()
-
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        logging.info('Shutting down all connections...')
+        for client in chain.from_iterable((channel.clients for channel in loult_state.chans.values())):
+            client.sendClose(code=1000, reason='Server shutting down.')
+        loop.close()
+        print('aplse')
