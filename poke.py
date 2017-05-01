@@ -16,13 +16,14 @@ from functools import lru_cache
 from itertools import chain
 from typing import List, Dict, Set, Tuple
 
+from autobahn.websocket.types import ConnectionDeny
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
      BANNED_WORDS, SHELLING_RESTING_TIME, MOD_COOKIES
 from salt import SALT
-from tools.slowban import slowban, SlowbanFail
+from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
@@ -163,8 +164,7 @@ class LoultServer(WebSocketServerProtocol):
 
         if cookie_hash in loult_state.banned_cookies:
             if datetime.now() < loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
-                self.sendClose()
-                return None, retn
+                raise ConnectionDeny(403, 'You are temporarily banned for flooding.')
             else:
                 del loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
 
@@ -377,21 +377,22 @@ class LoultServer(WebSocketServerProtocol):
                                     'x' : float(msg_data['x']),
                                     'y' : float(msg_data['y'])})
 
-    async def _slowban_handler(self, msg_data : Dict):
+    async def _ban_handler(self, msg_data : Dict):
         user_id = msg_data['userid']
+        ban_type = msg_data['type']
         state = msg_data['state']
-        # This key is mandatory, but we'll let the slowban function
-        # and its try/except block handle that
-        rate = msg_data.get('rate', None)
+        timeout = msg_data.get('timeout', 0)
+        info = {'type': ban_type, 'userid': user_id}
+
+        if not loult_state.can_ban:
+            info['state'] = 'ban_system_disabled'
+            return self.sendMessage(json(info))
 
         if self.cookie not in MOD_COOKIES:
-            self.sendMessage(json({
-                    'type': 'slowban',
-                    'state': 'unauthorized',
-                    'userid': user_id,
-                    'date': time() * 1000,
-                }))
-            return
+            info['state'] = 'unauthorized'
+            logging.info('Unauthorized access to ban tools from IP %s.'
+                         % self.ip)
+            return self.sendMessage(json(info))
 
         connected_list = (client.ip for client in self.channel_obj.clients
                           if client.user.user_id == user_id)
@@ -399,21 +400,18 @@ class LoultServer(WebSocketServerProtocol):
                         if userid == user_id)
         todo = tuple(chain(connected_list, backlog_list))
 
+        log_msg = 'Ban of type "{type}", state "{state}", ' + \
+                  'for userid "{userid}" with IP "{ip}".'
+
         try:
-            state = await slowban(todo, state, rate)
-            self.sendMessage(json({
-                'type': 'slowban',
-                'state': state,
-                'userid': user_id,
-                'date': time() * 1000,
-            }))
-        except SlowbanFail as err:
-            self.sendMessage(json({
-                'type': 'slowban',
-                'state': err.state,
-                'userid': user_id,
-                'date': time() * 1000,
-            }))
+            ban = Ban(ban_type, state, timeout)
+            info['state'] = await ban(todo)
+            logging.info(log_msg.format(**info, ip=todo))
+            self.sendMessage(json(info))
+        except BanFail as err:
+            info['state'] = err.state
+            logging.info(log_msg.format(**info, ip=todo))
+            self.sendMessage(json(info))
 
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
@@ -432,16 +430,14 @@ class LoultServer(WebSocketServerProtocol):
             # when a user moves
             self._move_handler(msg)
 
-        elif msg["type"] == "slowban":
-            loop.create_task(self._slowban_handler(msg))
+        elif msg["type"] in Ban.ban_types:
+            loop.create_task(self._ban_handler(msg))
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
-
-        # This lets moderators ban an user even after their disconnection
-        loult_state.ip_backlog.append((self.user.user_id, self.ip))
-
-        if hasattr(self, 'cnx') and self.cnx:
+        if self.cnx:
+            # This lets moderators ban an user even after their disconnection
+            loult_state.ip_backlog.append((self.user.user_id, self.ip))
             self.channel_obj.channel_leave(self, self.user)
 
         logging.info("WebSocket connection closed: {0}".format(reason))
@@ -542,12 +538,20 @@ loult_state = LoultServerState()
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
+    loop = get_event_loop()
+
+    try:
+        loop.run_until_complete(Ban.ensure_sets())
+        loult_state.can_ban = True
+    except BanFail:
+        loult_state.can_ban = False
+        logging.warning("ipset command dosen't work; bans are disabled.")
+
 
     factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
     factory.protocol = LoultServer
     factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
 
-    loop = get_event_loop()
     coro = loop.create_server(factory, '127.0.0.1', 9000)
     server = loop.run_until_complete(coro)
 
