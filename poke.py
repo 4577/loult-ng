@@ -2,8 +2,9 @@
 #-*- encoding: Utf-8 -*-
 import logging
 import random
-from asyncio import get_event_loop
-from collections import OrderedDict
+from asyncio import get_event_loop, set_event_loop_policy, \
+        get_event_loop_policy
+from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
 from hashlib import md5
@@ -13,14 +14,15 @@ from os import urandom, path
 from re import sub
 from time import time
 from functools import lru_cache
+from itertools import chain
 from typing import List, Dict, Set, Tuple
 
-from autobahn.asyncio.websocket import WebSocketServerProtocol, \
-    WebSocketServerFactory
+from autobahn.websocket.types import ConnectionDeny
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
-     BANNED_WORDS
+     BANNED_WORDS, SHELLING_RESTING_TIME, MOD_COOKIES
 from salt import SALT
+from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
@@ -64,7 +66,7 @@ class User:
                 'userid': self.user_id,
                 'params': {
                     'name': self.poke_params.pokename,
-                    'img': '/pokemon/%s.gif' % str(self.poke_params.poke_id).zfill(3),
+                    'img': str(self.poke_params.poke_id).zfill(3),
                     'color': self.poke_params.color
                 }
             }
@@ -81,7 +83,7 @@ class User:
 
         return input_obj
 
-    def _vocode(self, text: str, lang: str) -> bytes:
+    async def _vocode(self, text: str, lang: str) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
         if self.state.effects[VoiceEffect]:
@@ -90,7 +92,7 @@ class User:
             voice_params = self.voice_params
 
         # apply the beep effect for spoilers
-        beeped = SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
+        beeped = await SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
 
         if isinstance(beeped, PhonemList) or self.state.effects[PhonemicEffect]:
 
@@ -103,16 +105,16 @@ class User:
                 modified_phonems = beeped
             elif self.state.effects[PhonemicEffect]:
                 # first running the text-to-phonems conversion, then applying the phonemic tools
-                phonems = self.audio_renderer.string_to_phonemes(text, lang, voice_params)
+                phonems = await self.audio_renderer.string_to_phonemes(text, lang, voice_params)
                 modified_phonems = self.apply_effects(phonems, self.state.effects[PhonemicEffect])
 
             #rendering audio using the phonemlist
-            return self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
+            return await self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
         else:
             # regular render
-            return self.audio_renderer.string_to_audio(text, lang, voice_params)
+            return await self.audio_renderer.string_to_audio(text, lang, voice_params)
 
-    def render_message(self, text: str, lang: str):
+    async def render_message(self, text: str, lang: str):
         cleaned_text = text[:500]
         # applying "explicit" effects (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
@@ -121,7 +123,7 @@ class User:
         rendered_text = prepare_text_for_tts(rendered_text, lang)
 
         # rendering the audio from the text
-        wav = self._vocode(rendered_text, lang)
+        wav = await self._vocode(rendered_text, lang)
 
         # if there are effets in the audio_effect list, we run it
         if self.state.effects[AudioEffect]:
@@ -135,17 +137,18 @@ class User:
         return displayed_text, wav
 
 
-class LoultServer(WebSocketServerProtocol):
+class LoultServer:
 
     def __init__(self, banned_words=BANNED_WORDS):
         super().__init__()
-        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt = None, None, None, None, None
+        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt, self.ip = None, None, None, None, None, None
         self.cnx = False
         self.banned_words = BannedWords(banned_words)
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        logging.info("Client connecting: {0}".format(request.peer))
+        ip = request.peer.split(':')[1]
+        logging.info("Client connecting: {0}".format(ip))
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
         # telling the client to store it with a Set-Cookie header
@@ -160,8 +163,7 @@ class LoultServer(WebSocketServerProtocol):
 
         if cookie_hash in loult_state.banned_cookies:
             if datetime.now() < loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
-                self.sendClose()
-                return None, retn
+                raise ConnectionDeny(403, 'You are temporarily banned for flooding.')
             else:
                 del loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
 
@@ -170,6 +172,7 @@ class LoultServer(WebSocketServerProtocol):
         self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
+        self.ip = ip
 
         return None, retn
 
@@ -222,9 +225,9 @@ class LoultServer(WebSocketServerProtocol):
             alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
             self.sendMessage(alarm_sound, isBinary=True)
 
-    def _msg_handler(self, msg_data : Dict):
+    async def _msg_handler(self, msg_data : Dict):
         # user object instance renders both the output sound and output text
-        output_msg, wav = self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
+        output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
 
         # message is not sent to the others, but directly to the user
         if self.user.state.is_shadowmuted:
@@ -317,15 +320,17 @@ class LoultServer(WebSocketServerProtocol):
         adversary_id, adversary = self.channel_obj.get_user_by_name(msg_data.get("target",
                                                                                  self.user.poke_params.pokename),
                                                                     msg_data.get("order", 1) - 1)
+        now = datetime.now()
 
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is None:
             self.sendMessage(json({'type': 'attack', 'event': 'invalid'}))
-        elif datetime.now() - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME):
+        elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME) or
+              now - self.user.state.last_shelling < timedelta(seconds=SHELLING_RESTING_TIME)):
             return
         elif adversary.state.is_shadowmuted:
             # if targeted user is shadowmuted, just bombard him/her with the same message
-            self.user.state.last_attack = datetime.now()
+            self.user.state.last_shelling = now
             self._handle_flooder_attack(adversary)
         else:
             self._broadcast_to_channel({'type': 'attack',
@@ -371,13 +376,50 @@ class LoultServer(WebSocketServerProtocol):
                                     'x' : float(msg_data['x']),
                                     'y' : float(msg_data['y'])})
 
+    async def _ban_handler(self, msg_data : Dict):
+        user_id = msg_data['userid']
+        ban_type = msg_data['type']
+        state = msg_data['state']
+        timeout = msg_data.get('timeout', 0)
+        info = {'type': ban_type, 'userid': user_id}
+
+        if not loult_state.can_ban:
+            info['state'] = 'ban_system_disabled'
+            return self.sendMessage(json(info))
+
+        if self.cookie not in MOD_COOKIES:
+            info['state'] = 'unauthorized'
+            logging.info('Unauthorized access to ban tools from IP %s.'
+                         % self.ip)
+            return self.sendMessage(json(info))
+
+        connected_list = (client.ip for client in self.channel_obj.clients
+                          if client.user.user_id == user_id)
+        backlog_list = (ip for userid, ip in loult_state.ip_backlog
+                        if userid == user_id)
+        todo = tuple(chain(connected_list, backlog_list))
+
+        log_msg = 'Ban of type "{type}", state "{state}", ' + \
+                  'for userid "{userid}" with IP "{ip}".'
+
+        try:
+            ban = Ban(ban_type, state, timeout)
+            info['state'] = await ban(todo)
+            logging.info(log_msg.format(**info, ip=todo))
+            self.sendMessage(json(info))
+        except BanFail as err:
+            info['state'] = err.state
+            logging.info(log_msg.format(**info, ip=todo))
+            self.sendMessage(json(info))
+
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         msg = loads(payload.decode('utf8'))
+        loop = get_event_loop()
 
         if msg['type'] == 'msg':
             # when the message is just a simple text message (regular chat)
-            self._msg_handler(msg)
+            loop.create_task(self._msg_handler(msg))
 
         elif msg["type"] == "attack":
             # when the current client attacks someone else
@@ -387,9 +429,14 @@ class LoultServer(WebSocketServerProtocol):
             # when a user moves
             self._move_handler(msg)
 
+        elif msg["type"] in Ban.ban_types:
+            loop.create_task(self._ban_handler(msg))
+
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
-        if hasattr(self, 'cnx') and self.cnx:
+        if self.cnx:
+            # This lets moderators ban an user even after their disconnection
+            loult_state.ip_backlog.append((self.user.user_id, self.ip))
             self.channel_obj.channel_leave(self, self.user)
 
         logging.info("WebSocket connection closed: {0}".format(reason))
@@ -474,6 +521,7 @@ class LoultServerState:
     def __init__(self, banned_words=BANNED_WORDS):
         self.chans = {} # type:Dict[str,Channel]
         self.banned_cookies = {} #type:Dict[str,datetime]
+        self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
@@ -490,11 +538,38 @@ loult_state = LoultServerState()
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
 
-    factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
-    factory.protocol = LoultServer
-    factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
+    try:
+        asyncio_policy = get_event_loop_policy()
+        import uvloop
+        # Make sure to set uvloop as the default before importing anything
+        # from autobahn else it won't use uvloop
+        set_event_loop_policy(uvloop.EventLoopPolicy())
+        logging.info("uvloop's event loop succesfully activated.")
+    except:
+        set_event_loop_policy(asyncio_policy)
+        logging.info("Failed to use uvloop, falling back to asyncio's event loop.")
+    finally:
+        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+            WebSocketServerFactory
+
+
+    class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
+        pass
+
 
     loop = get_event_loop()
+
+    try:
+        loop.run_until_complete(Ban.ensure_sets())
+        loult_state.can_ban = True
+    except BanFail:
+        loult_state.can_ban = False
+        logging.warning("ipset command dosen't work; bans are disabled.")
+
+    factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
+    factory.protocol = AutobahnLoultServer
+    factory.setProtocolOptions(autoPingInterval=60, autoPingTimeout=30)
+
     coro = loop.create_server(factory, '127.0.0.1', 9000)
     server = loop.run_until_complete(coro)
 

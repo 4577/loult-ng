@@ -7,8 +7,8 @@ from io import BytesIO
 from re import sub, compile as regex
 from shlex import quote
 from struct import pack
-from subprocess import PIPE, run
-from asyncio import get_event_loop
+from asyncio import get_event_loop, create_subprocess_shell
+from asyncio.subprocess import PIPE
 from typing import List, Union
 
 import numpy
@@ -51,12 +51,13 @@ class PokeParameters:
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
-        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.7)
+        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.75)
         return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
                    (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1) # poke id
 
 
 class UserState:
+
     detection_window = timedelta(seconds=FLOOD_DETECTION_WINDOW)
 
     def __init__(self):
@@ -67,6 +68,7 @@ class UserState:
                         (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
 
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
+        self.last_shelling = datetime.now() # last flooder attack, user has to wait too
         self.last_msgs_timestamps = [] #type:List[datetime]
         self.has_been_warned = False # User has been warned he shouldn't flood
         self.is_shadowmuted = False # User has been shadowmuted
@@ -155,34 +157,36 @@ class AudioRenderer:
     def _wav_format(self, wav : bytes):
         return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
-    def string_to_audio(self, text : str, lang : str, voice_params : VoiceParameters) -> bytes:
+    async def string_to_audio(self, text : str, lang : str, voice_params : VoiceParameters) -> bytes:
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                        '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
                        % (voice_params.speed, voice_params.pitch, lang, sex, text,
                           volume, lang, voice, lang, voice)
         logging.debug("Running synth command %s" % synth_string)
-        wav = run(synth_string, shell=True, stdout=PIPE, stderr=PIPE).stdout
+        process = await create_subprocess_shell(synth_string, stderr=PIPE, stdout=PIPE)
+        wav, err = await process.communicate()
         return self._wav_format(wav)
 
-    def phonemes_to_audio(self, phonemes : PhonemList, lang : str, voice_params : VoiceParameters) -> bytes:
+    async def phonemes_to_audio(self, phonemes : PhonemList, lang : str, voice_params : VoiceParameters) -> bytes:
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         audio_synth_string = 'MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
                              % (volume, lang, voice, lang, voice)
         logging.debug("Running mbrola command %s" % audio_synth_string)
-        wav = run(audio_synth_string, shell=True, stdout=PIPE,
-                  stderr=PIPE, input=str(phonemes).encode("utf-8")).stdout
+        process = await create_subprocess_shell(audio_synth_string, stdout=PIPE,
+                                                stdin=PIPE, stderr=PIPE)
+        wav, err = await process.communicate(input=str(phonemes).encode('utf-8'))
         return self._wav_format(wav)
 
-    def string_to_phonemes(self, text : str, lang : str, voice_params : VoiceParameters) -> PhonemList:
+    async def string_to_phonemes(self, text : str, lang : str, voice_params : VoiceParameters) -> PhonemList:
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                               % (voice_params.speed, voice_params.pitch, lang, sex, text)
         logging.debug("Running espeak command %s" % phonem_synth_string)
-        return PhonemList(run(phonem_synth_string, shell=True, stdout=PIPE, stderr=PIPE)
-                          .stdout
-                          .decode("utf-8")
-                          .strip())
+        process = await create_subprocess_shell(phonem_synth_string,
+                                                stdout=PIPE, stderr=PIPE)
+        phonems, err = await process.communicate()
+        return PhonemList(phonems.decode('utf-8').strip())
 
     @staticmethod
     def to_f32_16k(wav : bytes) -> numpy.ndarray:
@@ -232,7 +236,7 @@ class SpoilerBipEffect(UtilitaryEffect):
                                       Phonem(i_phonem, duration, [(0, 103 * 3), (80, 103 * 3), (100, 103 * 3)]),
                                       Phonem("p", 228)]))
 
-    def process(self, text: str, lang : str) -> Union[str, PhonemList]:
+    async def process(self, text: str, lang : str) -> Union[str, PhonemList]:
         """Beeps out parts of the text that are tagged with double asterisks.
         It basicaly replaces the opening and closing asterisk with two opening and closing 'stop words'
         then finds the phonemic form of these two and replaces the phonems inside with an equivalently long beep"""
@@ -243,7 +247,7 @@ class SpoilerBipEffect(UtilitaryEffect):
             for occ, tagged_occ in zip(occ_list, tagged_occ_list):
                 text = text.replace(occ, tagged_occ)
             # getting the phonemic form of the text
-            phonems = self.renderer.string_to_phonemes(text, lang, self.voice_params)
+            phonems = await self.renderer.string_to_phonemes(text, lang, self.voice_params)
             # then using a simple state machine (in_beep is the state), replaces the phonems between
             # the right phonemic occurence with the phonems of a beep
             in_beep = False
