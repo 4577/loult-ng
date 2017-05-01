@@ -344,10 +344,6 @@ class LoultServer:
 
             combat_sim = CombatSimulator()
             combat_sim.run_attack(self.user, adversary, self.channel_obj)
-            # combat_sim uses the last attack time to compute the bonus,
-            # so it must be updated after the running the attack.
-            self.user.state.last_attack = now
-
             self._broadcast_to_channel(type='attack', date=time() * 1000,
                                        event='dice',
                                        attacker_dice=combat_sim.atk_dice,
@@ -367,6 +363,10 @@ class LoultServer:
             else: # list is empty, no one was attacked
                 self._broadcast_to_channel(type='attack', date=time() * 1000,
                                            event='nothing')
+
+            # combat_sim uses the last attack time to compute the bonus,
+            # so it must be updated after the running the attack.
+            self.user.state.last_attack = now
 
 
     @auto_close
