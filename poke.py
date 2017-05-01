@@ -16,6 +16,7 @@ from functools import lru_cache
 from itertools import chain
 from typing import List, Dict, Set, Tuple
 
+from autobahn.websocket.types import ConnectionDeny
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
@@ -163,8 +164,7 @@ class LoultServer(WebSocketServerProtocol):
 
         if cookie_hash in loult_state.banned_cookies:
             if datetime.now() < loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
-                self.sendClose()
-                return None, retn
+                raise ConnectionDeny(403, 'You are temporarily banned for flooding.')
             else:
                 del loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
 
