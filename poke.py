@@ -12,10 +12,9 @@ from html import escape
 import json
 from os import urandom, path
 from re import sub
-from time import time, sleep
+from time import time
 from functools import lru_cache, wraps
 from itertools import chain
-import traceback
 from typing import List, Dict, Set, Tuple
 
 from autobahn.websocket.types import ConnectionDeny
