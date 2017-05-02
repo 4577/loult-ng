@@ -129,7 +129,7 @@ class User:
         # if there are effets in the audio_effect list, we run it
         if self.state.effects[AudioEffect]:
             # converting to f32 (more standard) and resampling to 16k if needed, and converting to a ndarray
-            rate , data = self.audio_renderer.to_f32_16k(wav)
+            rate , data = await self.audio_renderer.to_f32_16k(wav)
             # applying the effects pipeline to the sound
             data = self.apply_effects(data, self.state.effects[AudioEffect])
             # converting the sound's ndarray back to bytes
