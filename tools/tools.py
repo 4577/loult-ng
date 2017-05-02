@@ -51,7 +51,7 @@ class PokeParameters:
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
-        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.75)
+        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 0.8, 0.8)
         return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
                    (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1) # poke id
 
