@@ -24,6 +24,9 @@ from tools.audio_tools import resample
 from tools.phonems import PhonemList, Phonem
 
 
+logger = logging.getLogger('tools')
+
+
 class ToolsError(Exception):
     pass
 
@@ -163,7 +166,7 @@ class AudioRenderer:
                        '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
                        % (voice_params.speed, voice_params.pitch, lang, sex, text,
                           volume, lang, voice, lang, voice)
-        logging.debug("Running synth command %s" % synth_string)
+        logger.debug("Running synth command %s" % synth_string)
         process = await create_subprocess_shell(synth_string, stderr=PIPE, stdout=PIPE)
         wav, err = await process.communicate()
         return self._wav_format(wav)
@@ -172,7 +175,7 @@ class AudioRenderer:
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         audio_synth_string = 'MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
                              % (volume, lang, voice, lang, voice)
-        logging.debug("Running mbrola command %s" % audio_synth_string)
+        logger.debug("Running mbrola command %s" % audio_synth_string)
         process = await create_subprocess_shell(audio_synth_string, stdout=PIPE,
                                                 stdin=PIPE, stderr=PIPE)
         wav, err = await process.communicate(input=str(phonemes).encode('utf-8'))
@@ -182,7 +185,7 @@ class AudioRenderer:
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                               % (voice_params.speed, voice_params.pitch, lang, sex, text)
-        logging.debug("Running espeak command %s" % phonem_synth_string)
+        logger.debug("Running espeak command %s" % phonem_synth_string)
         process = await create_subprocess_shell(phonem_synth_string,
                                                 stdout=PIPE, stderr=PIPE)
         phonems, err = await process.communicate()

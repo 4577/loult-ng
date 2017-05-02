@@ -139,6 +139,22 @@ class User:
         return displayed_text, wav
 
 
+class ClientLogAdapter(logging.LoggerAdapter):
+
+    def process(self, msg, kwargs):
+
+        if not (self.extra.ip is None or self.extra.user is None):
+            tpl = '{ip}:{user_id}:{msg}'
+            msg = tpl.format(user_id=self.extra.user.user_id,
+                             ip=self.extra.ip, msg=msg)
+        elif self.extra.user is None and self.extra.ip is not None:
+            msg = '{ip}:{msg}'.format(ip=self.extra.ip, msg=msg)
+        else:
+            msg = 'pre-handshake state, no information: {msg}'.format(msg=msg)
+
+        return msg, kwargs
+
+
 def auto_close(method):
     @wraps(method)
     async def wrapped(*args, **kwargs):
@@ -147,23 +163,36 @@ def auto_close(method):
             return await method(*args, **kwargs)
         except Exception as err:
             self.sendClose(code=4000, reason=str(err))
-            logging.error('{} has raised an exception "{}"'.format(self, err))
-            logging.debug(err, exc_info=True)
+            self.logger.error('raised an exception "%s"' % err)
+            self.logger.debug(err, exc_info=True)
     return wrapped
 
 
 class LoultServer:
 
+    banned_words = None
+    channel_n = None
+    channel_obj = None
+    client_logger = None
+    cnx = False
+    cookie = None
+    ip = None
+    lasttxt = None
+    loult_state = None
+    sendend = None
+    user = None
+
     def __init__(self):
-        super().__init__()
-        self.cookie, self.channel_n, self.channel_obj, self.sendend, self.lasttxt, self.ip = None, None, None, None, None, None
-        self.cnx = False
+        if self.client_logger is None or self.loult_state is None:
+            raise NotImplementedError('You must override "logger" and "state".')
+        self.logger = ClientLogAdapter(self.client_logger, self)
         self.banned_words = BannedWords(BANNED_WORDS)
+        super().__init__()
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        ip = request.peer.split(':')[1]
-        logging.info("{0} is attempting a connection".format(ip))
+        self.ip = request.peer.split(':')[1]
+        self.logger.info('attempting a connection')
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
         # telling the client to store it with a Set-Cookie header
@@ -176,30 +205,25 @@ class LoultServer:
 
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
 
-        if cookie_hash in loult_state.banned_cookies:
-            if datetime.now() < loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
-                raise ConnectionDeny(403, 'You are temporarily banned for flooding.')
+        if cookie_hash in self.loult_state.banned_cookies:
+            if datetime.now() < self.loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
+                raise ConnectionDeny(403, 'temporarily banned for flooding.')
             else:
-                del loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
+                del self.loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
 
         self.cookie = cookie_hash
         self.channel_n = request.path.lower().split('/', 2)[-1]
         self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
-        self.ip = ip
 
         return None, retn
-
-    def __repr__(self):
-        tpl = 'client {userid} with IP {ip}'
-        return tpl.format(userid=self.user.user_id, ip=self.ip)
 
     def onOpen(self):
         """Triggered once the WSS is opened. Mainly consists of registering the user in the channel, and
         sending the channel's information (connected users and the backlog) to the user"""
         # telling the  connected users'register to register the current user in the current channel
-        self.channel_obj, self.user = loult_state.channel_connect(self, self.cookie, self.channel_n)
+        self.channel_obj, self.user = self.loult_state.channel_connect(self, self.cookie, self.channel_n)
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
         my_userlist = OrderedDict([(user_id , deepcopy(user.info))
@@ -210,7 +234,7 @@ class LoultServer:
         self.send_json(type='backlog', msgs=self.channel_obj.backlog)
 
         self.cnx = True  # connected!
-        logging.info(self.__repr__() + " has fully open a connection.")
+        self.logger.info('has fully open a connection')
 
     def send_json(self, **kwargs):
         self.sendMessage(encode_json(kwargs), isBinary=False)
@@ -227,11 +251,12 @@ class LoultServer:
 
     def _handle_automute(self):
         if self.user.state.has_been_warned: # user has already been warned. Shadowmuting him/her and notifying everyone
+            self.logger.info('has been detected as a flooder')
             self.user.state.is_shadowmuted = True
             self._broadcast_to_channel(type='automute', event='automuted',
                                        flooder_id=self.user.user_id,
                                        date=time() * 1000)
-            loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
+            self.loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
         else:
             # resets the user's msg log, then warns the user
             self.user.state.last_msgs_timestamps = []
@@ -240,6 +265,7 @@ class LoultServer:
                            date=time() * 1000)
             alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
             self.send_binary(alarm_sound)
+            self.logger.info('has been warned for flooding')
 
     @auto_close
     async def _msg_handler(self, msg_data : Dict):
@@ -255,7 +281,6 @@ class LoultServer:
 
         elif (self.user.state.is_flooding or
               self.banned_words(msg_data["msg"])):
-            logging.info(self.__repr__() + " has been detected as a flooder")
             self._handle_automute()
 
         else:
@@ -394,33 +419,31 @@ class LoultServer:
         timeout = msg_data.get('timeout', 0)
         info = {'type': ban_type, 'userid': user_id}
 
-        if not loult_state.can_ban:
+        if not self.loult_state.can_ban:
             info['state'] = 'ban_system_disabled'
             return self.send_json(**info)
 
         if self.cookie not in MOD_COOKIES:
             info['state'] = 'unauthorized'
-            logging.info('Unauthorized access to ban tools from IP %s.'
-                         % self.ip)
+            self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
 
         connected_list = (client.ip for client in self.channel_obj.clients
                           if client.user.user_id == user_id)
-        backlog_list = (ip for userid, ip in loult_state.ip_backlog
+        backlog_list = (ip for userid, ip in self.loult_state.ip_backlog
                         if userid == user_id)
         todo = tuple(chain(connected_list, backlog_list))
 
-        log_msg = 'Ban of type "{type}", state "{state}", ' + \
-                  'for userid "{userid}" with IP "{ip}".'
+        log_msg = '{type}:{ip}:{userid}:resulted in "{state}"'
 
         try:
             ban = Ban(ban_type, state, timeout)
             info['state'] = await ban(todo)
-            logging.info(log_msg.format(**info, ip=todo))
+            self.logger.info(log_msg.format(**info, ip=todo))
             self.send_json(**info)
         except BanFail as err:
             info['state'] = err.state
-            logging.info(log_msg.format(**info, ip=todo))
+            self.logger.info(log_msg.format(**info, ip=todo))
             self.send_json(**info)
 
     def onMessage(self, payload, isBinary):
@@ -428,8 +451,9 @@ class LoultServer:
         if isBinary:
             return self.sendClose(code=4002,
                                   reason='Binary data is not accepted')
+
         try:
-            msg = json.loads(payload.decode('utf8'))
+            msg = json.loads(payload.decode('utf-8'))
         except json.JSONDecodeError:
             return self.sendClose(code=4001, reason='Malformed JSON.')
 
@@ -456,16 +480,18 @@ class LoultServer:
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if self.cnx:
             # This lets moderators ban an user even after their disconnection
-            loult_state.ip_backlog.append((self.user.user_id, self.ip))
+            self.loult_state.ip_backlog.append((self.user.user_id, self.ip))
             self.channel_obj.channel_leave(self, self.user)
 
-        msg = 'client {} left with reason "{}"' if reason else 'client {} left'
-        logging.info(msg.format(self, reason))
+        msg = 'left with reason "{}"'.format(reason) if reason else 'left'
+
+        self.logger.info(msg)
 
 
 class Channel:
-    def __init__(self, channel_name):
+    def __init__(self, channel_name, state):
         self.name = channel_name
+        self.loult_state = state
         self.clients = set()  # type:Set[LoultServer]
         self.users = OrderedDict()  # type:OrderedDict[str, User]
         self.backlog = []  # type:List
@@ -491,7 +517,7 @@ class Channel:
 
                 # if no one's connected dans the backlog is empty, we delete the channel from the register
                 if not self.clients and not self.backlog:
-                    del loult_state.chans[self.name]
+                    del self.loult_state.chans[self.name]
         except KeyError:
             pass
 
@@ -541,17 +567,16 @@ class LoultServerState:
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
         if channel_name not in self.chans:
-            self.chans[channel_name] = Channel(channel_name)
+            self.chans[channel_name] = Channel(channel_name, self)
         channel_obj = self.chans[channel_name]
         channel_obj.clients.add(client)
 
         return channel_obj, channel_obj.user_connect(User(user_cookie, channel_name, client), client)
 
 
-loult_state = LoultServerState()
-
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger('server')
 
     try:
         asyncio_policy = get_event_loop_policy()
@@ -559,27 +584,29 @@ if __name__ == "__main__":
         # Make sure to set uvloop as the default before importing anything
         # from autobahn else it won't use uvloop
         set_event_loop_policy(uvloop.EventLoopPolicy())
-        logging.info("uvloop's event loop succesfully activated.")
+        logger.info("uvloop's event loop succesfully activated.")
     except:
         set_event_loop_policy(asyncio_policy)
-        logging.info("Failed to use uvloop, falling back to asyncio's event loop.")
+        logger.info("Failed to use uvloop, falling back to asyncio's event loop.")
     finally:
         from autobahn.asyncio.websocket import WebSocketServerProtocol, \
             WebSocketServerFactory
 
-
-    class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
-        pass
-
-
     loop = get_event_loop()
+    loult_state = LoultServerState()
 
     try:
         loop.run_until_complete(Ban.ensure_sets())
         loult_state.can_ban = True
     except BanFail:
         loult_state.can_ban = False
-        logging.warning("ipset command dosen't work; bans are disabled.")
+        logger.warning("ipset command dosen't work; bans are disabled.")
+
+
+    class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
+        loult_state = loult_state
+        client_logger = logging.getLogger('client')
+
 
     factory = WebSocketServerFactory(server='Lou.lt/NG') # 'ws://127.0.0.1:9000',
     factory.protocol = AutobahnLoultServer
@@ -597,7 +624,7 @@ if __name__ == "__main__":
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        logging.info('Shutting down all connections...')
+        logger.info('Shutting down all connections...')
         for client in chain.from_iterable((channel.clients for channel in loult_state.chans.values())):
             client.sendClose(code=1000, reason='Server shutting down.')
         loop.close()
