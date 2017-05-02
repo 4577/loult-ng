@@ -192,13 +192,13 @@ class AudioRenderer:
         return PhonemList(phonems.decode('utf-8').strip())
 
     @staticmethod
-    def to_f32_16k(wav : bytes) -> numpy.ndarray:
+    async def to_f32_16k(wav : bytes) -> numpy.ndarray:
         # converting the wav to ndarray, which is much easier to use for DSP
         rate, data = wavfile.read(BytesIO(wav))
         # casting the data array to the right format (float32, for usage by pysndfx)
         data = (data / (2. ** 15)).astype('float32')
         if rate != 16000:
-            data = resample(data, rate)
+            data = await resample(data, rate)
             rate = 16000
 
         return rate, data
