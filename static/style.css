@@ -572,11 +572,11 @@ select {
 	font-family: monospace;
 }
 
-.rainbow td label, .rainbow .btn {
+.rainbow #chat label, .rainbow #chatentry .btn, .rainbow #sidebtns .btn {
 	-webkit-animation: fader 30s infinite;
 	-ms-animation: fader 30s infinite;
 	animation: fader 30s infinite;
-	color: #F00;
+	color: #F00 !important;
 }
 
 @keyframes fader {
