@@ -27,7 +27,7 @@ from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
 from tools.phonems import PhonemList
-from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState, \
+from tools.tools import AudioRenderer, SpoilerBipEffect, VoiceParameters, PokeParameters, UserState, \
     prepare_text_for_tts, BannedWords
 
 
@@ -295,8 +295,7 @@ class LoultServer:
             if synth:
                 self.sendend = calc_sendend
 
-            # add output
-            output_msg = add_msg_html_tag(output_msg)
+            output_msg = escape(output_msg)
             # send to the backlog
             info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
