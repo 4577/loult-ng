@@ -14,9 +14,55 @@
 	var you = null;
 	var lastMsg;
 	var ws;
-	
+
+	const PARSE_RULES = (function() {
+		var links = /https?:\/\/[^< ]*[^<*.,?! :]/g;
+		// This is the result of the linkification of a vocaroo url.
+		// This MUST run after the linkification.
+		var vocaroo = /<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g;
+		var vocaroo_src = 'http://vocaroo.com/media_command.php?media=$1&command=download_';
+		var marquee = ['||||', '||||'];
+
+		var rules = [
+			{
+				test: msg => msg.includes('http'),
+				run: msg => msg.replace(links, '<a href="$&" target="_blank">$&</a>'),
+			},
+			{
+				test: msg => msg.includes('**'),
+				run: msg => msg.replace(/\*\*(.*)?\*\*/g, '<span class="spoiler">$1</span>'),
+			},
+			{
+				test: msg => msg.includes('://vocaroo.com/i/'),
+				run: msg => msg.replace(vocaroo, '<audio controls>' +
+						`<source src="${vocaroo_src}mp3" type="audio/mpeg">` +
+						`<source src="${vocaroo_src}webm" type="audio/webm">` +
+					'</audio>'),
+			},
+			{
+				test: msg => msg.includes(marquee[0]) && msg.includes(marquee[1]),
+				run: msg => msg.replace(marquee[0], '').replace(marquee[1], ''),
+				class: 'marquee',
+			},
+			{
+				test: msg => msg.startsWith('&gt;'),
+				class: 'greentext',
+			},
+		]
+
+		return rules;
+	})();
+
+	// Usage: var [msg, classes] = parser(raw_msg)
+	var parser = function(raw_msg) {
+		var rules = PARSE_RULES.filter(rule => ('test' in rule) && rule.test(raw_msg));
+		var msg = rules.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);
+		var classes = rules.filter(rule => 'class' in rule).map(rule => rule.class);
+		return [msg, classes];
+	}
+
 	// DOM-related functions
-	
+
 	var addLine = function(pkmn, txt, datemsg, trclass) {
 		var tr = document.createElement('tr');
 		if(trclass)
@@ -37,9 +83,15 @@
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		td.innerHTML = txt;
-		if(txt.match(/^&gt;/))
-			td.className = 'greentext';
+		var [txt, classes] = parser(txt);
+		if (classes.indexOf('marquee') > -1) {
+			var contener = td.appendChild(document.createElement('marquee'));
+			contener.innerHTML = txt;
+			classes.splice(classes.indexOf('marquee'), 1);
+		}  else {
+			td.innerHTML = txt;
+		}
+		td.className = classes.join(' ');
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
