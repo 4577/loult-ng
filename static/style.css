@@ -1,4 +1,4 @@
-div, header, input {
+﻿div, header, input {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -217,21 +217,20 @@ td:first-child {
 	overflow-x: hidden;
 }
 
-label {
-	cursor: inherit;
+td label {
 	display: block;
 	line-height: 36px;
 	background-repeat: no-repeat;
 }
 
-label.left {
+td label.left {
 	padding-left: 40px;
 	padding-right: 0;
 	text-align: left;
 	background-position: left 0 bottom 5px;
 }
 
-label.right {
+td label.right {
 	padding-left: 0;
 	padding-right: 40px;
 	text-align: right;
@@ -346,15 +345,13 @@ header, main, #overlay {
 
 .blur-in {
 	-webkit-animation: blur-in 450ms forwards;
+	-ms-animation: blur-in 450ms forwards;
 	animation: blur-in 450ms forwards;
 }
-@-webkit-keyframes blur-in {
-	0% { -webkit-filter: blur(0px); }
-	100% { -webkit-filter: blur(3px); }
-}
+
 @keyframes blur-in {
-	0% { -webkit-filter: blur(0px); filter: blur(0px); }
-	100% { -webkit-filter: blur(3px); filter: blur(3px); }
+	0% { -webkit-filter: blur(0px); -moz-filter: blur(0px); -o-filter: blur(0px); -ms-filter: blur(0px); filter: blur(0px); }
+	100% { -webkit-filter: blur(3px); -moz-filter: blur(3px); -o-filter: blur(3px); -ms-filter: blur(3px); filter: blur(3px); }
 }
 
 #window {
@@ -415,6 +412,7 @@ header, main, #overlay {
 }
 
 #prefs label {
+	cursor: inherit;
 	display: inline-block;
 	padding: 0 10px;
 	min-width: 80px;
@@ -450,6 +448,7 @@ select {
 
 * {
 	-webkit-transition: background-color 150ms linear;
+	-ms-transition: background-color 150ms linear;
 	transition: background-color 150ms linear;
 }
 
@@ -558,4 +557,35 @@ select {
 
 .night ::-webkit-scrollbar, .night ::-webkit-scrollbar-thumb {
 	background-color: #222;
+}
+
+.comic, .comic input, .comic select, .comic option {
+	font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+	font-weight: bold;
+}
+
+.comic #underlay {
+	background: none !important;
+}
+
+.rainbow, .rainbow input, .rainbow select, .rainbow option {
+	font-family: monospace;
+}
+
+.rainbow td label, .rainbow .btn {
+	-webkit-animation: fader 30s infinite;
+	-ms-animation: fader 30s infinite;
+	animation: fader 30s infinite;
+	color: #F00;
+}
+
+@keyframes fader {
+	7% { color: #F00; }
+	21% { color: #F80; }
+	35% { color: #FF0; }
+	50% { color: #0F0; }
+	64% { color: #0FF; }
+	78% { color: #00F; }
+	93% { color: #90F; }
+	100% { color: #F00; }
 }
