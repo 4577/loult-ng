@@ -23,6 +23,11 @@ source venv/bin/activate
 
 `pip3 install -r requirements.txt`
 
+Si vous le souhaitez, installez `uvloop`, une boucle évènementielle
+alternative à celle d'`asyncio` et plus rapide:
+
+`pip3 install uvloop`
+
 * Créer un fichier `salt.py` contenant `SALT = 'valeur arbitraire'`
 * Configurer nginx avec `loult.conf`, adapter le chemin de $static
 
@@ -33,6 +38,36 @@ ln -s /etc/nginx/site-available/ /etc/nginx/site-enabled
 
 * Lancer `poke.py`
 
+# Bans
+
+Le système de ban utilise netfilter pour éviter de faire consommer
+des ressources au serveur python. Il faut entrer 4 règles avec iptables
+et installer `ipset`. Ces règles sont :
+
+	-A INPUT  -m set --match-set ban src -m conntrack --ctstate ESTABLISHED,NEW -j DROP
+	-A OUTPUT -m set --match-set ban src -m conntrack --ctstate ESTABLISHED -j DROP
+	-A INPUT  -m set --match-set slowban src -m conntrack --ctstate ESTABLISHED,NEW -m statistic --mode random --probability 0.75 -j DROP
+	-A OUTPUT -m set --match-set slowban src -m conntrack --ctstate ESTABLISHED,NEW -m statistic --mode random --probability 0.75 -j DROP
+
+Voici un moyen de faire marcher ce système entre chaque redémarrage du serveur :
+
+* installez `ipset` et assurez-vous qu'il est utilisable par l'utilisateur
+lançant loult-ng sans entrer de mot de passe
+* créez `/etc/iptables/` et copiez-y `os/iptables.rules`
+* copiez `os/iptables.sevice` dans `/usr/lib/systemd/system/`
+* copiez `os/iptables-reset` dans `/usr/lib/systemd/scripts/`
+* lancez `chmod +x /usr/lib/systemd/scripts/iptables-reset`
+* copiez `os/ipset.service` dans `/usr/lib/systemd/system/`
+* lancez `systemctl daemon-reload`
+* `systemctl enable iptables`
+* `systemctl restart iptables`
+* `systemctl enable ipset`
+* `touch /etc/ipset.conf`
+* vous pouvez vérifier que tout s'est bien passé en lançant `iptables-save`
+* lancez `crontab -e` en tant que root et rajoutez-y
+
+        0 1 * * * /sbin/ipset save -file /etc/ipset.conf
+
 # Détails sur le fonctionnement
 
 * Les joueurs peuvent s'attaquer les uns les autres en lançant la commande
@@ -41,6 +76,17 @@ S'il y a plusieurs pokémons à ce nom dans le chat, on peut rajouter son numér
 `/attack Taupiqueur 3`
 Ce qui attaquera le 3ème Taupiqueur dans la liste
 * On peut paramétrer le "temps de récupération" entre les attaques dans config.py (en seconde)
+
+# Codes d'erreur
+
+L'application définit des codes d'erreurs spéciaux lors de la fermeture forcée d'un websocket :
+
+| code | signification             |
+|------|---------------------------|
+| 4000 | Erreur inattendue         |
+| 4001 | JSON malformé             |
+| 4002 | Données binaires refusées |
+| 4003 | Type de commande inconnu  |
 
 
 D'après une œuvre de *@DrEmixam*.
