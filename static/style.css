@@ -29,6 +29,11 @@ html, body {
 	background: #ACF;
 }
 
+input, select, option {
+	font-family: inherit;
+	font-weight: inherit;
+}
+
 header {
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
@@ -523,20 +528,8 @@ select {
     background: #333;
 }
 
-.night header, .night #prefsttl {
-	border-bottom: 1px solid #111;
-}
-
-.night #chatentry {
-	border-top: 1px solid #111;
-}
-
-.night #wrap, .night #close {
-	border-left: 1px solid #111;
-}
-
-.night #window {
-	border: 1px solid #111;
+.night header, .night #prefsttl, .night #chatentry, .night #wrap, .night #close, .night #window {
+	border-color: #111;
 }
 
 .night .backlog td, .mute > *, .night  #chattbl td:last-child {
@@ -545,8 +538,8 @@ select {
 
 .night header, .night #prefsttl {
 	background: #111;
-	background: -webkit-linear-gradient(top, #111 0%,#333 100%);
-	background: linear-gradient(to bottom, #111 0%,#333 100%);
+	background: -webkit-linear-gradient(top, #111 0%, #333 100%);
+	background: linear-gradient(to bottom, #111 0%, #333 100%);
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#111',endColorstr='#333',GradientType=0);
 }
 
@@ -559,7 +552,7 @@ select {
 	background-color: #222;
 }
 
-.comic, .comic input, .comic select, .comic option {
+.comic {
 	font-family: 'Comic Sans MS', 'Comic Sans', cursive;
 	font-weight: bold;
 }
@@ -568,7 +561,7 @@ select {
 	background: none !important;
 }
 
-.rainbow, .rainbow input, .rainbow select, .rainbow option {
+.rainbow {
 	font-family: monospace;
 }
 
