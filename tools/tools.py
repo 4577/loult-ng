@@ -2,7 +2,6 @@ import logging
 import re
 from colorsys import hsv_to_rgb
 from datetime import datetime, timedelta
-from html import escape
 from io import BytesIO
 from re import sub, compile as regex
 from shlex import quote
@@ -54,7 +53,7 @@ class PokeParameters:
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
-        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.75)
+        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 0.8, 0.9)
         return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
                    (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1) # poke id
 
@@ -283,30 +282,6 @@ class BannedWords(list):
 
     def __call__(self, word):
         return any(regex_word.fullmatch(word) for regex_word in self.words)
-
-
-def add_msg_html_tag(text : str) -> str:
-    """Add html tags to the output message, for vocaroos, links or spoilers"""
-    text = escape(text)
-    if re.search(r'\*\*.*?\*\*', text):
-        text = re.sub(r'(\*\*(.*?)\*\*)', r'<span class="spoiler">\2</span>', text)
-
-    if re.search(r'(https?://vocaroo\.com/i/[0-9a-z]+)', text, flags=re.IGNORECASE):
-        vocaroo_player_tag= r'''
-        <object class="vocalink" width="148" height="44">
-            <param name="movie" value="https://loult.family/player.swf?playMediaID=\2&autoplay=0"></param>
-            <param name="wmode" value="transparent"></param>
-            <embed src="https://loult.family/player.swf?playMediaID=\2&autoplay=0"
-                width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
-            </embed>
-            <a href="\1" target="_blank">Donne mou la vocarookles</a>
-        </object>'''
-        text = re.sub(r'(?P<link>https?://vocaroo\.com/i/(?P<id>[0-9a-z]+))', vocaroo_player_tag, text,
-                      flags=re.IGNORECASE)
-    elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):
-        text = re.sub(r'(https?://[^< ]*[^<*.,?! :])', r'<a href="\1" target="_blank">\1</a>', text)
-
-    return text
 
 
 links_translation = {'fr': 'cliquez mes petits chatons',

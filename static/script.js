@@ -1,13 +1,13 @@
-document.addEventListener('DOMContentLoaded', function() {
+﻿document.addEventListener('DOMContentLoaded', function() {
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
 	var usertbl = document.getElementById('usertbl');
 	var input = document.getElementById('input');
-	var night = (localStorage.night == 'true');
-	var left = (localStorage.left == 'true');
-	var dt = (localStorage.dt == 'true');
-	var hr = (localStorage.hr == 'true');
+	var theme = localStorage.theme || 'day';
+	var left = (localStorage.left === 'true');
+	var dt = (localStorage.dt === 'true');
+	var hr = (localStorage.hr === 'true');
 	var waitTime = 1000;
 	var users = {};
 	var muted = [];
@@ -17,13 +17,37 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// DOM-related functions
 	
+	var parser = function(raw_msg) {
+		var rules = [
+			{
+				test: msg => msg.includes('http'),
+				run: msg => msg.replace(/https?:\/\/[^< ]*[^<*.,?! :]/g, '<a href="$&" target="_blank">$&</a>'),
+			},
+			{
+				test: msg => msg.includes('**'),
+				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/gu, '<span class="spoiler">$1</span>'),
+			},
+			{
+				test: msg => msg.includes('://vocaroo.com/i/'),
+				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>'),
+			},
+			{
+				test: msg => msg.startsWith('&gt;'),
+				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>'),
+			}
+		];
+		
+		var tests = rules.filter(rule => ('test' in rule) && rule.test(raw_msg));
+		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
+	};
+	
 	var addLine = function(pkmn, txt, datemsg, trclass) {
 		var tr = document.createElement('tr');
 		if(trclass)
 			tr.className = trclass;
 		
 		var td = document.createElement('td');
-		if(pkmn == 'info')
+		if(pkmn === 'info')
 			td.appendChild(document.createTextNode('[Info]'));
 		else
 		{
@@ -37,10 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		txt = String(txt).replace(/(.+)?\{{4}(.+)?\}{4}(.+)?/, '<marquee>$1$2$3</marquee>');
-		td.innerHTML = txt;
-		if(txt.match(/^&gt;/))
-			td.className = 'greentext';
+		td.innerHTML = parser(txt);
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
@@ -63,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		td.appendChild(sp);
 		tr.appendChild(td);
 		
-		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
+		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		chattbl.appendChild(tr);
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
@@ -131,23 +152,20 @@ document.addEventListener('DOMContentLoaded', function() {
 	var close = document.getElementById('close');
 	var rightbtn = document.getElementById('right');
 	var leftbtn = document.getElementById('left');
-	var daybtn = document.getElementById('day');
-	var nightbtn = document.getElementById('night');
+	var themes = document.getElementById('theme');
 	var dtbtn = document.getElementById('dt');
 	var hrbtn = document.getElementById('hr');
-	// var ckwipe = document.getElementById('ckwipe');
 	var head = document.getElementById('head');
 	var main = document.getElementById('main');
+	// var ckwipe = document.getElementById('ckwipe');
 	
 	var openWindow = function() {
 		overlay.style.display = 'block';
-		head.className = 'blur-in';
-		main.className = 'blur-in';
+		head.className = main.className = 'blur-in';
 	};
 	var closeWindow = function() {
 		overlay.style.display = 'none';
-		head.className = '';
-		main.className = '';
+		head.className = main.className = '';
 	};
 	
 	gear.onclick = openWindow;
@@ -164,18 +182,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	};
 	rightbtn.onclick = leftbtn.onclick = align;
 	
-	daybtn.checked = !night;
-	nightbtn.checked = night;
-	var theme = function(evt) {
-		localStorage.night = night = !daybtn.checked;
-		document.body.className = (night ? 'night' : 'day');
-	};
-	daybtn.onclick = nightbtn.onclick = theme;
-	
 	dtbtn.checked = dt;
 	dtbtn.onchange = function(evt) {
 		localStorage.dt = dt = dtbtn.checked;
-		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
+		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		var rows = document.querySelectorAll('#chattbl td:last-child span:first-child');
 		for(var i = 0; i < rows.length; i++)
 			rows[i].className = (dt ? 'show' : '');
@@ -185,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	hrbtn.checked = hr;
 	hrbtn.onchange = function(evt) {
 		localStorage.hr = hr = hrbtn.checked;
-		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
+		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		var rows = document.querySelectorAll('#chattbl td:last-child span:last-child');
 		for(var i = 0; i < rows.length; i++)
 			rows[i].className = (hr ? 'show' : '');
@@ -198,6 +208,13 @@ document.addEventListener('DOMContentLoaded', function() {
 			rows[i].className = ((dt && hr) ? 'show' : '');
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
+	};
+	
+	document.body.className = themes.value = theme;
+	
+	themes.onchange = function() {
+		localStorage.theme = theme = this.value;
+		document.body.className = theme;
 	};
 	
 	// ckwipe.onclick = function(evt) {
@@ -239,7 +256,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Focus-related functions
 	
 	var dontFocus = false;
+	
 	select.addEventListener('focus', function() {
+		dontFocus = true;
+	}, false);
+	
+	themes.addEventListener('focus', function() {
 		dontFocus = true;
 	}, false);
 	
@@ -356,8 +378,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	var userswitch = document.getElementById('userswitch');
 	
 	userswitch.onclick = function() {
-		var atBottom = (chatbox.scrollTop == (chatbox.scrollHeight - chatbox.offsetHeight));
-		userlist.style.width = (userlist.style.width == '0px' ? '185px' : '0px');
+		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
+		userlist.style.width = (userlist.style.width === '0px' ? '185px' : '0px');
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
 	};
@@ -366,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	var wsConnect = function() {
 		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		// ws = new WebSocket('ws://loult.family/socket' + location.pathname);
+		// ws = new WebSocket('wss://loult.family/socket/');
 		ws.binaryType = 'arraybuffer';
 		
 		var lastMuted = false;
@@ -377,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				if(trimed.charAt(0) === '/') {
 					if(trimed.match(/^\/atta(ck|que)\s/i)) {
 						var splitted = trimed.split(' ');
-						ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length == 3) ? parseInt(splitted[2]) : 0) }));
+						ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length === 3) ? parseInt(splitted[2]) : 0) }));
 					}
 					else if(trimed.match(/^\/(en|es|fr|de)\s/i))
 						ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2)}));
@@ -417,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 		
 		ws.onmessage = function(msg) {
-			if(typeof msg.data == 'string') {
+			if(typeof msg.data === 'string') {
 				msg = JSON.parse(msg.data);
 				lastMuted = (muted.indexOf(msg.userid) != -1);
 				
@@ -451,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
 							break;
 							case 'effect':
 								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
-								if(msg.target_id == you)
+								if(msg.target_id === you)
 								{
 									var d = new Date(msg.date);
 									d.setSeconds(d.getSeconds() + msg.timeout);
@@ -515,6 +537,5 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 	};
 	
-	theme();
 	wsConnect();
 });
