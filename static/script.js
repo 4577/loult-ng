@@ -27,7 +27,7 @@
 			},
 			{
 				test: msg => msg.includes('**'),
-				run: msg => msg.replace(/\*\*(.*)?\*\*/g, '<span class="spoiler">$1</span>'),
+				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/gu, '<span class="spoiler">$1</span>'),
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
