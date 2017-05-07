@@ -18,8 +18,6 @@
 	// DOM-related functions
 	
 	const RULES = (function() {
-		var vocaroo = /<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g;
-		var vocaroo_src = 'http://vocaroo.com/media_command.php?media=$1&command=download_';
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
@@ -31,7 +29,7 @@
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
-				run: msg => msg.replace(vocaroo, '<audio controls><source src="${vocaroo_src}mp3" type="audio/mpeg"><source src="${vocaroo_src}webm" type="audio/webm"></audio>'),
+				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>'),
 			},
 			{
 				test: msg => msg.startsWith('&gt;'),
