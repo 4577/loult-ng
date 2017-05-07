@@ -17,7 +17,7 @@
 	
 	// DOM-related functions
 	
-	const RULES = (function() {
+	var parser = function(raw_msg) {
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
@@ -34,14 +34,10 @@
 			{
 				test: msg => msg.startsWith('&gt;'),
 				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>'),
-			},
+			}
 		];
-
-		return rules;
-	})();
-	
-	var parser = function(raw_msg) {
-		var tests = RULES.filter(rule => ('test' in rule) && rule.test(raw_msg));
+		
+		var tests = rules.filter(rule => ('test' in rule) && rule.test(raw_msg));
 		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
 	};
 	
