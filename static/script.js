@@ -14,19 +14,16 @@
 	var you = null;
 	var lastMsg;
 	var ws;
-
-	const PARSE_RULES = (function() {
-		var links = /https?:\/\/[^< ]*[^<*.,?! :]/g;
-		// This is the result of the linkification of a vocaroo url.
-		// This MUST run after the linkification.
+	
+	// DOM-related functions
+	
+	const RULES = (function() {
 		var vocaroo = /<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g;
 		var vocaroo_src = 'http://vocaroo.com/media_command.php?media=$1&command=download_';
-		var marquee = ['||||', '||||'];
-
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
-				run: msg => msg.replace(links, '<a href="$&" target="_blank">$&</a>'),
+				run: msg => msg.replace(/https?:\/\/[^< ]*[^<*.,?! :]/g, '<a href="$&" target="_blank">$&</a>'),
 			},
 			{
 				test: msg => msg.includes('**'),
@@ -34,35 +31,22 @@
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
-				run: msg => msg.replace(vocaroo, '<audio controls>' +
-						`<source src="${vocaroo_src}mp3" type="audio/mpeg">` +
-						`<source src="${vocaroo_src}webm" type="audio/webm">` +
-					'</audio>'),
-			},
-			{
-				test: msg => msg.includes(marquee[0]) && msg.includes(marquee[1]),
-				run: msg => msg.replace(marquee[0], '').replace(marquee[1], ''),
-				class: 'marquee',
+				run: msg => msg.replace(vocaroo, '<audio controls><source src="${vocaroo_src}mp3" type="audio/mpeg"><source src="${vocaroo_src}webm" type="audio/webm"></audio>'),
 			},
 			{
 				test: msg => msg.startsWith('&gt;'),
-				class: 'greentext',
+				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>'),
 			},
-		]
+		];
 
 		return rules;
 	})();
-
-	// Usage: var [msg, classes] = parser(raw_msg)
+	
 	var parser = function(raw_msg) {
-		var rules = PARSE_RULES.filter(rule => ('test' in rule) && rule.test(raw_msg));
-		var msg = rules.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);
-		var classes = rules.filter(rule => 'class' in rule).map(rule => rule.class);
-		return [msg, classes];
-	}
-
-	// DOM-related functions
-
+		var tests = RULES.filter(rule => ('test' in rule) && rule.test(raw_msg));
+		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
+	};
+	
 	var addLine = function(pkmn, txt, datemsg, trclass) {
 		var tr = document.createElement('tr');
 		if(trclass)
@@ -83,15 +67,7 @@
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		var [txt, classes] = parser(txt);
-		if (classes.indexOf('marquee') > -1) {
-			var contener = td.appendChild(document.createElement('marquee'));
-			contener.innerHTML = txt;
-			classes.splice(classes.indexOf('marquee'), 1);
-		}  else {
-			td.innerHTML = txt;
-		}
-		td.className = classes.join(' ');
+		td.innerHTML = parser(txt);
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
@@ -191,13 +167,11 @@
 	
 	var openWindow = function() {
 		overlay.style.display = 'block';
-		head.className = 'blur-in';
-		main.className = 'blur-in';
+		head.className = main.className = 'blur-in';
 	};
 	var closeWindow = function() {
 		overlay.style.display = 'none';
-		head.className = '';
-		main.className = '';
+		head.className = main.className = '';
 	};
 	
 	gear.onclick = openWindow;
