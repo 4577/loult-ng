@@ -1,4 +1,4 @@
-﻿div, header, input {
+div, header, input {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -572,7 +572,7 @@ select {
 	font-family: monospace;
 }
 
-.rainbow #chat label, .rainbow #chatentry .btn, .rainbow #sidebtns .btn, .rainbow .log {
+.rainbow #chat tr:nth-last-of-type(-n+50) label, .rainbow #chatentry .btn, .rainbow #sidebtns .btn, .rainbow .log:nth-last-of-type(-n+50) {
 	-webkit-animation: fader 30s infinite;
 	-ms-animation: fader 30s infinite;
 	animation: fader 30s infinite;
