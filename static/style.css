@@ -277,8 +277,8 @@ a:hover, .sound:hover, .btn:hover, #prefs input:hover, #prefs label:hover, selec
 	color: #792 !important;
 }
 
-.vocalink {
-    vertical-align : middle;
+audio + a {
+	margin-left: 0.2em;
 }
 
 .log {
