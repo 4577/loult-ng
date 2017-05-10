@@ -1,4 +1,4 @@
-div, header, input {
+﻿div, header, input {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -222,6 +222,10 @@ td:first-child {
 	overflow-x: hidden;
 }
 
+#userlist .btn {
+	margin-top: 3px;
+}
+
 td label {
 	display: block;
 	line-height: 36px;
@@ -289,21 +293,11 @@ a:hover, .sound:hover, .btn:hover, #prefs input:hover, #prefs label:hover, selec
 	color: #1AC;
 }
 
-.kick, .off:before {
+.kick {
 	color: #F33;
 }
 
-.off {
-	position: relative;
-}
-
-.off:before {
-	content: '🚫';
-	position: absolute;
-}
-
 .btn {
-	font-size: 26px;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
@@ -442,6 +436,10 @@ header, main, #overlay {
 	border-left: 1px solid #BBB;
 }
 
+#close i , #chatentry i {
+	padding: 7px;
+}
+
 select {
 	background: #f9f9f9;
 	border: none;
@@ -505,7 +503,11 @@ select {
 	
 	#input {
 		height: auto;
-		padding: 15px 0px;
+		padding: 10px 0px;
+	}
+	
+	#chatentry .btn {
+		display: none;
 	}
 }
 	

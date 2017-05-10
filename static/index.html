@@ -5,9 +5,10 @@
 		<meta charset="utf-8">
 		<meta name="description" content="Un clone de Lou.lt, le célèbre t'chat Pokémon.">
 		<meta name="viewport" content="width=device-width, initial-scale=0.7">
-		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico">
 		<link rel="stylesheet" href="/style.css">
-		<script src="/script.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<script src="./script.js"></script>
 	</head>
 	<body>
 		<header id="head">
@@ -15,9 +16,9 @@
 				<img src="/img/logo.svg" alt="Loult" title="Loult">
 			</div>
 			<div id="sidebtns">
-				<div class="btn" id="speaker">🔊</div>
-				<div class="btn" id="gear">🔧</div>
-				<div class="btn" id="userswitch">👤</div>
+				<div class="btn" id="speaker"><i class="material-icons" id="vol">volume_up</i></div>
+				<div class="btn" id="gear"><i class="material-icons">settings</i></div>
+				<div class="btn" id="userswitch"><i class="material-icons">people</i></div>
 			</div>
 		</header>
 		<div id="underlay">
@@ -45,7 +46,7 @@
 			<div id="window">
 				<div id="prefsttl">
 					Préférences
-					<div id="close">✖</div>
+					<div id="close"><i class="material-icons">clear</i></div>
 				</div>
 				<div id="prefs">
 					<div>
@@ -76,9 +77,6 @@
 					<div>
 						<span>Alignement :</span><input type="radio" name="align" value="right" id="right"><label for="right">Droite</label><input type="radio" name="align" value="left" id="left"><label for="left">Gauche</label>
 					</div>
-					<!--<div>
-						<input type="button" value="Supprimer mon cookie" id="ckwipe">
-					</div>-->
 					<div>
 						<a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dictionnaire</a> - <a href="https://github.com/4577/loult-ng" target="_blank">GitHub</a>
 					</div>

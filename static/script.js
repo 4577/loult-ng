@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+﻿﻿document.addEventListener('DOMContentLoaded', function() {
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
@@ -112,19 +112,22 @@
 		
 		if(!params.you) {
 			var sound = document.createElement('div');
-			sound.appendChild(document.createTextNode('📣'));
+			var i = document.createElement('i');
 			sound.className = 'btn';
+			i.className = 'material-icons';
+			i.appendChild(document.createTextNode('volume_up'));
+			sound.appendChild(i);
 			td.appendChild(sound);
 			
 			sound.onmousedown = function() {
 				var mt = (muted.indexOf(userid) != -1);
 				if(!mt) {
 					muted.push(userid);
-					sound.className = 'btn off';
+					i.innerHTML = 'volume_off';
 				}
 				else {
 					muted.splice(muted.indexOf(userid), 1);
-					sound.className = 'btn';
+					i.innerHTML = 'volume_up';
 				}
 			};
 		}
@@ -217,14 +220,6 @@
 		document.body.className = theme;
 	};
 	
-	// ckwipe.onclick = function(evt) {
-		// evt.preventDefault();
-		// if(confirm('Supprimer le cookie ?')) {
-			// document.cookie = 'id=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/';
-			// location.reload();
-		// }
-	// };
-	
 	// Languages
 	
 	var select = document.getElementById('lang');
@@ -285,31 +280,31 @@
 	
 	if(audio)
 	{
-		var changeVolume = function() {
-			volume.gain.value = volrange.value * 0.01;
-			localStorage.volume = volume.gain.value;
-		};
-		
+		var vol = document.getElementById('vol');
 		var speaker = document.getElementById('speaker');
 		var volrange = document.getElementById('volrange');
 		var context = new (window.AudioContext || webkitAudioContext)();
 		var volume = (context.createGain ? context.createGain() : context.createGainNode());
 		volume.connect(context.destination);
 		
+		var changeVolume = function() {
+			localStorage.volume = volume.gain.value = volrange.value * 0.01;
+			changeIcon(volrange.value);
+		};
+		
+		var changeIcon = function(v) {
+			vol.innerHTML = (v > 0 ? (v > 50 ? 'volume_up' : 'volume_down') : 'volume_mute');
+		};
+		
 		if(localStorage.volume) {
 			volrange.value = localStorage.volume * 100;
 			volume.gain.value = localStorage.volume;
+			changeIcon(volrange.value);
 		}
 		
 		speaker.onclick = function() {
-			if(volume.gain.value > 0) {
-				volume.gain.value = 0;
-				speaker.className = 'btn off';
-			}
-			else {
-				volume.gain.value = volrange.value * 0.01;
-				speaker.className = 'btn';
-			}
+			volume.gain.value = (volume.gain.value > 0 ? 0 : volrange.value * 0.01);
+			changeIcon(volume.gain.value * 100);
 		};
 		
 		volrange.oninput = changeVolume;
@@ -323,16 +318,19 @@
 		
 		var chatentry = document.getElementById('chatentry');
 		var div = document.createElement('div');
+		var i = document.createElement('i');
 		div.className = 'btn';
-		div.appendChild(document.createTextNode('🎤'));
+		i.className = 'material-icons';
+		i.appendChild(document.createTextNode('mic_none'));
+		div.appendChild(i);
 		chatentry.appendChild(div);
 		div.onclick = function () {
 			if(recognizing) {
 				recognition.stop();
-				div.className = 'btn';
+				i.innerHTML = 'mic_off';
 				return;
 			}
-			div.className = 'btn kick';
+			i.innerHTML = 'mic';
 			recognition.lang = lang + '-' + ((lang === 'en') ? 'US' : lang.toUpperCase());
 			recognition.start();
 			input.value = '';
@@ -387,8 +385,8 @@
 	// WebSocket-related functions
 	
 	var wsConnect = function() {
-		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		// ws = new WebSocket('wss://loult.family/socket/');
+		// ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+		ws = new WebSocket('wss://loult.family/socket/' + location.pathname);
 		ws.binaryType = 'arraybuffer';
 		
 		var lastMuted = false;
