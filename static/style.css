@@ -505,16 +505,6 @@ select {
 		height: auto;
 		padding: 10px 0px;
 	}
-	
-	#chatentry .btn {
-		display: none;
-	}
-}
-	
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-	input[type=button] {
-		padding: 5px;
-	}
 }
 
 .night, .night #window, .night #input, .night select {

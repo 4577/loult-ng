@@ -386,7 +386,7 @@
 	
 	var wsConnect = function() {
 		// ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		ws = new WebSocket('wss://loult.family/socket/' + location.pathname);
+		ws = new WebSocket('wss://loult.family/socket' + location.pathname);
 		ws.binaryType = 'arraybuffer';
 		
 		var lastMuted = false;
