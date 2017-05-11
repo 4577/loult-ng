@@ -76,7 +76,7 @@ header > div > img {
 	-webkit-box-pack: justify;
 	-ms-flex-pack: justify;
 	justify-content: space-between;
-	padding: 0 27px;
+	padding: 15px 27px;
 	margin-left: auto;
 }
 
@@ -277,8 +277,8 @@ a:hover, .sound:hover, .btn:hover, #prefs input:hover, #prefs label:hover, selec
 	color: #792 !important;
 }
 
-.vocalink {
-    vertical-align : middle;
+audio + a {
+    margin-left: 5px;
 }
 
 .log {

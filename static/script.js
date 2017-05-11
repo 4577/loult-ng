@@ -29,7 +29,11 @@
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
-				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>'),
+				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>$&'),
+  			},
+  			{
+  				test: msg => msg.startsWith('&gt;'),
+
 			},
 			{
 				test: msg => msg.startsWith('&gt;'),
@@ -385,8 +389,8 @@
 	// WebSocket-related functions
 	
 	var wsConnect = function() {
-		// ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		ws = new WebSocket('wss://loult.family/socket' + location.pathname);
+		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+		// ws = new WebSocket('wss://loult.family/socket/' + location.pathname);
 		ws.binaryType = 'arraybuffer';
 		
 		var lastMuted = false;
