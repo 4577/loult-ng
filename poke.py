@@ -180,6 +180,7 @@ class LoultServer:
     loult_state = None
     sendend = None
     user = None
+    raw_cookie = None
 
     def __init__(self):
         if self.client_logger is None or self.loult_state is None:
@@ -202,6 +203,7 @@ class LoultServer:
             ck = urandom(16).hex()
             retn = {'Set-Cookie': 'id=%s; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/' % ck}
 
+        self.raw_cookie = ck
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
 
         if cookie_hash in self.loult_state.banned_cookies:
@@ -421,7 +423,7 @@ class LoultServer:
             info['state'] = 'ban_system_disabled'
             return self.send_json(**info)
 
-        if self.cookie not in MOD_COOKIES:
+        if self.raw_cookie not in MOD_COOKIES:
             info['state'] = 'unauthorized'
             self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
