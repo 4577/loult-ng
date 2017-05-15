@@ -6,6 +6,7 @@ from io import BytesIO
 from re import sub, compile as regex
 from shlex import quote
 from struct import pack
+from collections import defaultdict
 from asyncio import get_event_loop, create_subprocess_shell
 from asyncio.subprocess import PIPE
 from typing import List, Union
@@ -71,9 +72,10 @@ class UserState:
 
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
         self.last_shelling = datetime.now() # last flooder attack, user has to wait too
-        self.last_msgs_timestamps = [] #type:List[datetime]
+        self.timestamps = defaultdict(list)
         self.has_been_warned = False # User has been warned he shouldn't flood
         self.is_shadowmuted = False # User has been shadowmuted
+
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -89,6 +91,9 @@ class UserState:
         a lambda for use as a callback in the event loop.
         """
         self.has_been_warned = False
+
+    def reset_timestamps(self):
+        self.timestamps = defaultdict(list)
 
     def add_effect(self, effect):
         """Adds an effect to one of the active tools list (depending on the effect type)"""
@@ -108,27 +113,30 @@ class UserState:
                     self.effects[cls].append(efct)
                     break
 
-    def log_msg(self):
+    def log_msg(self, kind):
         """Add a timestamp for a user's message, and clears timestamps which are too old"""
         # removing msg timestamps that are out of the detection window
         now = datetime.now()
-        self._refresh_timestamps(now)
-        self.last_msgs_timestamps.append(now)
+        self._refresh_timestamps(kind, now=now)
+        self.timestamps[kind].append(now)
 
     @property
     def is_flooding(self):
-        self._refresh_timestamps()
-        return len(self.last_msgs_timestamps) > FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+        threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+        for kind in self.timestamps.keys():
+            self._refresh_timestamps(kind)
+        if sum(len(timestamps) for timestamps in self.timestamps.values()) > threshold:
+            return True
 
-    def _refresh_timestamps(self, now=None):
+    def _refresh_timestamps(self, kind, now=None):
         # now has to be a possible argument else there might me slight
         # time differences between the current time of the calling function
         # and this one's current time.
         now = now if now else datetime.now()
         # removing msg timestamps that are out of the detection window
-        updated = [timestamp for timestamp in self.last_msgs_timestamps
+        updated = [timestamp for timestamp in self.timestamps[kind]
                    if timestamp + self.detection_window > now]
-        self.last_msgs_timestamps = updated
+        self.timestamps[kind] = updated
 
 
 class AudioRenderer:

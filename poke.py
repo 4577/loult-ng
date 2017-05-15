@@ -15,7 +15,7 @@ from re import sub
 from time import time
 from functools import lru_cache, wraps
 from itertools import chain
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 
 from autobahn.websocket.types import ConnectionDeny
 
@@ -260,7 +260,7 @@ class LoultServer:
             self.loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
         else:
             # resets the user's msg log, then warns the user
-            self.user.state.last_msgs_timestamps = []
+            self.user.state.reset_timestamps()
             self.user.state.has_been_warned = True
             self.send_json(type='automute', event='flood_warning',
                            date=time() * 1000)
@@ -268,30 +268,30 @@ class LoultServer:
             self.send_binary(alarm_sound)
             self.logger.info('has been warned for flooding')
 
-    @auto_close
-    async def _msg_handler(self, msg_data : Dict):
-        # user object instance renders both the output sound and output text
-        output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
-
-        # message is not sent to the others, but directly to the user
+    def _flood_state(self, msg_data : Dict) -> Optional[str]:
         if self.user.state.is_shadowmuted:
-            now = time() * 1000
-            self.send_json(type='msg', userid=self.user.user_id,
-                           msg=output_msg, date=now)
-            self.send_binary(wav)
-
+            return "shadowmuted"
         elif (self.user.state.is_flooding or
               self.banned_words(msg_data["msg"])):
-            self._handle_automute()
-
+            return "warned"
         else:
-            # rate limit: if the previous message is less than 100 milliseconds from this one, we stop the broadcast
-            now = datetime.now()
-            if now - self.lasttxt <= timedelta(milliseconds=100):
-                return
-            self.lasttxt = now # updating with current time
+            return None
 
-            # estimating the end of the current voice render, to rate limit again
+    @auto_close
+    async def _msg_handler(self, msg_data : Dict):
+        flood_state = self._flood_state(msg_data)
+        if flood_state == "shadowmuted":
+            output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
+            self.send_json(type='msg', userid=self.user.user_id,
+                           msg=output_msg, date=time() * 1000)
+            self.send_binary(wav)
+        elif flood_state == "warned":
+            self._handle_automute()
+        else:
+            now = datetime.now()
+            # user object instance renders both the output sound and output text
+            output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
+            # estimating the end of the current voice render, to rate limit
             calc_sendend = max(self.sendend, now) + timedelta(seconds=len(wav) * 8 / 6000000)
             synth = calc_sendend < now + timedelta(seconds=2.5)
             if synth:
@@ -302,10 +302,25 @@ class LoultServer:
             info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
             # broadcast message and rendered audio to all clients in the channel
-            self.user.state.log_msg()
+            self.user.state.log_msg('msg')
             self._broadcast_to_channel(type='msg', userid=self.user.user_id,
                                        msg=output_msg, date=info['date'],
                                        binary_payload=wav if synth else None)
+
+    @auto_close
+    async def _me_handler(self, msg):
+        self.user.state.log_msg('me')
+        name = self.user.info['params']['name']
+
+        flood_state = self._flood_state(msg)
+        if flood_state == "shadowmuted":
+            self.send_json(type='me', name=name, msg=msg['msg'], date=time() * 1000)
+        elif flood_state == "warned":
+            self._handle_automute()
+        else:
+            self.lasttxt = datetime.now()
+            name = self.user.info['params']['name']
+            self._broadcast_to_channel(type='me', name=name, msg=msg['msg'], date=time() * 1000)
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
@@ -471,6 +486,9 @@ class LoultServer:
 
         elif msg["type"] in Ban.ban_types:
             ensure_future(self._ban_handler(msg))
+
+        elif msg['type'] == 'me':
+            ensure_future(self._me_handler(msg))
 
         else:
             return self.sendClose(code=4003,
