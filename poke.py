@@ -443,11 +443,11 @@ class LoultServer:
             self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
 
-        connected_list = (client.ip for client in self.channel_obj.clients
-                          if client.user.user_id == user_id)
-        backlog_list = (ip for userid, ip in self.loult_state.ip_backlog
-                        if userid == user_id)
-        todo = tuple(chain(connected_list, backlog_list))
+        connected_list = {client.ip for client in self.channel_obj.clients
+                          if client.user.user_id == user_id}
+        backlog_list = {ip for userid, ip in self.loult_state.ip_backlog
+                        if userid == user_id}
+        todo = connected_list | backlog_list
 
         log_msg = '{type}:{ip}:{userid}:resulted in "{state}"'
 
