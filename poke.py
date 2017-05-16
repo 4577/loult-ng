@@ -321,7 +321,9 @@ class LoultServer:
         else:
             self.lasttxt = datetime.now()
             name = self.user.info['params']['name']
-            self._broadcast_to_channel(type='me', name=name, msg=content, date=time() * 1000)
+            user_id = self.user.info['userid']
+            self._broadcast_to_channel(type='me', name=name, msg=content,
+                                       userid=user_id, date=time() * 1000)
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
