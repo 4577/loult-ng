@@ -411,6 +411,7 @@
 						addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, 'part');
 						if(audio)
 							addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, 'part');
+						addLine('info', "/me : réaliser une action. Exemple: /me teste la commande /me.", d, 'part');
 						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
 						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, 'part');
 					}
@@ -512,7 +513,8 @@
 					break;
 
 					case 'me':
-						addLine('info', msg.name + ' ' + msg.msg, msg.date, 'log part')
+						if(!lastMuted)
+							addLine('info', msg.name + ' ' + msg.msg, msg.date, 'log part')
 					break;
 				}
 			}
