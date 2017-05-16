@@ -191,7 +191,7 @@ class LoultServer:
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        self.ip = request.peer.split(':')[1]
+       	self.ip = request.headers['x-real-ip']
         self.logger.info('attempting a connection')
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
