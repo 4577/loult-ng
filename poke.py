@@ -313,14 +313,15 @@ class LoultServer:
         name = self.user.info['params']['name']
 
         flood_state = self._flood_state(msg)
+        content = escape(msg['msg'])
         if flood_state == "shadowmuted":
-            self.send_json(type='me', name=name, msg=msg['msg'], date=time() * 1000)
+            self.send_json(type='me', name=name, msg=content, date=time() * 1000)
         elif flood_state == "warned":
             self._handle_automute()
         else:
             self.lasttxt = datetime.now()
             name = self.user.info['params']['name']
-            self._broadcast_to_channel(type='me', name=name, msg=msg['msg'], date=time() * 1000)
+            self._broadcast_to_channel(type='me', name=name, msg=content, date=time() * 1000)
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
