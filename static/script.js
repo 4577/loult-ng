@@ -414,6 +414,8 @@
 						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
 						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, 'part');
 					}
+					else if(trimed.match(/^\/me\s/i))
+						ws.send(JSON.stringify({type: 'me', msg: trimed.substr(4)}));
 					else
 						ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 				}
@@ -507,6 +509,10 @@
 						for(var i = 0; i < msg.msgs.length; i++)
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
 						addLine('info', 'Vous êtes connecté', (new Date), 'log');
+					break;
+
+					case 'me':
+						addLine('info', msg.name + ' ' + msg.msg, msg.date, 'log part')
 					break;
 				}
 			}
