@@ -42,12 +42,16 @@
 	};
 	
 	var addLine = function(pkmn, txt, datemsg, trclass) {
+		var trclass = trclass || [];
+		if (typeof trclass === 'string')
+			trclass = [trclass];
+
 		var tr = document.createElement('tr');
 		if(trclass)
-			tr.className = trclass;
+			tr.className = trclass.join(' ');
 		
 		var td = document.createElement('td');
-		if(pkmn === 'info' || trclass === 'me')
+		if(pkmn === 'info' || trclass.indexOf('me') > -1)
 			td.appendChild(document.createTextNode('[Info]'));
 		else {
 			var label = document.createElement('label');
@@ -61,7 +65,7 @@
 		
 		td = document.createElement('td');
 		var parsed = parser(txt);
-		if (trclass === 'me') {
+		if (trclass.indexOf('me') > -1) {
 			td.style.color = pkmn.color;
 			parsed = pkmn.name + ' ' + parsed;
 		}
@@ -463,7 +467,7 @@
 					
 					case 'disconnect':
 						if(!lastMuted) {
-							addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, 'log part');
+							addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, ['log', 'part']);
 							delUser(msg.userid);
 						}
 					break;
@@ -482,14 +486,14 @@
 								{
 									var d = new Date(msg.date);
 									d.setSeconds(d.getSeconds() + msg.timeout);
-									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, 'log part'); }, msg.timeout * 1000);
+									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, ['log', 'part']); }, msg.timeout * 1000);
 								}
 							break;
 							case 'invalid':
-								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, 'log part');
+								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, ['log', 'part']);
 							break;
 							case 'nothing':
-								addLine('info', 'Il ne se passe rien...', msg.date, 'log part');
+								addLine('info', 'Il ne se passe rien...', msg.date, ['log', 'part']);
 							break;
 						}
 					break;
@@ -500,7 +504,7 @@
 								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
 							break;
 							case 'flood_warning':
-                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, 'log part');
+                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'part']);
 							break;
 						}
 					break;
@@ -512,7 +516,7 @@
 					
 					case 'backlog':
 						for(var i = 0; i < msg.msgs.length; i++)
-							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, 'backlog');
+							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, ['backlog', msg.msgs[i].type]);
 						addLine('info', 'Vous êtes connecté', (new Date), 'log');
 					break;
 
@@ -540,7 +544,7 @@
 			for(var i in users)
 				delUser(i);
 			
-			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), 'log part');
+			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), ['log', 'part']);
 			
 			window.setTimeout(wsConnect, waitTime);
 			waitTime = Math.min(waitTime * 2, 120000);

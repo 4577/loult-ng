@@ -9,15 +9,15 @@ class TestUserState(unittest.TestCase):
 
     def test_log_msg(self):
         user_state = UserState()
-        user_state.log_msg('test')
+        user_state.log_msg()
         self.assertEqual(len(user_state.timestamps), 1)
 
     def test_log_msg_prune(self):
         user_state = UserState()
         over_flood_window = timedelta(seconds=FLOOD_DETECTION_WINDOW + 1)
         old_timestamp = datetime.now() - over_flood_window
-        user_state.timestamps['test'] = [old_timestamp]
-        user_state.log_msg('test')
+        user_state.timestamps = [old_timestamp]
+        user_state.log_msg()
         self.assertEqual(len(user_state.timestamps), 1)
 
     def test_is_flooding(self):
@@ -25,11 +25,8 @@ class TestUserState(unittest.TestCase):
         # sending an average of X messages per Y seconds means
         # having sent X*Y messages in Y seconds.
         flood_nb = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
-        # ensure flood detection works across any type of message
-        kinds = ('unit', 'test')
         for i in range(flood_nb + 1):
-            index = i % len(kinds)
-            user_state.log_msg(kinds[index])
+            user_state.log_msg()
         self.assertTrue(user_state.is_flooding)
 
     def test_is_flooding_no_trigger(self):
@@ -38,7 +35,7 @@ class TestUserState(unittest.TestCase):
         # having sent X*Y messages in Y seconds.
         flood_nb = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
         for i in range(flood_nb):
-            user_state.log_msg('test')
+            user_state.log_msg()
         self.assertFalse(user_state.is_flooding)
 
 
