@@ -47,10 +47,9 @@
 			tr.className = trclass;
 		
 		var td = document.createElement('td');
-		if(pkmn === 'info')
+		if(pkmn === 'info' || trclass === 'me')
 			td.appendChild(document.createTextNode('[Info]'));
-		else
-		{
+		else {
 			var label = document.createElement('label');
 			label.appendChild(document.createTextNode(pkmn.name));
 			label.style.color = pkmn.color;
@@ -61,7 +60,12 @@
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
-		td.innerHTML = parser(txt);
+		var parsed = parser(txt);
+		if (trclass === 'me') {
+			td.style.color = pkmn.color;
+			parsed = pkmn.name + ' ' + parsed;
+		}
+		td.innerHTML = parsed;
 		tr.appendChild(td);
 		
 		td = document.createElement('td');
@@ -514,7 +518,7 @@
 
 					case 'me':
 						if(!lastMuted)
-							addLine('info', msg.name + ' ' + msg.msg, msg.date, 'log part')
+							addLine(users[msg.userid], msg.msg, msg.date, 'me');
 					break;
 				}
 			}
