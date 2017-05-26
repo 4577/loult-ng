@@ -285,7 +285,7 @@ audio + a {
 	color: #3C3;
 }
 
-.log, .part td:first-child, .me {
+.log, .part td:first-child {
 	text-align: center;
 }
 
@@ -295,10 +295,6 @@ audio + a {
 
 .kick {
 	color: #F33;
-}
-
-.me {
-	color: #1AC;
 }
 
 .me td:nth-child(2) {
