@@ -297,7 +297,7 @@ audio + a {
 	color: #F33;
 }
 
-.me td:nth-child(2) {
+.me td:not(:last-child) {
 	font-style: italic;
 }
 
