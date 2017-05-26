@@ -302,28 +302,27 @@ class LoultServer:
             info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
             # broadcast message and rendered audio to all clients in the channel
-            self.user.state.log_msg('msg')
+            self.user.state.log_msg()
             self._broadcast_to_channel(type='msg', userid=self.user.user_id,
                                        msg=output_msg, date=info['date'],
                                        binary_payload=wav if synth else None)
 
     @auto_close
     async def _me_handler(self, msg):
-        self.user.state.log_msg('me')
-        name = self.user.info['params']['name']
-
+        output_msg = escape(msg['msg'])
+        user_id = self.user.user_id
         flood_state = self._flood_state(msg)
-        content = escape(msg['msg'])
+
         if flood_state == "shadowmuted":
-            self.send_json(type='me', name=name, msg=content, date=time() * 1000)
+            self.send_json(type='me', userid=user_id,
+                           msg=output_msg, date=time() * 1000)
         elif flood_state == "warned":
             self._handle_automute()
         else:
-            self.lasttxt = datetime.now()
-            name = self.user.info['params']['name']
-            user_id = self.user.info['userid']
-            self._broadcast_to_channel(type='me', name=name, msg=content,
-                                       userid=user_id, date=time() * 1000)
+            self.user.state.log_msg()
+            info = self.channel_obj.log_to_backlog(user_id, output_msg, kind='me')
+            self._broadcast_to_channel(type='me', msg=output_msg,
+                                       userid=user_id, date=info['date'])
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
@@ -553,12 +552,13 @@ class Channel:
             self.users[new_user.user_id].clients.append(client)
             return self.users[new_user.user_id]  # returning an already existing instance of the user
 
-    def log_to_backlog(self, user_id, msg: str):
+    def log_to_backlog(self, user_id, msg: str, kind='msg'):
         # creating new entry
         info = {
             'user': self.users[user_id].info['params'],
             'msg': msg,
-            'date': time() * 1000
+            'date': time() * 1000,
+            'type': kind,
         }
 
         # adding it to list and removing oldest entry
