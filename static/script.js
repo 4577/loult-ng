@@ -51,7 +51,7 @@
 			tr.className = trclass.join(' ');
 		
 		var td = document.createElement('td');
-		if(pkmn === 'info' || trclass.indexOf('me') > -1)
+		if(pkmn === 'info')
 			td.appendChild(document.createTextNode('[Info]'));
 		else {
 			var label = document.createElement('label');
