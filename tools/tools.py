@@ -72,7 +72,7 @@ class UserState:
 
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
         self.last_shelling = datetime.now() # last flooder attack, user has to wait too
-        self.timestamps = defaultdict(list)
+        self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood
         self.is_shadowmuted = False # User has been shadowmuted
 
@@ -93,7 +93,7 @@ class UserState:
         self.has_been_warned = False
 
     def reset_timestamps(self):
-        self.timestamps = defaultdict(list)
+        self.timestamps = list()
 
     def add_effect(self, effect):
         """Adds an effect to one of the active tools list (depending on the effect type)"""
@@ -113,30 +113,28 @@ class UserState:
                     self.effects[cls].append(efct)
                     break
 
-    def log_msg(self, kind):
+    def log_msg(self):
         """Add a timestamp for a user's message, and clears timestamps which are too old"""
         # removing msg timestamps that are out of the detection window
         now = datetime.now()
-        self._refresh_timestamps(kind, now=now)
-        self.timestamps[kind].append(now)
+        self._refresh_timestamps(now)
+        self.timestamps.append(now)
 
     @property
     def is_flooding(self):
+        self._refresh_timestamps()
         threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
-        for kind in self.timestamps.keys():
-            self._refresh_timestamps(kind)
-        if sum(len(timestamps) for timestamps in self.timestamps.values()) > threshold:
-            return True
+        return len(self.timestamps) > threshold
 
-    def _refresh_timestamps(self, kind, now=None):
+    def _refresh_timestamps(self, now=None):
         # now has to be a possible argument else there might me slight
         # time differences between the current time of the calling function
         # and this one's current time.
         now = now if now else datetime.now()
         # removing msg timestamps that are out of the detection window
-        updated = [timestamp for timestamp in self.timestamps[kind]
+        updated = [timestamp for timestamp in self.timestamps
                    if timestamp + self.detection_window > now]
-        self.timestamps[kind] = updated
+        self.timestamps = updated
 
 
 class AudioRenderer:
