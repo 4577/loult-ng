@@ -65,10 +65,8 @@
 		
 		td = document.createElement('td');
 		var parsed = parser(txt);
-		if (trclass.indexOf('me') > -1) {
+		if(trclass.indexOf('me') > -1)
 			td.style.color = pkmn.color;
-			parsed = pkmn.name + ' ' + parsed;
-		}
 		td.innerHTML = parsed;
 		tr.appendChild(td);
 		
