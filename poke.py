@@ -557,6 +557,7 @@ class Channel:
         info = {
             'user': self.users[user_id].info['params'],
             'msg': msg,
+            'userid': user_id,
             'date': time() * 1000,
             'type': kind,
         }
