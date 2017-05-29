@@ -600,19 +600,22 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger('server')
 
-    try:
-        asyncio_policy = get_event_loop_policy()
-        import uvloop
-        # Make sure to set uvloop as the default before importing anything
-        # from autobahn else it won't use uvloop
-        set_event_loop_policy(uvloop.EventLoopPolicy())
-        logger.info("uvloop's event loop succesfully activated.")
-    except:
-        set_event_loop_policy(asyncio_policy)
-        logger.info("Failed to use uvloop, falling back to asyncio's event loop.")
-    finally:
-        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
-            WebSocketServerFactory
+## uncomment once https://github.com/MagicStack/uvloop/issues/93 is closed
+#    try:
+#        asyncio_policy = get_event_loop_policy()
+#        import uvloop
+#        # Make sure to set uvloop as the default before importing anything
+#        # from autobahn else it won't use uvloop
+#        set_event_loop_policy(uvloop.EventLoopPolicy())
+#        logger.info("uvloop's event loop succesfully activated.")
+#    except:
+#        set_event_loop_policy(asyncio_policy)
+#        logger.info("Failed to use uvloop, falling back to asyncio's event loop.")
+#    finally:
+#        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+#            WebSocketServerFactory
+    from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+        WebSocketServerFactory
 
     loop = get_event_loop()
     loult_state = LoultServerState()
