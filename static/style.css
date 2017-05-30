@@ -289,7 +289,7 @@ audio + a {
 	text-align: center;
 }
 
-.part {
+.part, .me {
 	color: #1AC;
 }
 
@@ -297,7 +297,7 @@ audio + a {
 	color: #F33;
 }
 
-.me td:not(:last-child) {
+.bot td:not(:last-child) {
 	font-style: italic;
 	color: inherit;
 }
