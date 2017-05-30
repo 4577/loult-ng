@@ -308,20 +308,21 @@ class LoultServer:
                                        binary_payload=wav if synth else None)
 
     @auto_close
-    async def _me_handler(self, msg):
-        output_msg = escape(msg['msg'])
+    async def _extra_handler(self, msg_data: Dict):
+        msg_type = msg_data['type']
         user_id = self.user.user_id
-        flood_state = self._flood_state(msg)
+        output_msg = escape(msg_data['msg'])
 
-        if flood_state == "shadowmuted":
-            self.send_json(type='me', userid=user_id,
+        flood_state = self._flood_state(msg_data)
+        if flood_state == 'shadowmuted':
+            self.send_json(type=msg_type, userid=user_id,
                            msg=output_msg, date=time() * 1000)
-        elif flood_state == "warned":
+        elif flood_state == 'warned':
             self._handle_automute()
         else:
             self.user.state.log_msg()
-            info = self.channel_obj.log_to_backlog(user_id, output_msg, kind='me')
-            self._broadcast_to_channel(type='me', msg=output_msg,
+            info = self.channel_obj.log_to_backlog(user_id, output_msg, kind=msg_type)
+            self._broadcast_to_channel(type=msg_type, msg=output_msg,
                                        userid=user_id, date=info['date'])
 
     @lru_cache()
@@ -489,8 +490,8 @@ class LoultServer:
         elif msg["type"] in Ban.ban_types:
             ensure_future(self._ban_handler(msg))
 
-        elif msg['type'] == 'me':
-            ensure_future(self._me_handler(msg))
+        elif msg['type'] in ('me', 'bot'):
+            ensure_future(self._extra_handler(msg))
 
         else:
             return self.sendClose(code=4003,
