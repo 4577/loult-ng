@@ -1,4 +1,4 @@
-﻿div, header, input {
+﻿﻿div, header, input {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -151,25 +151,27 @@ td {
 	padding: 0;
 }
 
-#chattbl td:first-child {
+td:nth-last-of-type(3), #userlist td {
+	min-width: 145px;
 	padding-left: 5px;
-}
-
-td:first-child {
-	min-width: 150px;
+	background-size: 0 0;
 }
 
 #chattbl tr:nth-child(odd) {
 	background: rgba(128, 128, 128, 0.1);
 }
 
-#chattbl td:not(:nth-child(2)) {
+#chattbl td:not(:nth-last-of-type(2)), td label {
 	white-space: nowrap;
 }
 
-#chattbl td:nth-child(2) {
+#chattbl td:nth-last-of-type(2) {
 	width: 99%;
 	padding: 8px;
+}
+
+.merged td:nth-last-of-type(2) {
+	padding: 8px !important;
 }
 
 #chattbl td:last-child {
@@ -182,16 +184,11 @@ td:first-child {
 	display: inline-block;
 	max-width: 0;
 	overflow: hidden;
-	margin-top: 6px;
+	margin-top: 11px;
 }
 
-.spoiler, .spoiler * {
-	background: #000;
-	color: #000;
-}
-
-.spoiler:hover, .spoiler:hover * {
-	background: transparent;
+#chattbl td:nth-last-of-type(3), #chattbl td:last-child  {
+	vertical-align: top;
 }
 
 .show {
@@ -205,7 +202,6 @@ td:first-child {
 
 #usertbl {
 	max-width: 150px;
-	margin: 0 5px;
 }
 
 #sidebtns, #userlist {
@@ -246,8 +242,8 @@ td label.right {
 	background-position: right 0 bottom 5px;
 }
 
-.sound {
-	margin-top:4px;
+td i {
+	margin-top: 3px;
 }
 
 .backlog td,.mute > *, #chattbl td:last-child {
@@ -259,22 +255,29 @@ a {
 	text-decoration: none;
 }
 
-.spoiler:hover a {
-	color: #06A !important;
-}
-
 a:hover, .sound:hover, .btn:hover, #prefs input:hover, #prefs label:hover, select:hover {
 	opacity: 0.8;
 	cursor: pointer !important;
 }
 
+
+.spoiler, .spoiler * {
+	background: #000;
+	color: #000;
+}
+
+.spoiler:hover, .spoiler:hover * {
+	background: transparent;
+	color: inherit !important;
+}
+
+.spoiler:hover a {
+	color: #06A !important;
+}
+
 .greentext {
 	color: #792;
 	font-family: monospace;
-}
-
-.greentext .spoiler:hover {
-	color: #792 !important;
 }
 
 audio + a {
@@ -285,7 +288,7 @@ audio + a {
 	color: #3C3;
 }
 
-.log, .part td:first-child {
+.log, .part td:nth-last-of-type(3), .me {
 	text-align: center;
 }
 
@@ -299,6 +302,7 @@ audio + a {
 
 .me td:not(:last-child) {
 	font-style: italic;
+	color: inherit;
 }
 
 .btn {
@@ -434,8 +438,8 @@ header, main, #overlay {
 	cursor: pointer;
 	float: right;
 	text-align: center;
-	height: 39px;
-	width: 39px;
+	height: 40px;
+	width: 40px;
 	background: #EEE;
 	border-left: 1px solid #BBB;
 }
@@ -511,12 +515,16 @@ select {
 	}
 }
 
+.day #chattbl .msg td:not(:nth-last-of-type(3)) {
+	color: #000;
+}
+
 .night, .night #window, .night #input, .night select {
 	background: #222;
 	color: #EEE;
 }
 
-.night select, .night .spoiler:hover, .night .spoiler:hover * {
+.night select, .night #chattbl .msg td:not(:nth-last-of-type(3)) {
 	color: #EEE;
 }
 
@@ -561,7 +569,7 @@ select {
 	font-family: monospace;
 }
 
-.rainbow #chat tr:nth-last-of-type(-n+50) label, .rainbow #chatentry .btn, .rainbow #sidebtns .btn, .rainbow .log:nth-last-of-type(-n+50) {
+.rainbow #chat tr:nth-last-of-type(-n+50) label, .rainbow #chatentry .btn, .rainbow #sidebtns .btn, .rainbow .log:nth-last-of-type(-n+50), .rainbow .me:nth-last-of-type(-n+50) {
 	-webkit-animation: fader 30s infinite;
 	-ms-animation: fader 30s infinite;
 	animation: fader 30s infinite;
@@ -577,4 +585,49 @@ select {
 	78% { color: #00F; }
 	93% { color: #90F; }
 	100% { color: #F00; }
+}
+
+.hd #chattbl tr {
+	background: transparent;
+}
+
+.hd #chattbl td:nth-last-of-type(3) {
+	padding: 5px 0 5px 10px;
+	min-width: 70px;
+	vertical-align: top;
+}
+
+.hd #chattbl td:nth-last-of-type(2) {
+	padding: 0 8px 8px 0 !important;
+}
+
+.hd #chattbl .log td:nth-last-of-type(3), .hd #chattbl .part td:nth-last-of-type(3), .hd #chattbl .me td:nth-last-of-type(3), .hd #chattbl .msg td:nth-last-of-type(2) {
+	padding: 0;
+	vertical-align: top;
+}
+
+.hd #chattbl tr.msg td:not(:first-child):not(:last-child):before {
+	content: '';
+	display: block;
+	height: 28px;
+}
+
+.hd #chattbl label {
+	padding: 0;
+	line-height: 18px;
+	background-image: inherit !important;
+	background-repeat: no-repeat;
+	background-position: center center;
+	border-radius: 99px;
+	width: 60px;
+	height: 60px;
+	text-indent: 70px;
+}
+
+.night.hd #chattbl label {
+	background-color: #333;
+}
+
+.day.hd #chattbl label {
+	background-color: #DDD;
 }
