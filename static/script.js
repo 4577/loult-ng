@@ -43,9 +43,11 @@
 		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
 	};
 	
-	var addLine = function(pkmn, txt, datemsg, trclass, uid = null) {
+		var addLine = function(pkmn, txt, datemsg, trclass, uid) {
 		var tr = document.createElement('tr');
 		var td = document.createElement('td');
+		var trclass = trclass || [];
+		var uid = uid || null;
 		var parsed = txt;
 		
 		if(pkmn.color) {
@@ -59,6 +61,7 @@
 			i.appendChild(document.createTextNode('info_outline'));
 			td.appendChild(i);
 			tr.appendChild(td);
+			lastTd = td;
 		}
 		else if(lastId !== uid) {
 			var label = document.createElement('label');
