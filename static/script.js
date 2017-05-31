@@ -43,7 +43,7 @@
 		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
 	};
 	
-		var addLine = function(pkmn, txt, datemsg, trclass, uid) {
+	var addLine = function(pkmn, txt, datemsg, trclass, uid) {
 		var tr = document.createElement('tr');
 		var td = document.createElement('td');
 		var trclass = trclass || [];
@@ -63,7 +63,7 @@
 			tr.appendChild(td);
 			lastTd = td;
 		}
-		else if(lastId !== uid) {
+		else if(lastId !== uid || lastTd.getElementsByTagName('i').length > 0) {
 			var label = document.createElement('label');
 			label.appendChild(document.createTextNode(pkmn.name));
 			label.style.backgroundImage = 'url("/pokemon/' + pkmn.img + '.gif")';
@@ -184,7 +184,6 @@
 	var hrbtn = document.getElementById('hr');
 	var head = document.getElementById('head');
 	var main = document.getElementById('main');
-	// var ckwipe = document.getElementById('ckwipe');
 	
 	var openWindow = function() {
 		overlay.style.display = 'block';
