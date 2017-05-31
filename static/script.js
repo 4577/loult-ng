@@ -1,4 +1,4 @@
-﻿﻿document.addEventListener('DOMContentLoaded', function() {
+﻿﻿﻿document.addEventListener('DOMContentLoaded', function() {
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
@@ -13,6 +13,8 @@
 	var muted = [];
 	var you = null;
 	var lastMsg;
+	var lastId;
+	var lastTd;
 	var ws;
 	
 	// DOM-related functions
@@ -41,32 +43,44 @@
 		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
 	};
 	
-	var addLine = function(pkmn, txt, datemsg, trclass) {
-		var trclass = trclass || [];
-		if (typeof trclass === 'string')
-			trclass = [trclass];
-
+	var addLine = function(pkmn, txt, datemsg, trclass, uid = null) {
 		var tr = document.createElement('tr');
-		if(trclass)
-			tr.className = trclass.join(' ');
-		
 		var td = document.createElement('td');
-		if(pkmn === 'info')
-			td.appendChild(document.createTextNode('[Info]'));
-		else {
+		var parsed = txt;
+		
+		if(pkmn.color) {
+			parsed = parser(txt);
+			tr.style.color = pkmn.color;
+		}
+		
+		if(pkmn === 'info' || trclass.indexOf('me') > -1) {
+			var i = document.createElement('i');
+			i.className = 'material-icons';
+			i.appendChild(document.createTextNode('info_outline'));
+			td.appendChild(i);
+			tr.appendChild(td);
+		}
+		else if(lastId !== uid) {
 			var label = document.createElement('label');
 			label.appendChild(document.createTextNode(pkmn.name));
-			label.style.color = pkmn.color;
 			label.style.backgroundImage = 'url("/pokemon/' + pkmn.img + '.gif")';
+			td.style.backgroundImage = 'url("/img/pokemon/' + pkmn.img + '.gif")';
 			label.className = (left ? 'left' : 'right');
 			td.appendChild(label);
+			tr.appendChild(td);
+			lastTd = td;
 		}
-		tr.appendChild(td);
+		else {
+			lastTd.rowSpan = ++lastTd.rowSpan;
+			trclass.push('merged');
+		}
+		
+		lastId = uid;
+		
+		if(trclass.indexOf('me') > -1)
+  			parsed = 'Le ' + pkmn.name + ' sauvage ' + parsed;
 		
 		td = document.createElement('td');
-		var parsed = parser(txt);
-		if(trclass.indexOf('me') > -1)
-			td.style.color = pkmn.color;
 		td.innerHTML = parsed;
 		tr.appendChild(td);
 		
@@ -89,6 +103,7 @@
 		sp.appendChild(document.createTextNode((new Date(datemsg)).toLocaleTimeString()));
 		td.appendChild(sp);
 		tr.appendChild(td);
+		tr.className = trclass.join(' ');
 		
 		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		chattbl.appendChild(tr);
@@ -224,6 +239,7 @@
 	themes.onchange = function() {
 		localStorage.theme = theme = this.value;
 		document.body.className = theme;
+		chatbox.scrollTop = chatbox.scrollHeight;
 	};
 	
 	// Languages
@@ -413,13 +429,13 @@
 					}
 					else if(trimed.match(/^\/(help|aide)$/i)) {
 						var d = new Date;
-						addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, 'part');
-						addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, 'part');
+						addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, ['part']);
+						addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, ['part']);
 						if(audio)
-							addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, 'part');
-						addLine('info', "/me : réaliser une action. Exemple: /me teste la commande /me.", d, 'part');
-						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, 'part');
-						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, 'part');
+							addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, ['part']);
+						addLine('info', "/me : Réaliser une action. Exemple: /me essaie la commande /me.", d, ['part']);
+						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, ['part']);
+						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, ['part']);
 					}
 					else if(trimed.match(/^\/me\s/i))
 						ws.send(JSON.stringify({type: 'me', msg: trimed.substr(4)}));
@@ -452,13 +468,14 @@
 				
 				switch(msg.type) {
 					case 'msg':
+					case 'me':
 						if(!lastMuted)
-							addLine(users[msg.userid], msg.msg, msg.date, null);
+							addLine(users[msg.userid], msg.msg, msg.date, [msg.type], msg.userid);
 					break;
 					
 					case 'connect':
 						if(!lastMuted) {
-							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, 'log');
+							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, ['log']);
 							addUser(msg.userid, msg.params);
 						}
 					break;
@@ -473,13 +490,13 @@
 					case 'attack':
 						switch(msg['event']) {
 							case 'attack':
-								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', msg.date, 'log');
+								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', msg.date, ['log']);
 							break;
 							case 'dice':
-								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !', msg.date, 'log');
+								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !', msg.date, ['log']);
 							break;
 							case 'effect':
-								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, 'log');
+								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, ['log']);
 								if(msg.target_id === you)
 								{
 									var d = new Date(msg.date);
@@ -488,21 +505,21 @@
 								}
 							break;
 							case 'invalid':
-								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, ['log', 'part']);
+								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, ['log', 'kick']);
 							break;
 							case 'nothing':
 								addLine('info', 'Il ne se passe rien...', msg.date, ['log', 'part']);
 							break;
 						}
 					break;
-
+					
 					case 'automute':
 						switch(msg['event']) {
 							case 'automuted':
-								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, 'log');
+								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, ['log', 'kick']);
 							break;
 							case 'flood_warning':
-                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'part']);
+                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'kick']);
 							break;
 						}
 					break;
@@ -514,13 +531,9 @@
 					
 					case 'backlog':
 						for(var i = 0; i < msg.msgs.length; i++)
-							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, ['backlog', msg.msgs[i].type]);
-						addLine('info', 'Vous êtes connecté', (new Date), 'log');
-					break;
-
-					case 'me':
-						if(!lastMuted)
-							addLine(users[msg.userid], msg.msg, msg.date, 'me');
+							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, ['backlog', msg.msgs[i].type], msg.msgs[i].userid);
+						addLine('info', 'Vous êtes connecté.', (new Date), ['log']);
+						addLine('info', '<img src="http://notdstarcraft.com/styles/dark/ratings/cake.png"> Joyeux anniversaiwe loult.family ! <img src="http://notdstarcraft.com/styles/dark/ratings/cake.png">', (new Date), ['log', 'kick', 'comic']);
 					break;
 				}
 			}
