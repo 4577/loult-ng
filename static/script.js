@@ -473,6 +473,7 @@
 				switch(msg.type) {
 					case 'msg':
 					case 'me':
+					case 'bot':
 						if(!lastMuted)
 							addLine(users[msg.userid], msg.msg, msg.date, [msg.type], msg.userid);
 					break;
@@ -538,11 +539,6 @@
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, ['backlog', msg.msgs[i].type], msg.msgs[i].userid);
 						addLine('info', 'Vous êtes connecté.', (new Date), ['log']);
 						addLine('info', '<img src="http://notdstarcraft.com/styles/dark/ratings/cake.png"> Joyeux anniversaiwe loult.family ! <img src="http://notdstarcraft.com/styles/dark/ratings/cake.png">', (new Date), ['log', 'kick', 'comic']);
-					break;
-
-					case 'bot':
-						if(!lastMuted)
-							addLine(users[msg.userid], msg.msg, msg.date, ['bot']);
 					break;
 				}
 			}
