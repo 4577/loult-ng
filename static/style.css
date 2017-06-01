@@ -598,12 +598,12 @@ select {
 	padding: 0 8px 8px 0 !important;
 }
 
-.hd #chattbl .log td:nth-last-of-type(3), .hd #chattbl .part td:nth-last-of-type(3), .hd #chattbl .me td:nth-last-of-type(3), .hd #chattbl .msg td:nth-last-of-type(2) {
+.hd #chattbl .log td:nth-last-of-type(3), .hd #chattbl .part td:nth-last-of-type(3), .hd #chattbl .me td:nth-last-of-type(3), .hd #chattbl .msg td:nth-last-of-type(2), .hd #chattbl .bot td:nth-last-of-type(2) {
 	padding: 0;
 	vertical-align: top;
 }
 
-.hd #chattbl tr.msg td:not(:first-child):not(:last-child):before {
+.hd #chattbl tr.msg td:not(:first-child):not(:last-child):before, .hd #chattbl tr.bot td:not(:first-child):not(:last-child):before {
 	content: '';
 	display: block;
 	height: 28px;
