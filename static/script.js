@@ -1,4 +1,4 @@
-﻿﻿﻿document.addEventListener('DOMContentLoaded', function() {
+﻿document.addEventListener('DOMContentLoaded', function() {
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
@@ -16,9 +16,9 @@
 	var lastId;
 	var lastTd;
 	var ws;
-	
+
 	// DOM-related functions
-	
+
 	var parser = function(raw_msg) {
 		var rules = [
 			{
@@ -32,17 +32,17 @@
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
 				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>$&'),
-  			},
+			},
 			{
 				test: msg => msg.startsWith('&gt;'),
 				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>'),
 			}
 		];
-		
+
 		var tests = rules.filter(rule => ('test' in rule) && rule.test(raw_msg));
 		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
 	};
-	
+
 	var addLine = function(pkmn, txt, datemsg, trclass, uid) {
 		var uid = uid || null;
 		var trclass = trclass || [];
@@ -51,12 +51,12 @@
 		var trclass = trclass || [];
 		var uid = uid || null;
 		var parsed = txt;
-		
+
 		if(pkmn.color) {
 			parsed = parser(txt);
 			tr.style.color = pkmn.color;
 		}
-		
+
 		if(pkmn === 'info' || trclass.indexOf('me') > -1) {
 			var i = document.createElement('i');
 			i.className = 'material-icons';
@@ -79,29 +79,29 @@
 			lastTd.rowSpan = ++lastTd.rowSpan;
 			trclass.push('merged');
 		}
-		
+
 		lastId = uid;
-		
+
 		if(trclass.indexOf('me') > -1)
-  			parsed = 'Le ' + pkmn.name + ' sauvage ' + parsed;
-		
+			parsed = 'Le ' + pkmn.name + ' sauvage ' + parsed;
+
 		td = document.createElement('td');
 		td.innerHTML = parsed;
 		tr.appendChild(td);
-		
+
 		td = document.createElement('td');
 		var sp = document.createElement('span');
 		if(dt)
 			sp.className = 'show';
 		sp.appendChild(document.createTextNode((new Date(datemsg)).toLocaleDateString()));
 		td.appendChild(sp);
-		
+
 		sp = document.createElement('span');
 		if(dt && hr)
 			sp.className = 'show';
 		sp.appendChild(document.createTextNode(' '));
 		td.appendChild(sp);
-		
+
 		sp = document.createElement('span');
 		if(hr)
 			sp.className = 'show';
@@ -109,17 +109,17 @@
 		td.appendChild(sp);
 		tr.appendChild(td);
 		tr.className = trclass.join(' ');
-		
+
 		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		chattbl.appendChild(tr);
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
 	};
-	
+
 	var addUser = function(userid, params) {
 		if(userid in users)
 			return;
-		
+
 		users[userid] = params;
 		var mute = (muted.indexOf(userid) != -1);
 		var tr = document.createElement('tr');
@@ -127,7 +127,7 @@
 		var label = document.createElement('label');
 		if(mute)
 			tr.className = 'mute';
-		
+
 		label.appendChild(document.createTextNode(params.name));
 		label.style.color = params.color;
 		label.style.backgroundImage = 'url("/pokemon/' + params.img + '.gif")';
@@ -135,7 +135,7 @@
 		td.appendChild(label);
 		tr.appendChild(td);
 		td = document.createElement('td');
-		
+
 		if(!params.you) {
 			var sound = document.createElement('div');
 			var i = document.createElement('i');
@@ -144,7 +144,7 @@
 			i.appendChild(document.createTextNode('volume_up'));
 			sound.appendChild(i);
 			td.appendChild(sound);
-			
+
 			sound.onmousedown = function() {
 				var mt = (muted.indexOf(userid) != -1);
 				if(!mt) {
@@ -162,19 +162,19 @@
 			underlay.style.backgroundImage = 'url("/dev/pokemon/' + params.img + '.png")';
 			you = userid;
 		}
-		
+
 		tr.appendChild(td);
 		usertbl.appendChild(tr);
 		users[userid].dom = tr;
 	};
-	
+
 	var delUser = function(userid) {
 		usertbl.removeChild(users[userid].dom);
 		delete users[userid];
 	};
-	
+
 	// Preferences
-	
+
 	var gear = document.getElementById('gear');
 	var overlay = document.getElementById('overlay');
 	var cover = document.getElementById('cover');
@@ -186,7 +186,7 @@
 	var hrbtn = document.getElementById('hr');
 	var head = document.getElementById('head');
 	var main = document.getElementById('main');
-	
+
 	var openWindow = function() {
 		overlay.style.display = 'block';
 		head.className = main.className = 'blur-in';
@@ -195,11 +195,11 @@
 		overlay.style.display = 'none';
 		head.className = main.className = '';
 	};
-	
+
 	gear.onclick = openWindow;
 	cover.onclick = closeWindow;
 	close.onclick = closeWindow;
-	
+
 	rightbtn.checked = !left;
 	leftbtn.checked = left;
 	var align = function(evt) {
@@ -209,7 +209,7 @@
 			rows[i].className = (left ? 'left' : 'right');
 	};
 	rightbtn.onclick = leftbtn.onclick = align;
-	
+
 	dtbtn.checked = dt;
 	dtbtn.onchange = function(evt) {
 		localStorage.dt = dt = dtbtn.checked;
@@ -219,7 +219,7 @@
 			rows[i].className = (dt ? 'show' : '');
 		mid(atBottom);
 	};
-	
+
 	hrbtn.checked = hr;
 	hrbtn.onchange = function(evt) {
 		localStorage.hr = hr = hrbtn.checked;
@@ -229,7 +229,7 @@
 			rows[i].className = (hr ? 'show' : '');
 		mid(atBottom);
 	};
-	
+
 	var mid = function(atBottom) {
 		var rows = document.querySelectorAll('#chattbl td:last-child span:nth-child(2)');
 		for(var i = 0; i < rows.length; i++)
@@ -237,20 +237,20 @@
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
 	};
-	
+
 	document.body.className = themes.value = theme;
-	
+
 	themes.onchange = function() {
 		localStorage.theme = theme = this.value;
 		document.body.className = theme;
 		chatbox.scrollTop = chatbox.scrollHeight;
 	};
-	
+
 	// Languages
-	
+
 	var select = document.getElementById('lang');
 	var lang = document.cookie.match(/lang=(\w{2})/);
-	
+
 	if(!lang) {
 		var l = navigator.language.substr(0, 2);
 		switch(l) {
@@ -266,26 +266,26 @@
 	}
 	else
 		lang = lang[1];
-	
+
 	select.value = lang;
-	
+
 	select.onchange = function() {
 		lang = this.value;
 		document.cookie = 'lang=' + lang + '; Path=/';
 	};
-	
+
 	// Focus-related functions
-	
+
 	var dontFocus = false;
-	
+
 	select.addEventListener('focus', function() {
 		dontFocus = true;
 	}, false);
-	
+
 	themes.addEventListener('focus', function() {
 		dontFocus = true;
 	}, false);
-	
+
 	var refocus = function(evt) {
 		setTimeout(function() {
 			if(!dontFocus && !window.getSelection().toString())
@@ -294,16 +294,16 @@
 				dontFocus = false;
 		}, 10);
 	};
-	
+
 	window.addEventListener('focus', refocus, false);
 	document.body.addEventListener('mouseup', refocus, false);
-	
+
 	window.addEventListener('resize', function(evt) {
 		chatbox.scrollTop = chatbox.scrollHeight;
 	});
-	
+
 	// Sound and volume
-	
+
 	if(audio)
 	{
 		var vol = document.getElementById('vol');
@@ -312,36 +312,36 @@
 		var context = new (window.AudioContext || webkitAudioContext)();
 		var volume = (context.createGain ? context.createGain() : context.createGainNode());
 		volume.connect(context.destination);
-		
+
 		var changeVolume = function() {
 			localStorage.volume = volume.gain.value = volrange.value * 0.01;
 			changeIcon(volrange.value);
 		};
-		
+
 		var changeIcon = function(v) {
 			vol.innerHTML = (v > 0 ? (v > 50 ? 'volume_up' : 'volume_down') : 'volume_mute');
 		};
-		
+
 		if(localStorage.volume) {
 			volrange.value = localStorage.volume * 100;
 			volume.gain.value = localStorage.volume;
 			changeIcon(volrange.value);
 		}
-		
+
 		speaker.onclick = function() {
 			volume.gain.value = (volume.gain.value > 0 ? 0 : volrange.value * 0.01);
 			changeIcon(volume.gain.value * 100);
 		};
-		
+
 		volrange.oninput = changeVolume;
 	}
-	
+
 	// Speech
-	
+
 	if('webkitSpeechRecognition' in window) {
 		var recognition = new webkitSpeechRecognition();
 		var recognizing = false;
-		
+
 		var chatentry = document.getElementById('chatentry');
 		var div = document.createElement('div');
 		var i = document.createElement('i');
@@ -361,22 +361,22 @@
 			recognition.start();
 			input.value = '';
 		};
-		
+
 		recognition.continuous = true;
 		recognition.interimResults = true;
-		
+
 		recognition.onstart = function() {
 			recognizing = true;
 		};
-		
+
 		recognition.onerror = function(event) {
 			// console.log(event.error);
 		};
-		
+
 		recognition.onend = function() {
 			recognizing = false;
 		};
-		
+
 		recognition.onresult = function(event) {
 			var interim_transcript = '';
 			for(var i = event.resultIndex; i < event.results.length; i++)
@@ -390,33 +390,33 @@
 				}
 				else
 					interim_transcript += event.results[i][0].transcript;
-			
+
 			input.value = interim_transcript.trim();
 			input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
 		};
 	}
-	
+
 	// Users list display
-	
+
 	var userlist = document.getElementById('userlist');
 	var userswitch = document.getElementById('userswitch');
-	
+
 	userswitch.onclick = function() {
 		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		userlist.style.width = (userlist.style.width === '0px' ? '185px' : '0px');
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
 	};
-	
+
 	// WebSocket-related functions
-	
+
 	var wsConnect = function() {
 		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
 		// ws = new WebSocket('wss://loult.family/socket/' + location.pathname);
 		ws.binaryType = 'arraybuffer';
-		
+
 		var lastMuted = false;
-		
+
 		input.onkeydown = function(evt) {
 			if(evt.keyCode === 13 && input.value) {
 				var trimed = input.value.trim();
@@ -448,7 +448,7 @@
 				}
 				else if(trimed.length)
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
-				
+
 				lastMsg = input.value;
 				input.value = '';
 			}
@@ -460,37 +460,37 @@
 					input.value = lastMsg;
 			}
 		};
-		
+
 		ws.onopen = function() {
 			waitTime = 1000;
 		};
-		
+
 		ws.onmessage = function(msg) {
 			if(typeof msg.data === 'string') {
 				msg = JSON.parse(msg.data);
 				lastMuted = (muted.indexOf(msg.userid) != -1);
-				
+
 				switch(msg.type) {
 					case 'msg':
 					case 'me':
 						if(!lastMuted)
 							addLine(users[msg.userid], msg.msg, msg.date, [msg.type], msg.userid);
 					break;
-					
+
 					case 'connect':
 						if(!lastMuted) {
 							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, ['log']);
 							addUser(msg.userid, msg.params);
 						}
 					break;
-					
+
 					case 'disconnect':
 						if(!lastMuted) {
 							addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, ['log', 'part']);
 							delUser(msg.userid);
 						}
 					break;
-					
+
 					case 'attack':
 						switch(msg['event']) {
 							case 'attack':
@@ -516,23 +516,23 @@
 							break;
 						}
 					break;
-					
+
 					case 'automute':
 						switch(msg['event']) {
 							case 'automuted':
 								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, ['log', 'kick']);
 							break;
 							case 'flood_warning':
-                                addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'kick']);
+								addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'kick']);
 							break;
 						}
 					break;
-					
+
 					case 'userlist':
 						for(var i = 0; i < msg.users.length; i++)
 							addUser(msg.users[i].userid, msg.users[i].params);
 					break;
-					
+
 					case 'backlog':
 						for(var i = 0; i < msg.msgs.length; i++)
 							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, ['backlog', msg.msgs[i].type], msg.msgs[i].userid);
@@ -555,21 +555,21 @@
 				});
 			}
 		};
-		
+
 		ws.onerror = function(e) {
 			console.log(['error', e]);
 		};
-		
+
 		ws.onclose = function() {
 			for(var i in users)
 				delUser(i);
-			
+
 			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), ['log', 'part']);
-			
+
 			window.setTimeout(wsConnect, waitTime);
 			waitTime = Math.min(waitTime * 2, 120000);
 		};
 	};
-	
+
 	wsConnect();
 });

@@ -1,4 +1,4 @@
-﻿﻿div, header, input {
+﻿div, header, input {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -479,33 +479,33 @@ select {
 		width: auto;
 		height: auto;
 	}
-	
+
 	#prefs {
 		top: 80px;
 	}
-	
+
 	#prefs, select {
 		font-size: 16px;
 	}
-	
+
 	#prefs div {
 		padding: 10px;
 		margin: 0 auto;
 	}
-	
+
 	#prefs span {
 		width: 115px;
 	}
-	
+
 	#prefs label {
 		min-width: 60px;
 		width: 60px;
 	}
-	
+
 	#chatentry img {
 		display: none;
 	}
-	
+
 	#input {
 		height: auto;
 		padding: 10px 0px;
