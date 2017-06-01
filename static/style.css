@@ -76,7 +76,7 @@ header > div > img {
 	-webkit-box-pack: justify;
 	-ms-flex-pack: justify;
 	justify-content: space-between;
-	padding: 15px 27px;
+	padding: 0 15px;
 	margin-left: auto;
 }
 
@@ -204,16 +204,13 @@ td:nth-last-of-type(3), #userlist td {
 	max-width: 150px;
 }
 
-#sidebtns, #userlist {
-	width: 185px;
-}
-
 #sidebtns img, #chatentry img {
 	height: 24px;
 	width: 24px;
 }
 
 #userlist {
+	width: 185px;
 	overflow-y: auto;
 	overflow-x: hidden;
 }
