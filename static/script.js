@@ -426,7 +426,7 @@
 						ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length === 3) ? parseInt(splitted[2]) : 0) }));
 					}
 					else if(trimed.match(/^\/(en|es|fr|de)\s/i))
-						ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2)}));
+						ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2).toLowerCase()}));
 					else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i) && audio) {
 						volrange.value = trimed.match(/\d+$/i)[0];
 						changeVolume();
