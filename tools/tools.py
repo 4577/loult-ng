@@ -71,10 +71,8 @@ class UserState:
                         (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
 
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
-        self.last_shelling = datetime.now() # last flooder attack, user has to wait too
         self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood
-        self.is_shadowmuted = False # User has been shadowmuted
 
 
     def __setattr__(self, name, value):
