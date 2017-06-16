@@ -7,8 +7,6 @@
 -A OUTPUT -m set --match-set ban src -m conntrack --ctstate ESTABLISHED -j DROP
 -A INPUT  -m set --match-set slowban src -m conntrack --ctstate ESTABLISHED,NEW -m statistic --mode random --probability 0.75 -j DROP
 -A OUTPUT -m set --match-set slowban src -m conntrack --ctstate ESTABLISHED,NEW -m statistic --mode random --probability 0.75 -j DROP
--A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
--A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
--A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+-A INPUT -p tcp -m multiport --dports 80,443 -m hashlimit --hashlimit-name web --hashlimit-mode srcip --hashlimit-upto 50/second --hashlimit-burst 100 --hashlimit-htable-expire 1800000 -j ACCEPT
 COMMIT
