@@ -54,6 +54,7 @@ Voici un moyen de faire marcher ce système entre chaque redémarrage du serveur
 * installez `ipset` et assurez-vous qu'il est utilisable par l'utilisateur
 lançant loult-ng sans entrer de mot de passe
 * créez `/etc/iptables/` et copiez-y `os/iptables.rules`
+* copiez `os/ipset.conf` dans `/etc/`
 * copiez `os/iptables.sevice` dans `/usr/lib/systemd/system/`
 * copiez `os/iptables-reset` dans `/usr/lib/systemd/scripts/`
 * lancez `chmod +x /usr/lib/systemd/scripts/iptables-reset`
@@ -62,7 +63,6 @@ lançant loult-ng sans entrer de mot de passe
 * `systemctl enable iptables`
 * `systemctl restart iptables`
 * `systemctl enable ipset`
-* `touch /etc/ipset.conf`
 * vous pouvez vérifier que tout s'est bien passé en lançant `iptables-save`
 * lancez `crontab -e` en tant que root et rajoutez-y
 
@@ -87,6 +87,7 @@ L'application définit des codes d'erreurs spéciaux lors de la fermeture forcé
 | 4001 | JSON malformé             |
 | 4002 | Données binaires refusées |
 | 4003 | Type de commande inconnu  |
+| 4004 | Banni pour flood          |
 
 
 D'après une œuvre de *@DrEmixam*.

@@ -516,10 +516,10 @@
 						}
 					break;
 
-					case 'automute':
+					case 'antiflood':
 						switch(msg['event']) {
-							case 'automuted':
-								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été muté, toute attaque à son encontre lui enverra quelques messages civilisateurs !', msg.date, ['log', 'kick']);
+							case 'banned':
+								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été banni temporairement.', msg.date, ['log', 'kick']);
 							break;
 							case 'flood_warning':
 								addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'kick']);
