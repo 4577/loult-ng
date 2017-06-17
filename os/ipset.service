@@ -1,7 +1,7 @@
 [Unit]
 Description=IP Set Netfilter Extension
 Wants=network-pre.target
-Before=network-pre.target
+Before=iptables.service
 DefaultDependencies=false
 
 [Service]
