@@ -17,7 +17,8 @@ from scipy.io import wavfile
 from config import (
         FLOOD_DETECTION_WINDOW,
         FLOOD_DETECTION_MSG_PER_SEC,
-        FLOOD_WARNING_TIMEOUT
+        FLOOD_WARNING_TIMEOUT,
+        BANNED_WORDS,
     )
 from tools import pokemons
 from tools.audio_tools import resample
@@ -73,6 +74,7 @@ class UserState:
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
         self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood
+        self._banned_words = [regex(word) for word in BANNED_WORDS]
 
 
     def __setattr__(self, name, value):
@@ -82,16 +84,6 @@ class UserState:
             # uses the default loop
             loop = get_event_loop()
             loop.call_later(FLOOD_WARNING_TIMEOUT, self._reset_warning)
-
-    def _reset_warning(self):
-        """
-        Helper with a better debug representation than
-        a lambda for use as a callback in the event loop.
-        """
-        self.has_been_warned = False
-
-    def reset_timestamps(self):
-        self.timestamps = list()
 
     def add_effect(self, effect):
         """Adds an effect to one of the active tools list (depending on the effect type)"""
@@ -111,18 +103,30 @@ class UserState:
                     self.effects[cls].append(efct)
                     break
 
-    def log_msg(self):
+    def reset_flood_detection(self):
+        self.timestamps = list()
+
+    def check_flood(self, msg):
+        self._add_timestamp()
+        threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+        return len(self.timestamps) > threshold or self._censor(msg)
+
+    def _add_timestamp(self):
         """Add a timestamp for a user's message, and clears timestamps which are too old"""
         # removing msg timestamps that are out of the detection window
         now = datetime.now()
         self._refresh_timestamps(now)
         self.timestamps.append(now)
 
-    @property
-    def is_flooding(self):
-        self._refresh_timestamps()
-        threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
-        return len(self.timestamps) > threshold
+    def _censor(self, msg):
+        return any(regex_word.fullmatch(msg) for regex_word in self._banned_words)
+
+    def _reset_warning(self):
+        """
+        Helper with a better debug representation than
+        a lambda for use as a callback in the event loop.
+        """
+        self.has_been_warned = False
 
     def _refresh_timestamps(self, now=None):
         # now has to be a possible argument else there might me slight
@@ -275,17 +279,6 @@ class SpoilerBipEffect(UtilitaryEffect):
             return output
         else:
             return text
-
-
-class BannedWords(list):
-
-    words = None
-
-    def __init__(self, words):
-        self.words = [regex(word) for word in words]
-
-    def __call__(self, word):
-        return any(regex_word.fullmatch(word) for regex_word in self.words)
 
 
 links_translation = {'fr': 'cliquez mes petits chatons',
