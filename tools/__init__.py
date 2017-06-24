@@ -12,14 +12,14 @@ from .phonems import PhonemList
 
 import random
 # the multiplier for each tools list sets the "probability" of the effect
-AVAILABLE_EFFECTS = 1 * [TurfuEffect, AmbianceEffect, VenerEffect] + \
-                    2 * [GhostEffect, SnebwewEffect, ReverbManEffect, VoiceSpeedupEffect,
-                         SpeechMasterEffect, PhonemicNwwoiwwEffect, VocalDyslexia,
-                         PhonemicFofoteEffect, VieuxPortEffect, AccentAllemandEffect, MwfeEffect,
-                         CrapweEffect, SpoinkEffect, BeatsEffect] + \
-                    3 * [TurboHangoul, GodSpeakingEffect, WpseEffect, StutterEffect, GrandSpeechMasterEffect,
-                         TouretteEffect, PitchRandomizerEffect] + \
-                    4 * [AutotuneEffect, RobotVoiceEffect, PoiloEffect, GaDoSEffect]
+AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
+                         PhonemicFofoteEffect, VieuxPortEffect, MwfeEffect,
+                         SpoinkEffect, TurboHangoul, TouretteEffect] + \
+                    3 * [GhostEffect, SpeechMasterEffect, CrapweEffect,
+                         VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
+                         StutterEffect, GrandSpeechMasterEffect] + \
+                    6 * [AutotuneEffect, PitchRandomizerEffect,
+                         RobotVoiceEffect, PoiloEffect, GaDoSEffect]
 # AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 

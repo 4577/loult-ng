@@ -2,11 +2,11 @@ import logging
 import re
 from colorsys import hsv_to_rgb
 from datetime import datetime, timedelta
-from html import escape
 from io import BytesIO
 from re import sub, compile as regex
 from shlex import quote
 from struct import pack
+from collections import defaultdict
 from asyncio import get_event_loop, create_subprocess_shell
 from asyncio.subprocess import PIPE
 from typing import List, Union
@@ -54,7 +54,7 @@ class PokeParameters:
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
-        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 1, 0.75)
+        color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 0.8, 0.9)
         return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
                    (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1) # poke id
 
@@ -71,10 +71,9 @@ class UserState:
                         (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
 
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
-        self.last_shelling = datetime.now() # last flooder attack, user has to wait too
-        self.last_msgs_timestamps = [] #type:List[datetime]
+        self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood
-        self.is_shadowmuted = False # User has been shadowmuted
+
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -90,6 +89,9 @@ class UserState:
         a lambda for use as a callback in the event loop.
         """
         self.has_been_warned = False
+
+    def reset_timestamps(self):
+        self.timestamps = list()
 
     def add_effect(self, effect):
         """Adds an effect to one of the active tools list (depending on the effect type)"""
@@ -114,12 +116,13 @@ class UserState:
         # removing msg timestamps that are out of the detection window
         now = datetime.now()
         self._refresh_timestamps(now)
-        self.last_msgs_timestamps.append(now)
+        self.timestamps.append(now)
 
     @property
     def is_flooding(self):
         self._refresh_timestamps()
-        return len(self.last_msgs_timestamps) > FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+        threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+        return len(self.timestamps) > threshold
 
     def _refresh_timestamps(self, now=None):
         # now has to be a possible argument else there might me slight
@@ -127,9 +130,9 @@ class UserState:
         # and this one's current time.
         now = now if now else datetime.now()
         # removing msg timestamps that are out of the detection window
-        updated = [timestamp for timestamp in self.last_msgs_timestamps
+        updated = [timestamp for timestamp in self.timestamps
                    if timestamp + self.detection_window > now]
-        self.last_msgs_timestamps = updated
+        self.timestamps = updated
 
 
 class AudioRenderer:
@@ -283,30 +286,6 @@ class BannedWords(list):
 
     def __call__(self, word):
         return any(regex_word.fullmatch(word) for regex_word in self.words)
-
-
-def add_msg_html_tag(text : str) -> str:
-    """Add html tags to the output message, for vocaroos, links or spoilers"""
-    text = escape(text)
-    if re.search(r'\*\*.*?\*\*', text):
-        text = re.sub(r'(\*\*(.*?)\*\*)', r'<span class="spoiler">\2</span>', text)
-
-    if re.search(r'(https?://vocaroo\.com/i/[0-9a-z]+)', text, flags=re.IGNORECASE):
-        vocaroo_player_tag= r'''
-        <object class="vocalink" width="148" height="44">
-            <param name="movie" value="https://loult.family/player.swf?playMediaID=\2&autoplay=0"></param>
-            <param name="wmode" value="transparent"></param>
-            <embed src="https://loult.family/player.swf?playMediaID=\2&autoplay=0"
-                width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
-            </embed>
-            <a href="\1" target="_blank">Donne mou la vocarookles</a>
-        </object>'''
-        text = re.sub(r'(?P<link>https?://vocaroo\.com/i/(?P<id>[0-9a-z]+))', vocaroo_player_tag, text,
-                      flags=re.IGNORECASE)
-    elif re.search(r'(https?://[^ ]*[^*.,?! :])', text):
-        text = re.sub(r'(https?://[^< ]*[^<*.,?! :])', r'<a href="\1" target="_blank">\1</a>', text)
-
-    return text
 
 
 links_translation = {'fr': 'cliquez mes petits chatons',

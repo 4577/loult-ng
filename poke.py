@@ -15,19 +15,19 @@ from re import sub
 from time import time
 from functools import lru_cache, wraps
 from itertools import chain
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 
 from autobahn.websocket.types import ConnectionDeny
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
-     BANNED_WORDS, SHELLING_RESTING_TIME, MOD_COOKIES
+     BANNED_WORDS, MOD_COOKIES
 from salt import SALT
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
      VoiceEffect
 from tools.phonems import PhonemList
-from tools.tools import AudioRenderer, SpoilerBipEffect, add_msg_html_tag, VoiceParameters, PokeParameters, UserState, \
+from tools.tools import AudioRenderer, SpoilerBipEffect, VoiceParameters, PokeParameters, UserState, \
     prepare_text_for_tts, BannedWords
 
 
@@ -180,6 +180,7 @@ class LoultServer:
     loult_state = None
     sendend = None
     user = None
+    raw_cookie = None
 
     def __init__(self):
         if self.client_logger is None or self.loult_state is None:
@@ -190,7 +191,7 @@ class LoultServer:
 
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
-        self.ip = request.peer.split(':')[1]
+       	self.ip = request.headers['x-real-ip']
         self.logger.info('attempting a connection')
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
@@ -202,13 +203,14 @@ class LoultServer:
             ck = urandom(16).hex()
             retn = {'Set-Cookie': 'id=%s; expires=Tue, 19 Jan 2038 03:14:07 UTC; Path=/' % ck}
 
+        self.raw_cookie = ck
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
 
         if cookie_hash in self.loult_state.banned_cookies:
-            if datetime.now() < self.loult_state.banned_cookies[cookie_hash]: # if user is shadowmuted, refuse connection
+            if datetime.now() < self.loult_state.banned_cookies[cookie_hash]:
                 raise ConnectionDeny(403, 'temporarily banned for flooding.')
             else:
-                del self.loult_state.banned_cookies[cookie_hash] # if ban has expired, remove user from banned cookie list
+                del self.loult_state.banned_cookies[cookie_hash]
 
         self.cookie = cookie_hash
         self.channel_n = request.path.lower().split('/', 2)[-1]
@@ -248,63 +250,63 @@ class LoultServer:
             if binary_payload:
                 client.send_binary(binary_payload)
 
-    def _handle_automute(self):
-        if self.user.state.has_been_warned: # user has already been warned. Shadowmuting him/her and notifying everyone
+    def _antiflood(self):
+        self.user.state.log_msg()
+
+        if not self.user.state.is_flooding:
+            return False
+
+        if self.user.state.has_been_warned: # user has already been warned. Ban him/her and notify everyone
             self.logger.info('has been detected as a flooder')
-            self.user.state.is_shadowmuted = True
-            self._broadcast_to_channel(type='automute', event='automuted',
+            self._broadcast_to_channel(type='antiflood', event='banned',
                                        flooder_id=self.user.user_id,
                                        date=time() * 1000)
             self.loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
+            self.sendClose(code=4004, reason='banned for flooding')
         else:
             # resets the user's msg log, then warns the user
-            self.user.state.last_msgs_timestamps = []
+            self.user.state.reset_timestamps()
             self.user.state.has_been_warned = True
-            self.send_json(type='automute', event='flood_warning',
+            self.send_json(type='antiflood', event='flood_warning',
                            date=time() * 1000)
             alarm_sound = self._open_sound_file("tools/data/alerts/alarm.wav")
             self.send_binary(alarm_sound)
             self.logger.info('has been warned for flooding')
+        return True
 
     @auto_close
     async def _msg_handler(self, msg_data : Dict):
+        if self._antiflood():
+            return
+        now = datetime.now()
         # user object instance renders both the output sound and output text
         output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
+        # estimating the end of the current voice render, to rate limit
+        calc_sendend = max(self.sendend, now) + timedelta(seconds=len(wav) * 8 / 6000000)
+        synth = calc_sendend < now + timedelta(seconds=2.5)
+        if synth:
+            self.sendend = calc_sendend
 
-        # message is not sent to the others, but directly to the user
-        if self.user.state.is_shadowmuted:
-            now = time() * 1000
-            self.send_json(type='msg', userid=self.user.user_id,
-                           msg=output_msg, date=now)
-            self.send_binary(wav)
+        output_msg = escape(output_msg)
+        # send to the backlog
+        info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
 
-        elif (self.user.state.is_flooding or
-              self.banned_words(msg_data["msg"])):
-            self._handle_automute()
+        # broadcast message and rendered audio to all clients in the channel
+        self._broadcast_to_channel(type='msg', userid=self.user.user_id,
+                                   msg=output_msg, date=info['date'],
+                                   binary_payload=wav if synth else None)
 
-        else:
-            # rate limit: if the previous message is less than 100 milliseconds from this one, we stop the broadcast
-            now = datetime.now()
-            if now - self.lasttxt <= timedelta(milliseconds=100):
-                return
-            self.lasttxt = now # updating with current time
+    @auto_close
+    async def _extra_handler(self, msg_data: Dict):
+        if self._antiflood():
+            return
+        msg_type = msg_data['type']
+        user_id = self.user.user_id
+        output_msg = escape(msg_data['msg'])
 
-            # estimating the end of the current voice render, to rate limit again
-            calc_sendend = max(self.sendend, now) + timedelta(seconds=len(wav) * 8 / 6000000)
-            synth = calc_sendend < now + timedelta(seconds=2.5)
-            if synth:
-                self.sendend = calc_sendend
-
-            # add output
-            output_msg = add_msg_html_tag(output_msg)
-            # send to the backlog
-            info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
-
-            # broadcast message and rendered audio to all clients in the channel
-            self.user.state.log_msg()
-            self._broadcast_to_channel(type='msg', userid=self.user.user_id,
-                                       msg=output_msg, date=info['date'],
-                                       binary_payload=wav if synth else None)
+        info = self.channel_obj.log_to_backlog(user_id, output_msg, kind=msg_type)
+        self._broadcast_to_channel(type=msg_type, msg=output_msg,
+                                   userid=user_id, date=info['date'])
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
@@ -312,38 +314,6 @@ class LoultServer:
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
         with open(full_path, "rb") as sound_file:
             return sound_file.read()
-
-    def _handle_flooder_attack(self, flooder : User):
-        punition_msg = "OH T KI LÀ"
-        punition_sound = self._open_sound_file("tools/data/alerts/ohtki.wav")
-        cannon_sound = self._open_sound_file("tools/data/alerts/ion_cannon.wav")
-        now = time() * 1000
-        loop = get_event_loop()
-
-        def punish(flooder, count):
-            """
-            Yes, it's a recursive asynchronous function.
-            If it weren't, this function would stall everything
-            until it completes. It's defined here to create a
-            closure instead of having to pass many arguments.
-            """
-            if count > 0 and flooder in self.channel_obj.users.values():
-                for client in flooder.clients:
-                    client.send_json(type='msg', userid=self.user.user_id,
-                                     msg=punition_msg, date=now)
-                    client.send_binary(punition_sound)
-                loop.call_soon(punish, flooder, count - 1)
-
-        # recursion launched here
-        loop.call_soon(punish, flooder, PUNITIVE_MSG_COUNT)
-
-        self._broadcast_to_channel(type='attack', date=now, event='attack',
-                                   attacker_id=self.user.user_id,
-                                   defender_id=flooder.user_id)
-        self._broadcast_to_channel(type='attack', date=time() * 1000,
-                                   event='effect', target_id=flooder.user_id,
-                                   effect='pillonage')
-        self._broadcast_to_channel(cannon_sound)
 
     @auto_close
     async def _attack_handler(self, msg_data : Dict):
@@ -358,13 +328,8 @@ class LoultServer:
         # checking if the target user is found, and if the current user has waited long enough to attack
         if adversary is None:
             self.send_json(type='attack', event='invalid')
-        elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME) or
-              now - self.user.state.last_shelling < timedelta(seconds=SHELLING_RESTING_TIME)):
+        elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME)):
             return
-        elif adversary.state.is_shadowmuted:
-            # if targeted user is shadowmuted, just bombard him/her with the same message
-            self.user.state.last_shelling = now
-            self._handle_flooder_attack(adversary)
         else:
             self._broadcast_to_channel(type='attack', date=time() * 1000,
                                        event='attack',
@@ -422,16 +387,16 @@ class LoultServer:
             info['state'] = 'ban_system_disabled'
             return self.send_json(**info)
 
-        if self.cookie not in MOD_COOKIES:
+        if self.raw_cookie not in MOD_COOKIES:
             info['state'] = 'unauthorized'
             self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
 
-        connected_list = (client.ip for client in self.channel_obj.clients
-                          if client.user.user_id == user_id)
-        backlog_list = (ip for userid, ip in self.loult_state.ip_backlog
-                        if userid == user_id)
-        todo = tuple(chain(connected_list, backlog_list))
+        connected_list = {client.ip for client in self.channel_obj.clients
+                          if client.user.user_id == user_id}
+        backlog_list = {ip for userid, ip in self.loult_state.ip_backlog
+                        if userid == user_id}
+        todo = connected_list | backlog_list
 
         log_msg = '{type}:{ip}:{userid}:resulted in "{state}"'
 
@@ -470,6 +435,9 @@ class LoultServer:
 
         elif msg["type"] in Ban.ban_types:
             ensure_future(self._ban_handler(msg))
+
+        elif msg['type'] in ('me', 'bot'):
+            ensure_future(self._extra_handler(msg))
 
         else:
             return self.sendClose(code=4003,
@@ -531,12 +499,14 @@ class Channel:
             self.users[new_user.user_id].clients.append(client)
             return self.users[new_user.user_id]  # returning an already existing instance of the user
 
-    def log_to_backlog(self, user_id, msg: str):
+    def log_to_backlog(self, user_id, msg: str, kind='msg'):
         # creating new entry
         info = {
             'user': self.users[user_id].info['params'],
             'msg': msg,
-            'date': time() * 1000
+            'userid': user_id,
+            'date': time() * 1000,
+            'type': kind,
         }
 
         # adding it to list and removing oldest entry
@@ -577,19 +547,22 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger('server')
 
-    try:
-        asyncio_policy = get_event_loop_policy()
-        import uvloop
-        # Make sure to set uvloop as the default before importing anything
-        # from autobahn else it won't use uvloop
-        set_event_loop_policy(uvloop.EventLoopPolicy())
-        logger.info("uvloop's event loop succesfully activated.")
-    except:
-        set_event_loop_policy(asyncio_policy)
-        logger.info("Failed to use uvloop, falling back to asyncio's event loop.")
-    finally:
-        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
-            WebSocketServerFactory
+## uncomment once https://github.com/MagicStack/uvloop/issues/93 is closed
+#    try:
+#        asyncio_policy = get_event_loop_policy()
+#        import uvloop
+#        # Make sure to set uvloop as the default before importing anything
+#        # from autobahn else it won't use uvloop
+#        set_event_loop_policy(uvloop.EventLoopPolicy())
+#        logger.info("uvloop's event loop succesfully activated.")
+#    except:
+#        set_event_loop_policy(asyncio_policy)
+#        logger.info("Failed to use uvloop, falling back to asyncio's event loop.")
+#    finally:
+#        from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+#            WebSocketServerFactory
+    from autobahn.asyncio.websocket import WebSocketServerProtocol, \
+        WebSocketServerFactory
 
     loop = get_event_loop()
     loult_state = LoultServerState()

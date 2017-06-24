@@ -5,19 +5,20 @@
 		<meta charset="utf-8">
 		<meta name="description" content="Un clone de Lou.lt, le célèbre t'chat Pokémon.">
 		<meta name="viewport" content="width=device-width, initial-scale=0.7">
-		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico">
 		<link rel="stylesheet" href="/style.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<script src="/script.js"></script>
 	</head>
 	<body>
 		<header id="head">
 			<div>
-				<img src="img/logo.svg" alt="Loult" title="Loult">
+				<img src="/img/logo.svg" alt="Loult" title="Loult">
 			</div>
 			<div id="sidebtns">
-				<div class="btn" id="speaker">🔊</div>
-				<div class="btn" id="gear">🔧</div>
-				<div class="btn" id="userswitch">👤</div>
+				<div class="btn" id="speaker"><i class="material-icons" id="vol">volume_up</i></div>
+				<div class="btn" id="gear"><i class="material-icons">settings</i></div>
+				<div class="btn" id="userswitch"><i class="material-icons">people</i></div>
 			</div>
 		</header>
 		<div id="underlay">
@@ -45,7 +46,7 @@
 			<div id="window">
 				<div id="prefsttl">
 					Préférences
-					<div id="close">✖</div>
+					<div id="close"><i class="material-icons">clear</i></div>
 				</div>
 				<div id="prefs">
 					<div>
@@ -62,7 +63,16 @@
 						</select>
 					</div>
 					<div>
-						<span>Thème :</span><input type="radio" name="theme" value="day" id="day"><label for="day">Jouw</label><input type="radio" name="theme" value="night" id="night"><label for="night">Nuiw</label>
+						<span>Thème :</span>
+						<select id="theme">
+							<option value="day">Jouw</option>
+							<option value="night">Nuiw</option>
+							<option value="day comic">Bulbi Jouw</option>
+							<option value="night comic">Bulbi Nuiw</option>
+							<option value="night rainbow">Mrle</option>
+							<option value="day hd">Turfu</option>
+							<option value="night hd">Toumiwmiw</option>
+						</select>
 					</div>
 					<div>
 						<span>Affichage :</span><input type="checkbox" id="dt"><label for="dt">Date</label><input type="checkbox" id="hr"><label for="hr">Heure</label>
@@ -70,9 +80,6 @@
 					<div>
 						<span>Alignement :</span><input type="radio" name="align" value="right" id="right"><label for="right">Droite</label><input type="radio" name="align" value="left" id="left"><label for="left">Gauche</label>
 					</div>
-					<!--<div>
-						<input type="button" value="Supprimer mon cookie" id="ckwipe">
-					</div>-->
 					<div>
 						<a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dictionnaire</a> - <a href="https://github.com/4577/loult-ng" target="_blank">GitHub</a>
 					</div>
