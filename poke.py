@@ -207,10 +207,7 @@ class LoultServer:
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
 
         if cookie_hash in self.loult_state.banned_cookies:
-            if datetime.now() < self.loult_state.banned_cookies[cookie_hash]:
-                raise ConnectionDeny(403, 'temporarily banned for flooding.')
-            else:
-                del self.loult_state.banned_cookies[cookie_hash]
+            raise ConnectionDeny(403, 'temporarily banned for flooding.')
 
         self.cookie = cookie_hash
         self.channel_n = request.path.lower().split('/', 2)[-1]
@@ -256,12 +253,15 @@ class LoultServer:
         if not self.user.state.is_flooding:
             return False
 
+        if self.cookie in self.loult_state.banned_cookies:
+            return True
+
         if self.user.state.has_been_warned: # user has already been warned. Ban him/her and notify everyone
             self.logger.info('has been detected as a flooder')
             self._broadcast_to_channel(type='antiflood', event='banned',
                                        flooder_id=self.user.user_id,
                                        date=time() * 1000)
-            self.loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
+            self.loult_state.ban_cookie(self.cookie)
             self.sendClose(code=4004, reason='banned for flooding')
         else:
             # resets the user's msg log, then warns the user
@@ -530,7 +530,7 @@ class LoultServerState:
 
     def __init__(self):
         self.chans = {} # type:Dict[str,Channel]
-        self.banned_cookies = {} #type:Dict[str,datetime]
+        self.banned_cookies = set() #type:Set[str]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
@@ -541,6 +541,13 @@ class LoultServerState:
         channel_obj.clients.add(client)
 
         return channel_obj, channel_obj.user_connect(User(user_cookie, channel_name, client), client)
+
+    def ban_cookie(self, cookie : str):
+        if cookie in self.banned_cookies:
+            return
+        self.banned_cookies.add(cookie)
+        loop = get_event_loop()
+        loop.call_later(BAN_TIME * 60, self.banned_cookies.remove, cookie)
 
 
 if __name__ == "__main__":
