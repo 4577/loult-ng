@@ -19,8 +19,7 @@ from typing import List, Dict, Set, Tuple, Optional
 
 from autobahn.websocket.types import ConnectionDeny
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
-     BANNED_WORDS, MOD_COOKIES
+from config import ATTACK_RESTING_TIME, BAN_TIME, BANNED_WORDS, MOD_COOKIES
 from salt import SALT
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
