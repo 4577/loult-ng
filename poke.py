@@ -28,7 +28,7 @@ from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEff
      VoiceEffect
 from tools.phonems import PhonemList
 from tools.tools import AudioRenderer, SpoilerBipEffect, VoiceParameters, PokeParameters, UserState, \
-    prepare_text_for_tts, BannedWords
+    prepare_text_for_tts
 
 
 def encode_json(data):
@@ -169,7 +169,6 @@ def auto_close(method):
 
 class LoultServer:
 
-    banned_words = None
     channel_n = None
     channel_obj = None
     client_logger = None
@@ -186,7 +185,6 @@ class LoultServer:
         if self.client_logger is None or self.loult_state is None:
             raise NotImplementedError('You must override "logger" and "state".')
         self.logger = ClientLogAdapter(self.client_logger, self)
-        self.banned_words = BannedWords(BANNED_WORDS)
         super().__init__()
 
     def onConnect(self, request):
@@ -247,10 +245,8 @@ class LoultServer:
             if binary_payload:
                 client.send_binary(binary_payload)
 
-    def _antiflood(self):
-        self.user.state.log_msg()
-
-        if not self.user.state.is_flooding:
+    def _check_flood(self, msg):
+        if not self.user.state.check_flood(msg):
             return False
 
         if self.cookie in self.loult_state.banned_cookies:
@@ -265,7 +261,7 @@ class LoultServer:
             self.sendClose(code=4004, reason='banned for flooding')
         else:
             # resets the user's msg log, then warns the user
-            self.user.state.reset_timestamps()
+            self.user.state.reset_flood_detection()
             self.user.state.has_been_warned = True
             self.send_json(type='antiflood', event='flood_warning',
                            date=time() * 1000)
@@ -276,7 +272,7 @@ class LoultServer:
 
     @auto_close
     async def _msg_handler(self, msg_data : Dict):
-        if self._antiflood():
+        if self._check_flood(msg_data['msg']):
             return
         now = datetime.now()
         # user object instance renders both the output sound and output text
@@ -298,11 +294,11 @@ class LoultServer:
 
     @auto_close
     async def _extra_handler(self, msg_data: Dict):
-        if self._antiflood():
-            return
         msg_type = msg_data['type']
         user_id = self.user.user_id
         output_msg = escape(msg_data['msg'])
+        if self._check_flood(output_msg):
+            return
 
         info = self.channel_obj.log_to_backlog(user_id, output_msg, kind=msg_type)
         self._broadcast_to_channel(type=msg_type, msg=output_msg,
