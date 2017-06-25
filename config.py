@@ -12,9 +12,6 @@ FLOOD_DETECTION_MSG_PER_SEC = 3
 # isn't considered a flooder anymore if they stop flooding
 FLOOD_WARNING_TIMEOUT = 5 * 60
 
-# Number of time a punitive message is sent to an attacked shadowmuted user
-PUNITIVE_MSG_COUNT = 50
-
 # in minutes, the time before a shadowmuted/banned user is able to connect again
 BAN_TIME = 1
 
