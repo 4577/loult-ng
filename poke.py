@@ -27,7 +27,7 @@ from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEff
      VoiceEffect
 from tools.phonems import PhonemList
 from tools.tools import AudioRenderer, SpoilerBipEffect, VoiceParameters, PokeParameters, UserState, \
-    prepare_text_for_tts
+    prepare_text_for_tts, INVISIBLE_CHARS
 
 
 def encode_json(data):
@@ -415,6 +415,9 @@ class LoultServer:
             msg = json.loads(payload.decode('utf-8'))
         except json.JSONDecodeError:
             return self.sendClose(code=4001, reason='Malformed JSON.')
+
+        if 'msg' in msg:
+            msg['msg'] = sub(INVISIBLE_CHARS, '', msg['msg'])
 
         if msg['type'] == 'msg':
             # when the message is just a simple text message (regular chat)
