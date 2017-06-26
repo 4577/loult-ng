@@ -1,12 +1,13 @@
 from asyncio import create_subprocess_shell
 from asyncio.subprocess import PIPE
+from re import search
+
+from config import NFTABLES_INPUT, NFTABLES_OUTPUT
 
 
 class BanFail(Exception):
 
-    state = None
-
-    def __init__(self, state):
+    def __init__(self, state=None):
         super().__init__()
         self.state = state
 
@@ -15,52 +16,59 @@ class Ban:
 
     ban_types = ('ban', 'slowban')
     commands = {
-        'apply': 'ipset add "{ban_type}" "{ip}" timeout "{timeout}"',
-        'remove': 'ipset del "{ban_type}" "{ip}"',
-        'add_set': 'ipset create "{ban_type}" hash:net timeout 0',
+        'apply': 'nft add element inet %s "{ban_type}" "{{{ip}}}"' % NFTABLES_INPUT,
+        'remove': 'nft delete element inet %s "{ban_type}" "{{{ip}}}"' % NFTABLES_OUTPUT,
     }
 
-    def __init__(self, ban_type, state, timeout=0):
+    def __init__(self, ban_type, state, timeout=None):
+        if not timeout:
+            timeout = '0s'
+        timeout = str(timeout)
         try:
-            self.timeout = int(timeout)
-        except TypeError:
-            raise BanFail('timeout_wrong_type')
-        if self.timeout < 0:
+            int(timeout)
+            timeout += 's'
+        except ValueError:
+            pass
+
+        if not search('^(\d+d)?(\d+h)?(\d+m)?(\d+s)?$', timeout):
             raise BanFail('timeout_invalid')
         if state not in self.commands:
             raise BanFail('wrong_state')
         if ban_type not in self.ban_types:
             raise BanFail('wrong_type')
 
-        self.type = ban_type
         self.state = state
+        self.type = ban_type
+        self.timeout = timeout
         self.template = self.commands[state]
-
-    @classmethod
-    async def ensure_sets(cls):
-        for ip_set in cls.ban_types:
-            cmd = cls.commands['add_set'].format(ban_type=ip_set)
-            err = await cls._run_cmd(cmd)
-            if cls._is_fatal(err):
-                raise BanFail('Failed to ensure the needed IP sets exist.')
 
     def __call__(self, ip_list):
         return self._ban(ip_list)
+
+    @classmethod
+    async def test_ban(cls):
+        err = await cls._run_cmd("nft -v")
+        if err:
+            raise BanFail
 
     async def _ban(self, ip_list):
         if len(ip_list) == 0:
             raise BanFail('wrong_userid')
 
-        for ip in ip_list:
-            err = await self._run_cmd(self._make_cmd(ip))
-            if self._is_fatal(err):
-                await self._handle_failure(ip_list)
+        err = await self._run_cmd(self._make_cmd(ip_list))
+        if err:
+            await self._handle_failure(ip_list)
 
         return self.state + '_ok'
 
-    def _make_cmd(self, ip):
+    def _make_cmd(self, ip_list):
+        if self.state == 'apply':
+            ip_arg = ', '.join('%s timeout %s' % (ip, self.timeout)
+                               for ip in ip_list)
+        else:
+            ip_arg = ', '.join(ip_list)
         return self.template.format(timeout=self.timeout,
-                                    ban_type=self.type, ip=ip)
+                                    ban_type=self.type, ip=ip_arg)
 
     @staticmethod
     async def _run_cmd(cmd):
@@ -71,13 +79,6 @@ class Ban:
             return None
         else:
             return stderr.decode('utf-8').rstrip(" \n")
-
-    @staticmethod
-    def _is_fatal(err):
-       return err is not None and not (
-              err.endswith("it's not added") or
-              err.endswith("it's already added") or
-              err.endswith("set with the same name already exists"))
 
     async def _handle_failure(self, ip_list):
         """Removes all bans that we tried to set."""
