@@ -7,6 +7,7 @@ from re import sub, compile as regex
 from shlex import quote
 from struct import pack
 from collections import defaultdict
+from itertools import chain
 from asyncio import get_event_loop, create_subprocess_shell
 from asyncio.subprocess import PIPE
 from typing import List, Union
@@ -28,19 +29,11 @@ from tools.phonems import PhonemList, Phonem
 logger = logging.getLogger('tools')
 
 
-##The INVISIBLE_CHARS list has been generated with this script:
-#import unicodedata, sys
-#
-#npchr = ["\u2060"]
-#for i in range(sys.maxunicode):
-#    char = chr(i)
-#    name = unicodedata.name(char, "NO NAME")
-#    if "INVISIBLE" in name or "ZERO WIDTH" in name:
-#        npchr.append(char)
-#
-#print(npchr)
-INVISIBLE_CHARS = "[%s]" % "".join(['\u2060', '\ufeff', '\u200b', '\u200c',
-                                    '\u200d', '\u2062', '\u2063', '\u2064'])
+INVISIBLE_UNICODE_POINTS = chain(range(0x2060, 0x2070), range(0x2028, 0x2030),
+                                 range(0x200b, 0x2010))
+
+
+INVISIBLE_CHARS = "[%s]" % "".join(chr(i) for i in INVISIBLE_UNICODE_POINTS)
 
 
 class ToolsError(Exception):
