@@ -8,6 +8,9 @@ table inet filter {
         type filter hook input priority 0
         policy drop
 
+        # Normal bans
+        ip saddr @ban ct state new,established drop
+        
         # Basic rules
         iif lo accept
         ct state established,related accept
@@ -16,9 +19,6 @@ table inet filter {
                 destination-unreachable, router-advertisement,
                 time-exceeded, parameter-problem, echo-request
             } accept
-
-        # Normal bans
-        ip saddr @ban ct state new,established drop
 
         # Open usual ports and rate-limit them by IP
         tcp dport ssh accept
