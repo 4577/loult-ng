@@ -18,7 +18,7 @@ table inet filter {
             } accept
 
         # Normal bans
-        ip saddr @ban drop
+        ip saddr @ban ct state new,established drop
 
         # Open usual ports and rate-limit them by IP
         tcp dport ssh accept
