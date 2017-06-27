@@ -72,7 +72,7 @@ class UserState:
 
     detection_window = timedelta(seconds=FLOOD_DETECTION_WINDOW)
 
-    def __init__(self):
+    def __init__(self, banned_words=BANNED_WORDS):
         from .effects import AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
             VoiceEffect
 
@@ -82,7 +82,7 @@ class UserState:
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
         self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood
-        self._banned_words = [regex(word) for word in BANNED_WORDS]
+        self._banned_words = [regex(word) for word in banned_words]
 
 
     def __setattr__(self, name, value):
@@ -117,7 +117,7 @@ class UserState:
     def check_flood(self, msg):
         self._add_timestamp()
         threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
-        return len(self.timestamps) > threshold or self._censor(msg)
+        return len(self.timestamps) > threshold or self.censor(msg)
 
     def _add_timestamp(self):
         """Add a timestamp for a user's message, and clears timestamps which are too old"""
@@ -126,7 +126,7 @@ class UserState:
         self._refresh_timestamps(now)
         self.timestamps.append(now)
 
-    def _censor(self, msg):
+    def censor(self, msg):
         return any(regex_word.fullmatch(msg) for regex_word in self._banned_words)
 
     def _reset_warning(self):
