@@ -375,7 +375,7 @@ class LoultServer:
         user_id = msg_data['userid']
         ban_type = msg_data['type']
         state = msg_data['state']
-        timeout = msg_data.get('timeout', 0)
+        timeout = msg_data.get('timeout', None)
         info = {'type': ban_type, 'userid': user_id}
 
         if not self.loult_state.can_ban:
@@ -573,11 +573,11 @@ if __name__ == "__main__":
     loult_state = LoultServerState()
 
     try:
-        loop.run_until_complete(Ban.ensure_sets())
+        loop.run_until_complete(Ban.test_ban())
         loult_state.can_ban = True
     except BanFail:
         loult_state.can_ban = False
-        logger.warning("ipset command dosen't work; bans are disabled.")
+        logger.warning("nft command dosen't work; bans are disabled.")
 
 
     class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
