@@ -1,8 +1,10 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+﻿﻿document.addEventListener('DOMContentLoaded', function() {
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
+	var userlist = document.getElementById('userlist');
+	var underlay = document.getElementById('underlay');
+	var usertbl = document.getElementById('usertbl');
 	var chatbox = document.getElementById('chatbox');
 	var chattbl = document.getElementById('chattbl');
-	var usertbl = document.getElementById('usertbl');
 	var input = document.getElementById('input');
 	var theme = localStorage.theme || 'day';
 	var left = (localStorage.left === 'true');
@@ -121,13 +123,13 @@
 			return;
 
 		users[userid] = params;
-		var mute = (muted.indexOf(userid) != -1);
+		
+		if(ambtn.checked && muted.indexOf(userid) === -1)
+			muted.push(userid);
+		
 		var tr = document.createElement('tr');
 		var td = document.createElement('td');
 		var label = document.createElement('label');
-		if(mute)
-			tr.className = 'mute';
-
 		label.appendChild(document.createTextNode(params.name));
 		label.style.color = params.color;
 		label.style.backgroundImage = 'url("/pokemon/' + params.img + '.gif")';
@@ -141,7 +143,7 @@
 			var i = document.createElement('i');
 			sound.className = 'btn';
 			i.className = 'material-icons';
-			i.appendChild(document.createTextNode('volume_up'));
+			i.appendChild(document.createTextNode('volume_' + (muted.indexOf(userid) != -1 ? 'off' : 'up')));
 			sound.appendChild(i);
 			td.appendChild(sound);
 
@@ -158,7 +160,6 @@
 			};
 		}
 		else {
-			var underlay = document.getElementById('underlay');
 			underlay.style.backgroundImage = 'url("/dev/pokemon/' + params.img + '.png")';
 			you = userid;
 		}
@@ -182,6 +183,7 @@
 	var rightbtn = document.getElementById('right');
 	var leftbtn = document.getElementById('left');
 	var themes = document.getElementById('theme');
+	var ambtn = document.getElementById('am');
 	var dtbtn = document.getElementById('dt');
 	var hrbtn = document.getElementById('hr');
 	var head = document.getElementById('head');
@@ -398,12 +400,12 @@
 
 	// Users list display
 
-	var userlist = document.getElementById('userlist');
 	var userswitch = document.getElementById('userswitch');
 
 	userswitch.onclick = function() {
 		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
 		userlist.style.width = (userlist.style.width === '0px' ? '185px' : '0px');
+		underlay.style.right = userlist.style.width;
 		if(atBottom)
 			chatbox.scrollTop = chatbox.scrollHeight;
 	};
@@ -418,6 +420,7 @@
 		var lastMuted = false;
 
 		input.onkeydown = function(evt) {
+			underlay.className = '';
 			if(evt.keyCode === 13 && input.value) {
 				var trimed = input.value.trim();
 				if(trimed.charAt(0) === '/') {
@@ -425,8 +428,10 @@
 						var splitted = trimed.split(' ');
 						ws.send(JSON.stringify({ type : 'attack', target : splitted[1], order : ((splitted.length === 3) ? parseInt(splitted[2]) : 0) }));
 					}
-					else if(trimed.match(/^\/(en|es|fr|de)\s/i))
+					else if(trimed.match(/^\/(en|es|fr|de)\s/i)) {
 						ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2).toLowerCase()}));
+						underlay.className = 'pulse';
+					}
 					else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i) && audio) {
 						volrange.value = trimed.match(/\d+$/i)[0];
 						changeVolume();
@@ -443,21 +448,22 @@
 					}
 					else if(trimed.match(/^\/me\s/i))
 						ws.send(JSON.stringify({type: 'me', msg: trimed.substr(4)}));
-					else
+					else {
 						ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
+						underlay.className = 'pulse';
+					}
 				}
-				else if(trimed.length)
+				else if(trimed.length) {
 					ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
+					underlay.className = 'pulse';
+				}
 
 				lastMsg = input.value;
 				input.value = '';
 			}
 			else if(evt.keyCode === 38 || evt.keyCode === 40) {
 				evt.preventDefault();
-				if(input.value)
-					input.value = '';
-				else if(lastMsg)
-					input.value = lastMsg;
+				input.value = (lastMsg && !input.value ? lastMsg : '');
 			}
 		};
 
