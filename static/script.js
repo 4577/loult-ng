@@ -485,9 +485,9 @@
 					break;
 
 					case 'connect':
+						addUser(msg.userid, msg.params);
 						if(!lastMuted)
 							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, ['log']);
-						addUser(msg.userid, msg.params);
 					break;
 
 					case 'disconnect':
