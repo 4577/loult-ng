@@ -30,7 +30,7 @@ logger = logging.getLogger('tools')
 
 
 INVISIBLE_UNICODE_POINTS = chain(range(0x2060, 0x2070), range(0x2028, 0x2030),
-                                 range(0x200b, 0x2010), ['\ufeff'])
+                                 range(0x200b, 0x2010), [0xfeff])
 
 
 INVISIBLE_CHARS = "[%s]" % "".join(chr(i) for i in INVISIBLE_UNICODE_POINTS)
