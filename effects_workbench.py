@@ -10,12 +10,12 @@ from numpy.lib.function_base import average
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
 
-from poke import User
+from tools.users import User
 from salt import SALT
 from tools.effects import AudioEffect, PhonemicEffect, AutotuneEffect, MwfeEffect, GodSpeakingEffect, WpseEffect, \
-    TurboHangoul, CrapweEffect, TurfuEffect, StutterEffect, VoiceSpeedupEffect, GrandSpeechMasterEffect, \
-    PoiloEffect, RobotVoiceEffect, GaDoSEffect, PitchRandomizerEffect
-from tools import SitcomEffect
+    TurboHangoul, CrapweEffect, StutterEffect, VoiceSpeedupEffect, GrandSpeechMasterEffect, \
+    PoiloEffect, RobotVoiceEffect, AngryRobotVoiceEffect, PitchRandomizerEffect
+from tools import SitcomEffect, TurfuEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.audio_tools import mix_tracks
 

@@ -4,20 +4,21 @@ import random
 from datetime import datetime
 from functools import partial
 from itertools import cycle
-from os import path, listdir
+from os import path
 from typing import List
 
 import numpy
-import tools
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
-from tools.audio_tools import mix_tracks, get_sounds
-from tools.melody import chord_progressions, get_harmonies
-from tools.phonems import PhonemList, Phonem, FrenchPhonems
-from tools.tools import VoiceParameters
+
+import tools
+from .audio_tools import mix_tracks, get_sounds
+from .melody import chord_progressions, get_harmonies
+from .phonems import PhonemList, Phonem, FrenchPhonems
+from .users import VoiceParameters
 
 
-# TODO : effet théatre, effet speech random, effet voix robot,
+# TODO : effet théatre, effet speech random
 # effet javanais
 
 
@@ -45,11 +46,11 @@ class Effect:
 
 
 class EffectGroup(Effect):
-    """An effect group is basically a 'meta-effect'. It returns, through the property 'tools' a
-    list of already instanciated effect objects, which are all going to be added the a user's tools
-    lists. In practice, it's a simple way to have tools that are both on sound, phonems and text.
+    """An effect group is basically a 'meta-effect'. It returns, through the property 'effects' a
+    list of already instanciated effect objects, which are all going to be added the a user's effects
+    lists. In practice, it's a simple way to have effects that are both on sound, phonems and text.
 
-    Before returning the list of tools, one has to make sure that the tools return by the 'tools' property
+    Before returning the list of effects, one has to make sure that the tools return by the 'effects' property
     all have the same timeout time as the effect group that returns them. This can be done by setting the optional
     _timeout instance attribute (*NOT* the TIMEOUT class attribute) of an Effect object"""
 
@@ -488,7 +489,7 @@ class GhostEffect(AudioEffect):
 
 
 class RobotVoiceEffect(AudioEffect):
-    NAME = "13-NRV"
+    NAME = "Gladwse"
     TIMEOUT = 150
 
     def process(self, wave_data: numpy.ndarray):
@@ -496,10 +497,10 @@ class RobotVoiceEffect(AudioEffect):
         return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
 
 
-class GaDoSEffect(AudioEffect):
-    """Adds pitch-shifted versions of the track to itself to create a scary effectPUTAIN
+class AngryRobotVoiceEffect(AudioEffect):
+    """Adds pitch-shifted versions of the track to itself to create a scary effect
     """
-    NAME = "glwe dwse"
+    NAME = "13-NRV"
     TIMEOUT = 150
 
     def process(self, wave_data: numpy.ndarray):
@@ -512,65 +513,6 @@ class GaDoSEffect(AudioEffect):
 
         return reverb(sum([audio_array[:min_len] for audio_array in repitched_arrays]),
                       sample_in=16000, sample_out=16000)
-
-class AmbianceEffect(AudioEffect):
-    """Adds a random mood to the audio"""
-    NAME = "ambiance"
-    TIMEOUT = 180
-    effects_mapping = {
-        "starwars_mood" : ("lasèw", 0.1),
-        # "bonfire_mood" : ("les feux de l'amouw", 0.6),
-        "seastorm_mood" : ("bretagne", 0.08),
-        "war_mood" : ("wesh yé ou ryan ce pd", 0.2),
-    }
-    data_folder = path.join(path.dirname(path.realpath(__file__)), "data/ambiance/")
-
-    def __init__(self):
-        super().__init__()
-        filename = random.choice(list(self.effects_mapping.keys()))
-        self._name, self.gain = self.effects_mapping[filename]
-        with open(path.join(self.data_folder, filename + ".wav"), "rb") as sndfile:
-            self.rate, self.track_data = read(sndfile)
-
-    @property
-    def name(self):
-        return self._name
-
-    def process(self, wave_data: numpy.ndarray):
-        padding_time = self.rate * 2
-        rnd_pos = random.randint(0,len(self.track_data) - len(wave_data) - padding_time)
-        return mix_tracks(self.track_data[rnd_pos:rnd_pos + len(wave_data) + padding_time] * self.gain,
-                          wave_data,
-                          align="center")
-
-
-class BeatsEffect(AudioEffect):
-    main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/")
-    NAME = "JR"
-    TIMEOUT = 150
-
-    _directories = {"posay" : ["other"],
-                    "tape ton para": ["ez3kiel", "outrun", "serbian_film"],
-                    "JR" : ["jr"]}
-
-    def __init__(self):
-        super().__init__()
-        self._name, directories = random.choice(list(self._directories.items()))
-        dir = random.choice(directories)
-        beat_filename = random.choice(listdir(path.join(self.main_dir, dir)))
-        with open(path.join(self.main_dir, dir, beat_filename), "rb") as sndfile:
-            self.rate, self.track = read(sndfile)
-
-    @property
-    def name(self):
-        return self._name
-
-    def process(self, wave_data: numpy.ndarray):
-        if len(self.track) < len(wave_data):
-            beat_track = numpy.tile(self.track, (len(wave_data) // len(self.track)) + 1)
-            return mix_tracks(beat_track * 0.4, wave_data, align="center")
-        else:
-            return wave_data
 
 
 class WpseEffect(AudioEffect):
@@ -597,28 +539,6 @@ class WpseEffect(AudioEffect):
 
 
 #### Here are the effects groups ####
-
-
-class VenerEffect(EffectGroup):
-    TIMEOUT = 120
-    NAME = "YÉ CHAUD"
-    _sound_file = path.join(path.dirname(path.realpath(__file__)),
-                            "data/vener/stinkhole_shave_me_extract.wav")
-
-    class UPPERCASEEffect(ExplicitTextEffect):
-        TIMEOUT = 120
-
-        def process(self, text : str):
-            return text.upper()
-
-    @property
-    def effects(self):
-        monkey_patched = AmbianceEffect()
-        monkey_patched._timeout = 120
-        monkey_patched.gain = 0.2
-        with open(self._sound_file, "rb") as sndfile:
-            monkey_patched.rate, monkey_patched.track_data = read(sndfile)
-        return [self.UPPERCASEEffect(), monkey_patched]
 
 
 class VieuxPortEffect(EffectGroup):
@@ -693,13 +613,3 @@ class GodSpeakingEffect(EffectGroup):
         return [ReverbManEffect(), monkey_patched]
 
 
-class TurfuEffect(EffectGroup):
-    TIMEOUT = 150
-    NAME = "du turfu"
-
-    @property
-    def effects(self):
-        hangoul, crapw = TurboHangoul(4), CrapweEffect(4)
-        hangoul._timeout = 150
-        crapw._timeout = 150
-        return [hangoul, crapw]
