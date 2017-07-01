@@ -1,4 +1,4 @@
-﻿div, header, input {
+﻿﻿div, header, input {
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -47,9 +47,9 @@ header {
 
 header, #prefsttl {
 	background: #EEE;
-	background: -webkit-linear-gradient(top, #EEE 0%,#FFF 100%);
-	background: linear-gradient(to bottom, #EEE 0%,#FFF 100%);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#EEE',endColorstr='#FFF',GradientType=0);
+	background: -webkit-linear-gradient(top, #EEE 0%, #FFF 100%);
+	background: linear-gradient(to bottom, #EEE 0%, #FFF 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#EEE', endColorstr='#FFF', GradientType=0);
 }
 
 header > div {
@@ -243,7 +243,7 @@ td i {
 	margin-top: 3px;
 }
 
-.backlog td,.mute > *, #chattbl td:last-child {
+.backlog td, #chattbl td:last-child {
 	opacity: 0.6;
 }
 
@@ -320,10 +320,21 @@ audio + a {
 	z-index: 10;
 	top: 0;
 	left: 0;
-	right: 0;
+	right: 185px;
 	bottom: 0;
 	background-position: center center;
 	background-repeat: no-repeat;
+}
+
+.pulse {
+	-webkit-animation: pulse 150ms forwards;
+	-ms-animation: pulse 150ms forwards;
+	animation: pulse 150ms forwards;
+}
+
+@keyframes pulse {
+	50% { opacity: 0.2; }
+	100% { opacity: 0.1; }
 }
 
 header, main, #overlay {
@@ -365,14 +376,14 @@ header, main, #overlay {
 	left: 0;
 	right: 0;
 	max-width: 680px;
-	max-height: 480px;
+	max-height: 540px;
+	width: 680px;
+	height: 540px;
 	margin: auto;
 	background: #f9f9f9;
 	box-shadow: 0 0 15px #BBB;
 	border: 1px solid #BBB;
 	line-height: 1.5em;
-	width: 680px;
-	height: 480px;
 }
 
 #window, #prefs input {
@@ -387,10 +398,9 @@ header, main, #overlay {
 
 #prefs {
 	position: absolute;
-	top: 40px;
-	bottom: 40px;
 	left: 0;
 	right: 0;
+	padding: 10px 0;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -398,16 +408,18 @@ header, main, #overlay {
 	-webkit-box-direction: normal;
 	-ms-flex-direction: column;
 	flex-direction: column;
-	-webkit-box-pack: center;
-	-ms-flex-pack: center;
-	justify-content: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
 }
 
 #prefs div {
-	padding: 10px 40px;
+	height: 40px;
+	padding: 10px 115px;
+	flex: 1;
 }
 
-#prefs div:last-child {
+#prefs div:last-child, #prefs div:nth-last-of-type(2) {
 	text-align: center;
 }
 
@@ -466,7 +478,6 @@ select {
 
 ::-webkit-scrollbar-track {
 	background-color: #EEE;
-	border-left: 1px solid #DDD;
 }
 
 ::-webkit-scrollbar, ::-webkit-scrollbar-thumb {
@@ -533,7 +544,7 @@ select {
 	border-color: #111;
 }
 
-.night .backlog td, .mute > *, .night  #chattbl td:last-child {
+.night .backlog td, .night  #chattbl td:last-child {
 	opacity: 0.4;
 }
 
@@ -541,16 +552,15 @@ select {
 	background: #111;
 	background: -webkit-linear-gradient(top, #111 0%, #333 100%);
 	background: linear-gradient(to bottom, #111 0%, #333 100%);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#111',endColorstr='#333',GradientType=0);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#111', endColorstr='#333', GradientType=0);
 }
 
 .night ::-webkit-scrollbar-track {
-	background-color: #333;
-	border-left: 1px solid #222;
+	background-color: #222;
 }
 
 .night ::-webkit-scrollbar, .night ::-webkit-scrollbar-thumb {
-	background-color: #222;
+	background-color: #333;
 }
 
 .comic {
@@ -595,7 +605,15 @@ select {
 }
 
 .hd #chattbl td:nth-last-of-type(2) {
-	padding: 0 8px 8px 0 !important;
+	padding: 4px 8px 4px 0 !important;
+}
+
+.hd #chattbl td:last-child span {
+	margin-top: 9px;
+}
+
+.hd #chattbl .merged td:last-child span {
+	margin-top: 7px;
 }
 
 .hd #chattbl .log td:nth-last-of-type(3), .hd #chattbl .part td:nth-last-of-type(3), .hd #chattbl .me td:nth-last-of-type(3), .hd #chattbl .msg td:nth-last-of-type(2), .hd #chattbl .bot td:nth-last-of-type(2) {

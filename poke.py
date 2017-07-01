@@ -19,8 +19,7 @@ from typing import List, Dict, Set, Tuple, Optional
 
 from autobahn.websocket.types import ConnectionDeny
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, PUNITIVE_MSG_COUNT, \
-     BANNED_WORDS, MOD_COOKIES
+from config import ATTACK_RESTING_TIME, BAN_TIME, BANNED_WORDS, MOD_COOKIES
 from salt import SALT
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
@@ -28,7 +27,7 @@ from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEff
      VoiceEffect
 from tools.phonems import PhonemList
 from tools.tools import AudioRenderer, SpoilerBipEffect, VoiceParameters, PokeParameters, UserState, \
-    prepare_text_for_tts, BannedWords
+    prepare_text_for_tts, INVISIBLE_CHARS
 
 
 def encode_json(data):
@@ -169,7 +168,6 @@ def auto_close(method):
 
 class LoultServer:
 
-    banned_words = None
     channel_n = None
     channel_obj = None
     client_logger = None
@@ -186,7 +184,6 @@ class LoultServer:
         if self.client_logger is None or self.loult_state is None:
             raise NotImplementedError('You must override "logger" and "state".')
         self.logger = ClientLogAdapter(self.client_logger, self)
-        self.banned_words = BannedWords(BANNED_WORDS)
         super().__init__()
 
     def onConnect(self, request):
@@ -207,10 +204,7 @@ class LoultServer:
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
 
         if cookie_hash in self.loult_state.banned_cookies:
-            if datetime.now() < self.loult_state.banned_cookies[cookie_hash]:
-                raise ConnectionDeny(403, 'temporarily banned for flooding.')
-            else:
-                del self.loult_state.banned_cookies[cookie_hash]
+            raise ConnectionDeny(403, 'temporarily banned for flooding.')
 
         self.cookie = cookie_hash
         self.channel_n = request.path.lower().split('/', 2)[-1]
@@ -250,22 +244,23 @@ class LoultServer:
             if binary_payload:
                 client.send_binary(binary_payload)
 
-    def _antiflood(self):
-        self.user.state.log_msg()
-
-        if not self.user.state.is_flooding:
+    def _check_flood(self, msg):
+        if not self.user.state.check_flood(msg):
             return False
+
+        if self.cookie in self.loult_state.banned_cookies:
+            return True
 
         if self.user.state.has_been_warned: # user has already been warned. Ban him/her and notify everyone
             self.logger.info('has been detected as a flooder')
             self._broadcast_to_channel(type='antiflood', event='banned',
                                        flooder_id=self.user.user_id,
                                        date=time() * 1000)
-            self.loult_state.banned_cookies[self.cookie] = datetime.now() + timedelta(minutes=BAN_TIME)
+            self.loult_state.ban_cookie(self.cookie)
             self.sendClose(code=4004, reason='banned for flooding')
         else:
             # resets the user's msg log, then warns the user
-            self.user.state.reset_timestamps()
+            self.user.state.reset_flood_detection()
             self.user.state.has_been_warned = True
             self.send_json(type='antiflood', event='flood_warning',
                            date=time() * 1000)
@@ -276,7 +271,7 @@ class LoultServer:
 
     @auto_close
     async def _msg_handler(self, msg_data : Dict):
-        if self._antiflood():
+        if self._check_flood(msg_data['msg']):
             return
         now = datetime.now()
         # user object instance renders both the output sound and output text
@@ -298,11 +293,11 @@ class LoultServer:
 
     @auto_close
     async def _extra_handler(self, msg_data: Dict):
-        if self._antiflood():
-            return
         msg_type = msg_data['type']
         user_id = self.user.user_id
         output_msg = escape(msg_data['msg'])
+        if self._check_flood(output_msg):
+            return
 
         info = self.channel_obj.log_to_backlog(user_id, output_msg, kind=msg_type)
         self._broadcast_to_channel(type=msg_type, msg=output_msg,
@@ -380,7 +375,7 @@ class LoultServer:
         user_id = msg_data['userid']
         ban_type = msg_data['type']
         state = msg_data['state']
-        timeout = msg_data.get('timeout', 0)
+        timeout = msg_data.get('timeout', None)
         info = {'type': ban_type, 'userid': user_id}
 
         if not self.loult_state.can_ban:
@@ -420,6 +415,9 @@ class LoultServer:
             msg = json.loads(payload.decode('utf-8'))
         except json.JSONDecodeError:
             return self.sendClose(code=4001, reason='Malformed JSON.')
+
+        if 'msg' in msg:
+            msg['msg'] = sub(INVISIBLE_CHARS, '', msg['msg'])
 
         if msg['type'] == 'msg':
             # when the message is just a simple text message (regular chat)
@@ -530,7 +528,7 @@ class LoultServerState:
 
     def __init__(self):
         self.chans = {} # type:Dict[str,Channel]
-        self.banned_cookies = {} #type:Dict[str,datetime]
+        self.banned_cookies = set() #type:Set[str]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
@@ -541,6 +539,13 @@ class LoultServerState:
         channel_obj.clients.add(client)
 
         return channel_obj, channel_obj.user_connect(User(user_cookie, channel_name, client), client)
+
+    def ban_cookie(self, cookie : str):
+        if cookie in self.banned_cookies:
+            return
+        self.banned_cookies.add(cookie)
+        loop = get_event_loop()
+        loop.call_later(BAN_TIME * 60, self.banned_cookies.remove, cookie)
 
 
 if __name__ == "__main__":
@@ -568,11 +573,11 @@ if __name__ == "__main__":
     loult_state = LoultServerState()
 
     try:
-        loop.run_until_complete(Ban.ensure_sets())
+        loop.run_until_complete(Ban.test_ban())
         loult_state.can_ban = True
     except BanFail:
         loult_state.can_ban = False
-        logger.warning("ipset command dosen't work; bans are disabled.")
+        logger.warning("nft command dosen't work; bans are disabled.")
 
 
     class AutobahnLoultServer(LoultServer, WebSocketServerProtocol):
