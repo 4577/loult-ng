@@ -11,6 +11,7 @@ from config import FLOOD_DETECTION_WINDOW, BANNED_WORDS, FLOOD_WARNING_TIMEOUT, 
 from tools import pokemons
 
 from tools.tools import AudioRenderer, SpoilerBipEffect, prepare_text_for_tts
+from .phonems import PhonemList
 
 
 class VoiceParameters:
@@ -172,6 +173,7 @@ class User:
     async def _vocode(self, text: str, lang: str) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
+        from .effects import VoiceEffect, PhonemicEffect
         if self.state.effects[VoiceEffect]:
             voice_params = self.apply_effects(self.voice_params, self.state.effects[VoiceEffect])
         else:
@@ -201,6 +203,8 @@ class User:
             return await self.audio_renderer.string_to_audio(text, lang, voice_params)
 
     async def render_message(self, text: str, lang: str):
+        from .effects import ExplicitTextEffect, HiddenTextEffect, AudioEffect
+
         cleaned_text = text[:500]
         # applying "explicit" effects (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
