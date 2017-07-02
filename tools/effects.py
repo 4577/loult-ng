@@ -430,14 +430,12 @@ class PitchRandomizerEffect(PhonemicEffect):
         delimiters.sort()
         delim_idx = 0
         current_multiplier = 1
-        print(phonems)
         for i, phonem in enumerate(phonems):
             if delim_idx < len(delimiters) and i == delimiters[delim_idx]:
                 delim_idx += 1
                 current_multiplier = random.random() * self._multiplier_range * (1 if random.randint(0,1) else -1) + 1
             phonem.pitch_modifiers = [(duration, int(pitch * current_multiplier))
                                       for duration, pitch in phonem.pitch_modifiers]
-        print(phonems)
         return phonems
 
 #### Here are the voice effets ####
