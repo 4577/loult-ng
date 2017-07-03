@@ -418,6 +418,18 @@ class GrandSpeechMasterEffect(PhonemicEffect):
         return phonems
 
 
+class VowelExchangeEffect(PhonemicEffect):
+    NAME = "hein quoi?"
+    TIMEOUT = 200
+
+    def process(self, phonems : PhonemList):
+        vowels_list = list(FrenchPhonems.ORALS | FrenchPhonems.NASAL_WOVELS)
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems.ORALS | FrenchPhonems.NASAL_WOVELS and random.randint(1,5) == 1:
+                phonem.name = random.choice(vowels_list)
+        return phonems
+
+
 class PitchRandomizerEffect(PhonemicEffect):
     TIMEOUT = 150
     NAME = "problèmes de gorge"
