@@ -2,7 +2,7 @@ from .effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, Ro
                       GhostEffect, SpeechMasterEffect, PoiloEffect, PitchRandomizerEffect,
                       PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, AngryRobotVoiceEffect,
                       VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect, AutotuneEffect, VoiceSpeedupEffect,
-                      StutterEffect, GrandSpeechMasterEffect)
+                      StutterEffect, GrandSpeechMasterEffect, VowelExchangeEffect)
 from .effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
 from .phonems import PhonemList
 
@@ -14,7 +14,8 @@ AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                          SpoinkEffect, TurboHangoul, GhostEffect, TurboHangoul] + \
                     3 * [WpseEffect, SpeechMasterEffect, CrapweEffect,
                          VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
-                         StutterEffect, GrandSpeechMasterEffect, TouretteEffect] + \
+                         StutterEffect, GrandSpeechMasterEffect, TouretteEffect,
+                         VowelExchangeEffect] + \
                     6 * [AutotuneEffect, PitchRandomizerEffect,
                          RobotVoiceEffect, PoiloEffect, AngryRobotVoiceEffect]
 # AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
