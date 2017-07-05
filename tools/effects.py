@@ -16,6 +16,7 @@ from .audio_tools import mix_tracks, get_sounds
 from .melody import chord_progressions, get_harmonies
 from .phonems import PhonemList, Phonem, FrenchPhonems
 from .users import VoiceParameters
+from .data.contradicteur.tree import Node, Leaf
 
 
 # TODO : effet théatre, effet speech random
@@ -179,6 +180,28 @@ class PoiloEffect(ExplicitTextEffect):
                 return text + " poil %s %s" % (article, rhyme.text)
 
         return text # default to "pass"
+
+
+class ContradictorEffect(ExplicitTextEffect):
+    NAME = "contradicteur"
+    TIMEOUT = 600
+    TREE_FILEPATH = path.join(path.dirname(path.realpath(__file__)), "data/contradicteur/liste_verbes.txt")
+
+    def __init__(self):
+        super().__init__()
+        with open(self.TREE_FILEPATH, "rb") as treefile:
+            self.verb_tree = pickle.load(treefile) # type:Node
+
+    def process(self, text : str):
+        if random.randint(1,3) == 1:
+            splitted = text.split()  # fak ye baudrive
+            reconstructed = ''
+            it = iter(splitted)
+            for word in it:
+                if self.verb_tree.has_leaf(Leaf(word)): # testing if it's a verb
+                    reconstructed += word + ' pas'
+        else:
+            return text
 
 
 class TouretteEffect(HiddenTextEffect):
