@@ -13,7 +13,7 @@ from scipy.io.wavfile import read
 
 from salt import SALT
 from tools.audio_tools import mix_tracks
-from tools.effects import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect
+from tools.effects import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.users import User
 
