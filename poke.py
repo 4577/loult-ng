@@ -1,140 +1,28 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
+import json
 import logging
-import random
-from asyncio import get_event_loop, set_event_loop_policy, \
-        get_event_loop_policy, ensure_future
+from asyncio import get_event_loop, ensure_future
 from collections import OrderedDict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
+from functools import lru_cache, wraps
 from hashlib import md5
 from html import escape
-import json
+from itertools import chain
 from os import urandom, path
 from re import sub
 from time import time
-from functools import lru_cache, wraps
-from itertools import chain
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Dict, Set, Tuple
 
 from autobahn.websocket.types import ConnectionDeny
-
-from config import ATTACK_RESTING_TIME, BAN_TIME, BANNED_WORDS, MOD_COOKIES
 from salt import SALT
+
+from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
-from tools.effects import Effect, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
-     VoiceEffect
-from tools.phonems import PhonemList
-from tools.tools import AudioRenderer, SpoilerBipEffect, VoiceParameters, PokeParameters, UserState, \
-    prepare_text_for_tts, INVISIBLE_CHARS
-
-
-def encode_json(data):
-    return json.dumps(data, ensure_ascii=False).encode('utf-8')
-
-
-class User:
-    """Stores a user's state and parameters, which are also used to render the user's audio messages"""
-
-    def __init__(self, cookie_hash, channel, client):
-        """Initiating a user using its cookie md5 hash"""
-        self.audio_renderer = AudioRenderer()
-        self.voice_params = VoiceParameters.from_cookie_hash(cookie_hash)
-        self.poke_params = PokeParameters.from_cookie_hash(cookie_hash)
-        self.user_id = cookie_hash.hex()[-16:]
-
-        self.channel = channel
-        self.clients = [client]
-        self.state = UserState()
-        self._info = None
-
-    def __hash__(self):
-        return self.user_id.__hash__()
-
-    def __eq__(self, other):
-        return self.user_id == other.user_id
-
-    def throw_dice(self, type="attack") -> Tuple[int, int]:
-        bonus = (datetime.now() - self.state.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
-        return random.randint(1, 100), bonus
-
-    @property
-    def info(self):
-        if self._info is None:
-            self._info = {
-                'userid': self.user_id,
-                'params': {
-                    'name': self.poke_params.pokename,
-                    'img': str(self.poke_params.poke_id).zfill(3),
-                    'color': self.poke_params.color
-                }
-            }
-        return self._info
-
-    @staticmethod
-    def apply_effects(input_obj, effect_list: List[Effect]):
-        if effect_list:
-            for effect in effect_list:
-                if effect.is_expired():
-                    effect_list.remove(effect)  # if the effect has expired, remove it
-                else:
-                    input_obj = effect.process(input_obj)
-
-        return input_obj
-
-    async def _vocode(self, text: str, lang: str) -> bytes:
-        """Renders a text and a language to a wav bytes object using espeak + mbrola"""
-        # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
-        if self.state.effects[VoiceEffect]:
-            voice_params = self.apply_effects(self.voice_params, self.state.effects[VoiceEffect])
-        else:
-            voice_params = self.voice_params
-
-        # apply the beep effect for spoilers
-        beeped = await SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
-
-        if isinstance(beeped, PhonemList) or self.state.effects[PhonemicEffect]:
-
-            modified_phonems = None
-            if isinstance(beeped, PhonemList) and self.state.effects[PhonemicEffect]:
-                # if it's already a phonem list, we apply the effect diretcly
-                modified_phonems = self.apply_effects(beeped, self.state.effects[PhonemicEffect])
-            elif isinstance(beeped, PhonemList):
-                # no effects, only the beeped phonem list
-                modified_phonems = beeped
-            elif self.state.effects[PhonemicEffect]:
-                # first running the text-to-phonems conversion, then applying the phonemic tools
-                phonems = await self.audio_renderer.string_to_phonemes(text, lang, voice_params)
-                modified_phonems = self.apply_effects(phonems, self.state.effects[PhonemicEffect])
-
-            #rendering audio using the phonemlist
-            return await self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
-        else:
-            # regular render
-            return await self.audio_renderer.string_to_audio(text, lang, voice_params)
-
-    async def render_message(self, text: str, lang: str):
-        cleaned_text = text[:500]
-        # applying "explicit" effects (visible to the users)
-        displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
-        # applying "hidden" texts effects (invisible on the chat, only heard in the audio)
-        rendered_text = self.apply_effects(displayed_text, self.state.effects[HiddenTextEffect])
-        rendered_text = prepare_text_for_tts(rendered_text, lang)
-
-        # rendering the audio from the text
-        wav = await self._vocode(rendered_text, lang)
-
-        # if there are effets in the audio_effect list, we run it
-        if self.state.effects[AudioEffect]:
-            # converting to f32 (more standard) and resampling to 16k if needed, and converting to a ndarray
-            rate , data = await self.audio_renderer.to_f32_16k(wav)
-            # applying the effects pipeline to the sound
-            data = self.apply_effects(data, self.state.effects[AudioEffect])
-            # converting the sound's ndarray back to bytes
-            wav = self.audio_renderer.to_wav_bytes(data, rate)
-
-        return displayed_text, wav
+from tools.tools import INVISIBLE_CHARS, encode_json
+from tools.users import User
 
 
 class ClientLogAdapter(logging.LoggerAdapter):
