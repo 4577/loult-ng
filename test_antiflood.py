@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from tools.tools import UserState
+from tools.users import UserState
 from config import FLOOD_DETECTION_MSG_PER_SEC, FLOOD_DETECTION_WINDOW
 
 
