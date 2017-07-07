@@ -52,13 +52,14 @@ directement `nftables.conf.sample`. À noter qu'aucune interface ni outil n'est 
 pour placer ces bans manuels, vous devez lire `tools/ban.py` pour un implémenter un.
 
 Supposons que la table `filter` de type `inet` contienne une chaîne nommée
-`input` pour le hook `input` et chaîne `output` autre pour le hook `output`.
+`input` pour le hook `input` et une chaîne `output` pour le hook `output`.
 Les règles à rajouter sont alors :
 
 	nft add set inet input ban "{type ipv4_addr; flags timeout;}"
-	nft add set inet ipnut slowban "{type ipv4_addr; flags timeout;}"
+	nft add set inet input slowban "{type ipv4_addr; flags timeout;}"
 	nft add rule inet filter input ip saddr @ban ct state new,established drop
-	nft add rule inet filter output ip daddr @slowban ct state new,established flow table slowbanftable { ip saddr limit rate over 10 kbytes/second } drop
+	nft add rule inet filter input ip saddr @slowban ct state new,established flow table slowban_in { ip saddr limit rate over 250 bytes/second } drop
+	nft add rule inet filter output ip daddr @slowban ct state new,established flow table slowban_out { ip daddr limit rate over 10 kbytes/second } drop
 
 
 Voici un moyen de faire marcher ce système entre chaque redémarrage du serveur :
