@@ -14,6 +14,7 @@ from scipy.io.wavfile import read
 from salt import SALT
 from tools.audio_tools import mix_tracks
 from tools import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
+from tools.effects.effects import SkyblogEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.users import User
 
@@ -104,7 +105,7 @@ class SpeechDeformation(PhonemicEffect):
 
 fake_cookie = md5(("6225fff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [VowelExchangeEffect()]:
+for effect in [SkyblogEffect()]:
     user.state.add_effect(effect)
 
 

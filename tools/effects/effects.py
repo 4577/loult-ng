@@ -234,6 +234,19 @@ class SpeechMasterEffect(HiddenTextEffect):
                                   for word in space_splitted])
         return reconstructed
 
+class SkyblogEffect(ExplicitTextEffect):
+    """Increases your style by 64%"""
+    NAME = "skyblog"
+    TIMEOUT = 120
+    available_punctuation = "?,!.:'"
+
+    def process(self, text: str):
+        reconstructed = ""
+        for char in text:
+            reconstructed += char.upper() if random.randint(1,3) == 1 else char
+
+        return reconstructed
+
 
 #### Here are the phonemic effects ####
 
