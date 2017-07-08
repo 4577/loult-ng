@@ -61,6 +61,8 @@ class AudioRenderer:
         return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
     async def string_to_audio(self, text : str, lang : str, voice_params : 'VoiceParameters') -> bytes:
+        """Renders directly a string to audio using an espeak -> mbrola pipeline
+        (output is a wav bytes object)"""
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                        '| MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
@@ -72,6 +74,7 @@ class AudioRenderer:
         return self._wav_format(wav)
 
     async def phonemes_to_audio(self, phonemes : PhonemList, lang : str, voice_params : 'VoiceParameters') -> bytes:
+        """Renders a phonemlist object to audio using mbrola"""
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         audio_synth_string = 'MALLOC_CHECK_=0 mbrola -v %g -e /usr/share/mbrola/%s%d/%s%d - -.wav' \
                              % (volume, lang, voice, lang, voice)
@@ -82,6 +85,7 @@ class AudioRenderer:
         return self._wav_format(wav)
 
     async def string_to_phonemes(self, text : str, lang : str, voice_params : 'VoiceParameters') -> PhonemList:
+        """Renders an input string to a phonemlist object using espeak"""
         lang, voice, sex, volume = self._get_additional_params(lang, voice_params)
         phonem_synth_string = 'MALLOC_CHECK_=0 espeak -s %d -p %d --pho -q -v mb/mb-%s%d %s ' \
                               % (voice_params.speed, voice_params.pitch, lang, sex, text)
@@ -98,7 +102,7 @@ class AudioRenderer:
         # casting the data array to the right format (float32, for usage by pysndfx)
         data = (data / (2. ** 15)).astype('float32')
         if rate != BASE_SAMPLING_RATE:
-            data = await resample(data, rate, BASE_SAMPLING_RATE)
+            data = resample(data, rate, BASE_SAMPLING_RATE)
 
         return BASE_SAMPLING_RATE, data
 
