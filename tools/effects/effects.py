@@ -12,11 +12,11 @@ from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
 
 import tools
-from .audio_tools import mix_tracks, get_sounds
+from tools.audio_tools import mix_tracks, get_sounds, BASE_SAMPLING_RATE
+from tools.effects.tree import Node, Leaf
+from tools.phonems import PhonemList, Phonem, FrenchPhonems
+from tools.users import VoiceParameters
 from .melody import chord_progressions, get_harmonies
-from .phonems import PhonemList, Phonem, FrenchPhonems
-from .users import VoiceParameters
-from .data.contradicteur.tree import Node, Leaf
 
 
 # TODO : effet théatre, effet speech random
@@ -506,9 +506,9 @@ class ReverbManEffect(AudioEffect):
         return self._name
 
     def process(self, wave_data: numpy.ndarray):
-        wave_data = numpy.concatenate([wave_data, numpy.zeros(16000, wave_data.dtype)])
+        wave_data = numpy.concatenate([wave_data, numpy.zeros(BASE_SAMPLING_RATE, wave_data.dtype)])
         apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
-        return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
+        return apply_audio_effects(wave_data, sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
 
 
 class GhostEffect(AudioEffect):
@@ -527,7 +527,7 @@ class RobotVoiceEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         apply_audio_effects = AudioEffectsChain().pitch(200).tremolo(500).delay(0.6, 0.8, [33],[0.9])
-        return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
+        return apply_audio_effects(wave_data, sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
 
 
 class AngryRobotVoiceEffect(AudioEffect):
@@ -538,14 +538,14 @@ class AngryRobotVoiceEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         effects_partials = [partial(AudioEffectsChain().pitch(pitch),
-                                    sample_in=16000, sample_out=16000)
+                                    sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
                             for pitch in [200, 100, -100, -200]]
         reverb = AudioEffectsChain().reverb(reverberance=50, hf_damping=100).gain(-5)
         repitched_arrays = [effect(wave_data) for effect in effects_partials]
         min_len = min(map(len, repitched_arrays))
 
         return reverb(sum([audio_array[:min_len] for audio_array in repitched_arrays]),
-                      sample_in=16000, sample_out=16000)
+                      sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
 
 
 class WpseEffect(AudioEffect):

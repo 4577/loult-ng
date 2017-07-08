@@ -13,7 +13,7 @@ class Leaf:
         else:
             raise IndexError()
 
-    def has_leaf(self, leaf: Leaf):
+    def has_leaf(self, leaf):
         return True
 
     @property
