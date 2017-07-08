@@ -1,5 +1,5 @@
 from os import path
-from tools.data.contradicteur.tree import Leaf, Node
+from tools.effects.tree import Leaf, Node
 import pickle
 
 ###### WARNING : has to be launched from the root of the project in order for pickle

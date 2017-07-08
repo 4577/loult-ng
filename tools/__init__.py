@@ -1,9 +1,9 @@
-from .effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, RobotVoiceEffect,
+from .effects.effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, RobotVoiceEffect,
                       GhostEffect, SpeechMasterEffect, PoiloEffect, PitchRandomizerEffect,
                       PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, AngryRobotVoiceEffect,
                       VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect, AutotuneEffect, VoiceSpeedupEffect,
                       StutterEffect, GrandSpeechMasterEffect, VowelExchangeEffect)
-from .effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
+from .effects.effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
 from .phonems import PhonemList
 
 

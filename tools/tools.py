@@ -13,7 +13,9 @@ from typing import Union
 import numpy
 from scipy.io import wavfile
 
-from tools.audio_tools import resample
+from resampy import resample
+
+from tools.audio_tools import BASE_SAMPLING_RATE
 from tools.phonems import PhonemList, Phonem
 
 logger = logging.getLogger('tools')
@@ -95,11 +97,10 @@ class AudioRenderer:
         rate, data = wavfile.read(BytesIO(wav))
         # casting the data array to the right format (float32, for usage by pysndfx)
         data = (data / (2. ** 15)).astype('float32')
-        if rate != 16000:
-            data = await resample(data, rate)
-            rate = 16000
+        if rate != BASE_SAMPLING_RATE:
+            data = await resample(data, rate, BASE_SAMPLING_RATE)
 
-        return rate, data
+        return BASE_SAMPLING_RATE, data
 
     @staticmethod
     def to_wav_bytes(data : numpy.ndarray, rate : int) -> bytes:
