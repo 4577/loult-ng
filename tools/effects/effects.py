@@ -20,6 +20,7 @@ from .melody import chord_progressions, get_harmonies
 
 
 # TODO : effet théatre, effet speech random
+# guitar raggea + maitre de l'élocution
 # effet javanais
 
 
@@ -185,7 +186,7 @@ class PoiloEffect(ExplicitTextEffect):
 class ContradictorEffect(ExplicitTextEffect):
     NAME = "contradicteur"
     TIMEOUT = 600
-    TREE_FILEPATH = path.join(path.dirname(path.realpath(__file__)), "data/contradicteur/liste_verbes.txt")
+    TREE_FILEPATH = path.join(path.dirname(path.realpath(__file__)), "data/contradicteur/verbs_tree.pckl")
 
     def __init__(self):
         super().__init__()
@@ -550,10 +551,14 @@ class AngryRobotVoiceEffect(AudioEffect):
     TIMEOUT = 150
 
     def process(self, wave_data: numpy.ndarray):
+        # making a partial for each pitch change
         effects_partials = [partial(AudioEffectsChain().pitch(pitch),
                                     sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
                             for pitch in [200, 100, -100, -200]]
+        # preparing a reverb effect chain
         reverb = AudioEffectsChain().reverb(reverberance=50, hf_damping=100).gain(-5)
+        # sometimes, the pitch_shifted output arrays are slightly different from one another,
+        # thus, to sum them we need to find the minimal length
         repitched_arrays = [effect(wave_data) for effect in effects_partials]
         min_len = min(map(len, repitched_arrays))
 
