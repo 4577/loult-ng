@@ -4,6 +4,7 @@ import random
 import wave
 from asyncio.events import get_event_loop
 from hashlib import md5
+from tkinter.tix import AUTO
 
 import numpy
 import pyaudio
@@ -14,7 +15,8 @@ from scipy.io.wavfile import read
 from salt import SALT
 from tools.audio_tools import mix_tracks
 from tools import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
-from tools.effects.effects import SkyblogEffect
+from tools.effects.effects import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
+    ContradictorEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.users import User
 
@@ -59,14 +61,6 @@ class TestEffect(AudioEffect):
         return low_shelf(wave_data)
 
 
-class Louder(AudioEffect):
-    NAME = "test"
-    TIMEOUT = 30
-
-    def process(self, wave_data: numpy.ndarray):
-        return wave_data * 2
-
-
 class ConvertINT16PCM(AudioEffect):
     NAME = "convert"
     TIMEOUT = 30
@@ -105,7 +99,7 @@ class SpeechDeformation(PhonemicEffect):
 
 fake_cookie = md5(("6225fff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [SkyblogEffect()]:
+for effect in [ContradictorEffect()]:
     user.state.add_effect(effect)
 
 
