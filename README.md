@@ -71,11 +71,29 @@ Voici un moyen de faire marcher ce système entre chaque redémarrage du serveur
 
 # Développement tiers
 
-## Bots
+## API
 
-Pour rendre votre bot plus discret, utilisez les types de message `bot` et `me`.
-Le type `bot`, accessible seulement de manière programmatique, est rendu comme un message
-en italiques et de la couleur associée au cookie du bot, sans synthèse vocale.
+Toutes les communications se font par websocket.
+Son point d'entrée est `wss://<nom de domaine>/socket/<room>`
+(ou `ws://...` si vous n'utilisez pas le chiffrement).
+
+Les clients ne peuvent envoyer que des messages JSON. Ils reçoivent des messages JSON
+et des messages binaires correspondant aux sons. Un son correspondant à un message JSON
+est envoyé juste après le message JSON ; il n'y a pas de marqueur associant un son à
+un utilisateur.
+
+Les messages envoyés par le client ont le format suivant : `{"type": <type>, "msg": <string>}`.
+`<type>` peut être `"msg"` pour un message normal, `"me"` pour les actions à la IRC,
+et `"bot"` pour que les bots puissent être plus discrets. Ce dernier type est accessible
+seulement de manière programmatique, est rendu comme un message en italiques et de la couleur
+associée au cookie du bot, sans synthèse vocale. Le type de message `"msg"` peut avoir
+un paramètre supplémentaire, `"lang"`, avec pour valeur un code de deux lettres parmis
+les langues disponibles : fr, en, es, de.
+
+Outre les moyens de communication textuelle, il est possible d'envoyer des commandes
+pour effectuer d'autres actions. Pour le moment, la seule autre action disponible est
+l'attaque, avec le format suivant :
+`{"type": "attack", "target": <nom du pokémon>, "order": <position dans la liste des utilisateurs (nombre entier)>}`.
 
 ## Fermeture impromptue du websocket
 
