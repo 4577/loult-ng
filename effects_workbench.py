@@ -2,7 +2,7 @@ import io
 import logging
 import random
 import wave
-from asyncio.events import get_event_loop
+from asyncio import get_event_loop
 from hashlib import md5
 from tkinter.tix import AUTO
 
@@ -102,26 +102,20 @@ user = User(fake_cookie, "wesh", None)
 for effect in [ContradictorEffect(),TestEffect()]:
     user.state.add_effect(effect)
 
-
-async def async_wrap():
-    text, wav = await user.render_message("""Non mais là les mecs faut se détendre si vous voulez sortir moi jme
-    ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre
-    ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas
-    a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections
-     régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe""",
-                                                 "fr")
-
-    # text, wav = await user.render_message('abaissa abaissai abaissaient abaissait abaissant abaisse abaissent ', "fr")
-    print("Text : ", text)
-    with open("/tmp/effect.wav", "wb") as wavfile:
-        wavfile.write(wav)
-    a = AudioFile(io.BytesIO(wav))
-    # a = AudioFile("/tmp/effect.wav")
-    a.play()
-    a.close()
+msg = """Non mais là les mecs faut se détendre si vous voulez sortir moi jme
+ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre
+ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas
+a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections
+ régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe"""
 
 loop = get_event_loop()
-loop.run_until_complete(async_wrap())
+text, wav = loop.run_until_complete(user.render_message(msg, "fr"))
 
+print("Text : ", text)
 
+with open("/tmp/effect.wav", "wb") as wavfile:
+    wavfile.write(wav)
+a = AudioFile(io.BytesIO(wav))
+a.play()
+a.close()
 

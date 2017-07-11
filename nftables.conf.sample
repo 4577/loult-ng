@@ -10,6 +10,8 @@ table inet filter {
 
         # Normal bans
         ip saddr @ban ct state new,established drop
+        # Slowbans
+        ip saddr @slowban ct state new,established flow table slowban_in { ip saddr limit rate over 250 bytes/second } drop
         
         # Basic rules
         iif lo accept
@@ -30,7 +32,7 @@ table inet filter {
         policy accept
 
         # Slowbans
-        ip daddr @slowban ct state new,established flow table slowbanftable { ip saddr limit rate over 10 kbytes/second } drop
+        ip daddr @slowban ct state new,established flow table slowban_out { ip daddr limit rate over 10 kbytes/second } drop
     }
 
     # The sets of (slow)banned IPs
