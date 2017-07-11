@@ -1,3 +1,4 @@
+from tools.effects.effects import PitchShiftEffect, ContradictorEffect
 from .effects.effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, RobotVoiceEffect,
                       GhostEffect, SpeechMasterEffect, PoiloEffect, PitchRandomizerEffect,
                       PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, AngryRobotVoiceEffect,
@@ -16,9 +17,10 @@ AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                     3 * [WpseEffect, SpeechMasterEffect, CrapweEffect,
                          VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
                          StutterEffect, GrandSpeechMasterEffect, TouretteEffect,
-                         VowelExchangeEffect] + \
+                         VowelExchangeEffect, PitchShiftEffect, PoiloEffect,
+                         ContradictorEffect] + \
                     6 * [AutotuneEffect, PitchRandomizerEffect,
-                         RobotVoiceEffect, PoiloEffect, AngryRobotVoiceEffect]
+                         RobotVoiceEffect, AngryRobotVoiceEffect]
 # AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
 
 

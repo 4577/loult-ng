@@ -11,7 +11,7 @@ tree = Node()
 
 with open(VERBS_FILEPATH) as verbs_file:
     for verb in verbs_file:
-        tree.add_leaf(Leaf(verb))
+        tree.add_leaf(Leaf(verb.strip()))
 
 with open(VERBS_TREE_FILEPATH, "wb") as picklefile:
     pickle.dump(tree, picklefile)

@@ -18,7 +18,7 @@ class Leaf:
 
     @property
     def isnull(self):
-        return self.str == "ok"
+        return not self.str
 
 class Node:
 
@@ -50,7 +50,7 @@ class Node:
         else:
             leaf_first_letter = leaf.pop_first()
             if leaf_first_letter in self.children:
-                return self.children[leaf_first_letter].has_leaf()
+                return self.children[leaf_first_letter].has_leaf(leaf)
             else:
                 return False
 
