@@ -1,0 +1,48 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+
+    chain input {
+        type filter hook input priority 0
+        policy drop
+
+        # Normal bans
+        ip saddr @ban ct state new,established drop
+        
+        # Basic rules
+        iif lo accept
+        ct state established,related accept
+        ct state invalid drop
+        ip protocol icmp icmp type {
+                destination-unreachable, router-advertisement,
+                time-exceeded, parameter-problem, echo-request
+            } accept
+
+        # Open usual ports and rate-limit them by IP
+        tcp dport ssh accept
+        tcp dport {http, https} flow table webftable { ip saddr limit rate 50/second burst 100 packets } accept
+    }
+
+    chain output {
+        type filter hook output priority 0
+        policy accept
+
+        # Slowbans
+        ip daddr @slowban ct state new,established flow table slowbanftable { ip saddr limit rate over 10 kbytes/second } drop
+    }
+
+    # The sets of (slow)banned IPs
+
+    set ban {
+        type ipv4_addr
+        flags timeout
+    }
+
+    set slowban {
+        type ipv4_addr
+        flags timeout
+    }
+
+}

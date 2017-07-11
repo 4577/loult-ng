@@ -1,9 +1,6 @@
 # in seconds, the time a pokemon has to wait before being able to attack again
 ATTACK_RESTING_TIME = 30
 
-# time in seconds before an user must wait before shelling a flooder again
-SHELLING_RESTING_TIME = 10
-
 # in seconds, the time during which a users's message are "remembered"
 FLOOD_DETECTION_WINDOW = 4
 
@@ -14,9 +11,6 @@ FLOOD_DETECTION_MSG_PER_SEC = 3
 # duration in seconds until a warned flooder
 # isn't considered a flooder anymore if they stop flooding
 FLOOD_WARNING_TIMEOUT = 5 * 60
-
-# Number of time a punitive message is sent to an attacked shadowmuted user
-PUNITIVE_MSG_COUNT = 50
 
 # in minutes, the time before a shadowmuted/banned user is able to connect again
 BAN_TIME = 1
@@ -29,3 +23,9 @@ BAN_TIME = 1
 BANNED_WORDS = [r"(?i).*\bTrump\b.*", r"(?i).*\bfag(got)?\b.*"]
 
 MOD_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
+
+# Name of a netfilter table with a chain whose hook is 'input' (resp. 'output')
+# in which the sets 'ban' (resp. 'slowban') are present. If you use the sample
+# config file for nftables you don't need to change anything here.
+NFTABLES_INPUT = 'filter'
+NFTABLES_OUTPUT = 'filter'
