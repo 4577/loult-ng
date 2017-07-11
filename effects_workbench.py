@@ -57,8 +57,8 @@ class TestEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         low_shelf = AudioEffectsChain().bandreject(80, q=10.0)
-        high_shelf = AudioEffectsChain().highpass(150)
-        return low_shelf(wave_data)
+        high_shelf = AudioEffectsChain().pitch(700)
+        return high_shelf(wave_data, sample_in=16000, sample_out=16000)
 
 
 class ConvertINT16PCM(AudioEffect):
@@ -97,9 +97,9 @@ class SpeechDeformation(PhonemicEffect):
         return phonems
 
 
-fake_cookie = md5(("6225fff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("6225f3ff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [ContradictorEffect()]:
+for effect in [ContradictorEffect(),TestEffect()]:
     user.state.add_effect(effect)
 
 
@@ -109,8 +109,9 @@ async def async_wrap():
     ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas
     a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections
      régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe""",
-                                                  "fr")
-    # text, wav = await user.render_message("Salut les mecs moi c'est jean paul" , "fr")
+                                                 "fr")
+
+    # text, wav = await user.render_message('abaissa abaissai abaissaient abaissait abaissant abaisse abaissent ', "fr")
     print("Text : ", text)
     with open("/tmp/effect.wav", "wb") as wavfile:
         wavfile.write(wav)

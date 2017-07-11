@@ -194,13 +194,14 @@ class ContradictorEffect(ExplicitTextEffect):
             self.verb_tree = pickle.load(treefile) # type:Node
 
     def process(self, text : str):
-        if random.randint(1,3) == 1:
+        if random.randint(1,1) == 1:
             splitted = text.split()  # fak ye baudrive
             reconstructed = ''
-            it = iter(splitted)
-            for word in it:
+            for word in splitted:
+                reconstructed += word + " "
                 if self.verb_tree.has_leaf(Leaf(word)): # testing if it's a verb
-                    reconstructed += word + ' pas'
+                    reconstructed += 'pas '
+            return  reconstructed
         else:
             return text
 
@@ -564,6 +565,22 @@ class AngryRobotVoiceEffect(AudioEffect):
 
         return reverb(sum([audio_array[:min_len] for audio_array in repitched_arrays]),
                       sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
+
+
+class PitchShiftEffect(AudioEffect):
+    NAME = "pitch shift"
+    TIMEOUT = 150
+
+    def __init__(self):
+        super().__init__()
+        if random.randint(0,1):
+            self._name, self.pitch_shift = "pascal le grand frère", -700
+        else:
+            self._name, self.pitch_shift = "castration", 700
+
+    def process(self, wave_data: numpy.ndarray):
+        pitch_shift = AudioEffectsChain().pitch(self.pitch_shift)
+        return pitch_shift(wave_data, sample_in=16000, sample_out=16000)
 
 
 class WpseEffect(AudioEffect):
