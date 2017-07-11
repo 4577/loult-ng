@@ -194,7 +194,7 @@ class ContradictorEffect(ExplicitTextEffect):
             self.verb_tree = pickle.load(treefile) # type:Node
 
     def process(self, text : str):
-        if random.randint(1,1) == 1:
+        if random.randint(1, 3) == 1:
             splitted = text.split()  # fak ye baudrive
             reconstructed = ''
             for word in splitted:
