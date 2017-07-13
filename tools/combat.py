@@ -2,7 +2,7 @@ from typing import Tuple
 import random
 
 from tools import get_random_effect
-from tools.effects import (TouretteEffect, CrapweEffect, TurboHangoul, MwfeEffect, WpseEffect,
+from tools.effects.effects import (TouretteEffect, CrapweEffect, TurboHangoul, MwfeEffect, WpseEffect,
                            GrandSpeechMasterEffect, AngryRobotVoiceEffect)
 
 

@@ -12,14 +12,15 @@ from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
 
 import tools
-from .audio_tools import mix_tracks, get_sounds
+from tools.audio_tools import mix_tracks, get_sounds, BASE_SAMPLING_RATE
+from tools.effects.tree import Node, Leaf
+from tools.phonems import PhonemList, Phonem, FrenchPhonems
+from tools.users import VoiceParameters
 from .melody import chord_progressions, get_harmonies
-from .phonems import PhonemList, Phonem, FrenchPhonems
-from .users import VoiceParameters
-from .data.contradicteur.tree import Node, Leaf
 
 
 # TODO : effet théatre, effet speech random
+# guitar raggea + maitre de l'élocution
 # effet javanais
 
 
@@ -185,7 +186,7 @@ class PoiloEffect(ExplicitTextEffect):
 class ContradictorEffect(ExplicitTextEffect):
     NAME = "contradicteur"
     TIMEOUT = 600
-    TREE_FILEPATH = path.join(path.dirname(path.realpath(__file__)), "data/contradicteur/liste_verbes.txt")
+    TREE_FILEPATH = path.join(path.dirname(path.realpath(__file__)), "data/contradicteur/verbs_tree.pckl")
 
     def __init__(self):
         super().__init__()
@@ -193,13 +194,14 @@ class ContradictorEffect(ExplicitTextEffect):
             self.verb_tree = pickle.load(treefile) # type:Node
 
     def process(self, text : str):
-        if random.randint(1,3) == 1:
+        if random.randint(1, 3) == 1:
             splitted = text.split()  # fak ye baudrive
             reconstructed = ''
-            it = iter(splitted)
-            for word in it:
+            for word in splitted:
+                reconstructed += word + " "
                 if self.verb_tree.has_leaf(Leaf(word)): # testing if it's a verb
-                    reconstructed += word + ' pas'
+                    reconstructed += 'pas '
+            return  reconstructed
         else:
             return text
 
@@ -232,6 +234,19 @@ class SpeechMasterEffect(HiddenTextEffect):
         space_splitted = [word for word in text.split(" ") if word != ""]
         reconstructed = " ".join([word + random.choice(self.available_punctuation)
                                   for word in space_splitted])
+        return reconstructed
+
+class SkyblogEffect(ExplicitTextEffect):
+    """Increases your style by 64%"""
+    NAME = "skyblog"
+    TIMEOUT = 120
+    available_punctuation = "?,!.:'"
+
+    def process(self, text: str):
+        reconstructed = ""
+        for char in text:
+            reconstructed += char.upper() if random.randint(1,3) == 1 else char
+
         return reconstructed
 
 
@@ -506,9 +521,9 @@ class ReverbManEffect(AudioEffect):
         return self._name
 
     def process(self, wave_data: numpy.ndarray):
-        wave_data = numpy.concatenate([wave_data, numpy.zeros(16000, wave_data.dtype)])
+        wave_data = numpy.concatenate([wave_data, numpy.zeros(BASE_SAMPLING_RATE, wave_data.dtype)])
         apply_audio_effects = AudioEffectsChain().reverb(reverberance=100, hf_damping=100)
-        return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
+        return apply_audio_effects(wave_data, sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
 
 
 class GhostEffect(AudioEffect):
@@ -527,7 +542,7 @@ class RobotVoiceEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         apply_audio_effects = AudioEffectsChain().pitch(200).tremolo(500).delay(0.6, 0.8, [33],[0.9])
-        return apply_audio_effects(wave_data, sample_in=16000, sample_out=16000)
+        return apply_audio_effects(wave_data, sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
 
 
 class AngryRobotVoiceEffect(AudioEffect):
@@ -537,15 +552,35 @@ class AngryRobotVoiceEffect(AudioEffect):
     TIMEOUT = 150
 
     def process(self, wave_data: numpy.ndarray):
+        # making a partial for each pitch change
         effects_partials = [partial(AudioEffectsChain().pitch(pitch),
-                                    sample_in=16000, sample_out=16000)
+                                    sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
                             for pitch in [200, 100, -100, -200]]
+        # preparing a reverb effect chain
         reverb = AudioEffectsChain().reverb(reverberance=50, hf_damping=100).gain(-5)
+        # sometimes, the pitch_shifted output arrays are slightly different from one another,
+        # thus, to sum them we need to find the minimal length
         repitched_arrays = [effect(wave_data) for effect in effects_partials]
         min_len = min(map(len, repitched_arrays))
 
         return reverb(sum([audio_array[:min_len] for audio_array in repitched_arrays]),
-                      sample_in=16000, sample_out=16000)
+                      sample_in=BASE_SAMPLING_RATE, sample_out=BASE_SAMPLING_RATE)
+
+
+class PitchShiftEffect(AudioEffect):
+    NAME = "pitch shift"
+    TIMEOUT = 150
+
+    def __init__(self):
+        super().__init__()
+        if random.randint(0,1):
+            self._name, self.pitch_shift = "pascal le grand frère", -700
+        else:
+            self._name, self.pitch_shift = "castration", 700
+
+    def process(self, wave_data: numpy.ndarray):
+        pitch_shift = AudioEffectsChain().pitch(self.pitch_shift)
+        return pitch_shift(wave_data, sample_in=16000, sample_out=16000)
 
 
 class WpseEffect(AudioEffect):
