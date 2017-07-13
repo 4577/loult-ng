@@ -4,7 +4,6 @@ import random
 import wave
 from asyncio import get_event_loop
 from hashlib import md5
-from tkinter.tix import AUTO
 
 import numpy
 import pyaudio
@@ -15,7 +14,7 @@ from scipy.io.wavfile import read
 from salt import SALT
 from tools.audio_tools import mix_tracks
 from tools import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
-from tools.effects.effects import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
+from tools import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
     ContradictorEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.users import User
