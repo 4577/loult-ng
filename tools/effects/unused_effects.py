@@ -7,8 +7,8 @@ import numpy
 from scipy.io.wavfile import read
 
 from tools.effects import EffectGroup
-from .phonems import PhonemList
-from .effects import PhonemicEffect, AudioEffect, ExplicitTextEffect
+from tools.phonems import PhonemList
+from tools.effects import PhonemicEffect, AudioEffect, ExplicitTextEffect
 from tools.audio_tools import get_sounds, mix_tracks
 
 

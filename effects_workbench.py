@@ -4,6 +4,7 @@ import random
 import wave
 from asyncio import get_event_loop
 from hashlib import md5
+from tkinter.tix import AUTO
 
 import numpy
 import pyaudio
@@ -13,7 +14,9 @@ from scipy.io.wavfile import read
 
 from salt import SALT
 from tools.audio_tools import mix_tracks
-from tools.effects import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
+from tools import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
+from tools.effects.effects import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
+    ContradictorEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.users import User
 
@@ -54,16 +57,8 @@ class TestEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         low_shelf = AudioEffectsChain().bandreject(80, q=10.0)
-        high_shelf = AudioEffectsChain().highpass(150)
-        return low_shelf(wave_data)
-
-
-class Louder(AudioEffect):
-    NAME = "test"
-    TIMEOUT = 30
-
-    def process(self, wave_data: numpy.ndarray):
-        return wave_data * 2
+        high_shelf = AudioEffectsChain().pitch(700)
+        return high_shelf(wave_data, sample_in=16000, sample_out=16000)
 
 
 class ConvertINT16PCM(AudioEffect):
@@ -102,9 +97,9 @@ class SpeechDeformation(PhonemicEffect):
         return phonems
 
 
-fake_cookie = md5(("6225fff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("6225f3ff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [VowelExchangeEffect()]:
+for effect in [ContradictorEffect(),TestEffect()]:
     user.state.add_effect(effect)
 
 msg = """Non mais là les mecs faut se détendre si vous voulez sortir moi jme
@@ -121,7 +116,6 @@ print("Text : ", text)
 with open("/tmp/effect.wav", "wb") as wavfile:
     wavfile.write(wav)
 a = AudioFile(io.BytesIO(wav))
-# a = AudioFile("/tmp/effect.wav")
 a.play()
 a.close()
 
