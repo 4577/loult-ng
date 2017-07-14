@@ -2,6 +2,7 @@ import io
 import logging
 import random
 import wave
+from asyncio import get_event_loop
 from hashlib import md5
 
 import numpy
@@ -10,16 +11,43 @@ from numpy.lib.function_base import average
 from pysndfx import AudioEffectsChain
 from scipy.io.wavfile import read
 
-from poke import User
 from salt import SALT
-from tools.effects import AudioEffect, PhonemicEffect, AutotuneEffect, MwfeEffect, GodSpeakingEffect, WpseEffect, \
-    TurboHangoul, CrapweEffect, TurfuEffect, StutterEffect, VoiceSpeedupEffect, GrandSpeechMasterEffect, \
-    PoiloEffect, RobotVoiceEffect, GaDoSEffect, PitchRandomizerEffect
-from tools import SitcomEffect
-from tools.phonems import PhonemList, FrenchPhonems
 from tools.audio_tools import mix_tracks
+from tools import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
+from tools import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
+    ContradictorEffect
+from tools.phonems import PhonemList, FrenchPhonems
+from tools.users import User
 
 logging.getLogger().setLevel(logging.DEBUG)
+
+
+class AudioFile:
+    """A sound player"""
+    chunk = 1024
+
+    def __init__(self, file):
+        """ Init audio stream """
+        self.wf = wave.open(file, 'rb')
+        self.p = pyaudio.PyAudio()
+        self.stream = self.p.open(
+            format = self.p.get_format_from_width(self.wf.getsampwidth()),
+            channels = self.wf.getnchannels(),
+            rate = self.wf.getframerate(),
+            output = True
+        )
+
+    def play(self):
+        """ Play entire file """
+        data = self.wf.readframes(self.chunk)
+        while data != b'':
+            self.stream.write(data)
+            data = self.wf.readframes(self.chunk)
+
+    def close(self):
+        """ Graceful shutdown """
+        self.stream.close()
+        self.p.terminate()
 
 
 class TestEffect(AudioEffect):
@@ -28,16 +56,8 @@ class TestEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         low_shelf = AudioEffectsChain().bandreject(80, q=10.0)
-        high_shelf = AudioEffectsChain().highpass(150)
-        return low_shelf(wave_data)
-
-
-class Louder(AudioEffect):
-    NAME = "test"
-    TIMEOUT = 30
-
-    def process(self, wave_data: numpy.ndarray):
-        return wave_data * 2
+        high_shelf = AudioEffectsChain().pitch(700)
+        return high_shelf(wave_data, sample_in=16000, sample_out=16000)
 
 
 class ConvertINT16PCM(AudioEffect):
@@ -75,47 +95,26 @@ class SpeechDeformation(PhonemicEffect):
                 phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 40) for i in range(4)])
         return phonems
 
-fake_cookie = md5(("622526c024c0629233193a39466" + SALT).encode('utf8')).digest()
+
+fake_cookie = md5(("6225f3ff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [PoiloEffect(), PitchRandomizerEffect()]:
+for effect in [ContradictorEffect(),TestEffect()]:
     user.state.add_effect(effect)
 
-text, wav = user.render_message("Non mais là les mecs faut se détendre si vous voulez sortir moi jme ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe", "fr")
-# text, wav = user.render_message("Salut les mecs moi c'est jean paul" , "fr")
-# text, wav = user.render_message("non mais mec on va mettre les choses à plat au clair au calme tout de suite là je t'ai dit tu viens faire le chaud mais genre tu crois t'as cru ou bien fin ça me fait bien rire là c'est bien fendard ton ptit numéro de genre ouais jsuis un solide et tout mais tu vois ta gueule elle est sur tes épaules mais ça trompepersonne bâtard je m'en carreles couilles sur lesoreilles de tes épaules ma gueule ouais t'as bien compris moi aussi je peux m'ebalancer les sacs à noisette", "fr")
+msg = """Non mais là les mecs faut se détendre si vous voulez sortir moi jme
+ferais un plaisir de putain de sortir des pédales comme vous parce que putain jreconnais les gars comme vous genre
+ils sla pètent ouais moi jsais chier debout et tout mais mon gars les mecs qui chient debout arrivent pas
+a pisser assis et ceux qui pissent assis mon gars c'est des connards qui votent pour daesh aux élections
+ régionales ça c'est avéré jai vécu des trucs dans ma life mon gars tsais meme pas ou ta sexualité se situe"""
+
+loop = get_event_loop()
+text, wav = loop.run_until_complete(user.render_message(msg, "fr"))
+
 print("Text : ", text)
 
 with open("/tmp/effect.wav", "wb") as wavfile:
     wavfile.write(wav)
-
-class AudioFile:
-    """A sound player"""
-    chunk = 1024
-
-    def __init__(self, file):
-        """ Init audio stream """
-        self.wf = wave.open(file, 'rb')
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(
-            format = self.p.get_format_from_width(self.wf.getsampwidth()),
-            channels = self.wf.getnchannels(),
-            rate = self.wf.getframerate(),
-            output = True
-        )
-
-    def play(self):
-        """ Play entire file """
-        data = self.wf.readframes(self.chunk)
-        while data != b'':
-            self.stream.write(data)
-            data = self.wf.readframes(self.chunk)
-
-    def close(self):
-        """ Graceful shutdown """
-        self.stream.close()
-        self.p.terminate()
-
 a = AudioFile(io.BytesIO(wav))
-#a = AudioFile("/tmp/effect.wav")
 a.play()
 a.close()
+
