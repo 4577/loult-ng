@@ -1,26 +1,30 @@
-from .unused_effects import ReversedEffect
-from .effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, RobotVoiceEffect,
-                      GhostEffect, SpeechMasterEffect, AmbianceEffect, PoiloEffect, PitchRandomizerEffect,
-                      PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, GaDoSEffect,
-                      VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, BeatsEffect,
-                      VenerEffect, VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect, TurfuEffect,
-                      AutotuneEffect, VoiceSpeedupEffect, StutterEffect, GrandSpeechMasterEffect)
-from tools.unused_effects import SitcomEffect
-from .effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
-from .phonems import PhonemList
-
-
 import random
+
+from .effects.effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
+from .effects.effects import (
+        Effect, SnebwewEffect, ReverbManEffect, TouretteEffect,
+        RobotVoiceEffect, GhostEffect, SpeechMasterEffect, PoiloEffect,
+        PitchRandomizerEffect, PhonemicNwwoiwwEffect, PhonemicFofoteEffect,
+        AccentMarseillaisEffect, AngryRobotVoiceEffect, VocalDyslexia,
+        AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect,
+        VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect,
+        AutotuneEffect, VoiceSpeedupEffect, StutterEffect,
+        GrandSpeechMasterEffect, VowelExchangeEffect, SkyblogEffect,
+        PitchShiftEffect, ContradictorEffect,
+    )
+
 # the multiplier for each tools list sets the "probability" of the effect
 AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, MwfeEffect,
-                         SpoinkEffect, TurboHangoul, TouretteEffect] + \
-                    3 * [GhostEffect, SpeechMasterEffect, CrapweEffect,
+                         SpoinkEffect, TurboHangoul, GhostEffect, TurboHangoul,
+                         SkyblogEffect] + \
+                    3 * [WpseEffect, SpeechMasterEffect, CrapweEffect,
                          VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
-                         StutterEffect, GrandSpeechMasterEffect] + \
+                         StutterEffect, GrandSpeechMasterEffect, TouretteEffect,
+                         VowelExchangeEffect, PitchShiftEffect, PoiloEffect] + \
                     6 * [AutotuneEffect, PitchRandomizerEffect,
-                         RobotVoiceEffect, PoiloEffect, GaDoSEffect]
-# AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
+                         RobotVoiceEffect, AngryRobotVoiceEffect]
+#AVAILABLE_EFFECTS = [ContradictorEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:

@@ -7,6 +7,7 @@ import numpy
 from numpy import pad
 from scipy.io.wavfile import read
 
+BASE_SAMPLING_RATE = 16000
 
 def mix_tracks(track1, track2, offset=None, align=None):
     """Function that mixes two tracks of unequal lengths(represented by numpy arrays) together,
@@ -70,7 +71,7 @@ def get_sounds(dir: str) -> List[numpy.ndarray]:
     return sounds
 
 
-async def resample(wave_data : numpy.ndarray, sample_in, sample_out=16000):
+async def resample(wave_data : numpy.ndarray, sample_in, sample_out=BASE_SAMPLING_RATE):
     """Uses sox to resample the wave data array"""
     cmd = "sox -N -V1 -t f32 -r %s -c 1 - -t f32 -r %s -c 1 -" % (sample_in, sample_out)
     process = await create_subprocess_shell(cmd, stdin=PIPE, stdout=PIPE)
