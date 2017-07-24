@@ -6,7 +6,7 @@ La partie client est en HTML/CSS/JS statique et la partie serveur en Python.
 
 * Installez nginx, python3-venv, le synthétiseur vocal mbrola,
 espeak, sox, ainsi que les voix mbrola :
-`apt install nginx mbrola espeak sox mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3 python3-venv`
+`apt install git nginx mbrola espeak sox mbrola-fr1 mbrola-us1 mbrola-es1 mbrola-de4 python3 python3-venv python3-dev python3-pip portaudio19-dev build-essential`
 
 * Clonez le lou sur votre propre machine :
 ```bash
@@ -18,7 +18,8 @@ cd loult-ng
 python3 -m venv venv
 source venv/bin/activate
 ```
-* Installez le reste des dépendances avec pip : `pip install -r requirements.txt`
+* Installez d'abord `numpy` et `wheel` avec `pip install numpy wheel`
+* installez le reste des dépendances : `pip install -r requirements.txt`
 * Créez un fichier `salt.py` contenant `SALT = '<valeur arbitraire>'`
 * Configurez nginx en vous servant de `loult.conf` (notamment adaptez le chemin de `$static`)
 ```bash
