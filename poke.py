@@ -301,6 +301,7 @@ class LoultServer:
             if self.cookie in SOUND_BROADCASTER_COOKIES:
                 try:
                     _, _ = wave.open(BytesIO(payload))
+                    self._broadcast_to_channel(binary_payload=payload)
                 except wave.Error:
                     return self.sendClose(code=4002,
                                           reason='Invalid wav sound file')
