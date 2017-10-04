@@ -2,6 +2,7 @@
 #-*- encoding: Utf-8 -*-
 import json
 import logging
+import wave
 from asyncio import get_event_loop, ensure_future
 from collections import OrderedDict, deque
 from copy import deepcopy
@@ -13,12 +14,13 @@ from itertools import chain
 from os import urandom, path
 from re import sub
 from time import time
+from io import BytesIO
 from typing import List, Dict, Set, Tuple
 
 from autobahn.websocket.types import ConnectionDeny
 from salt import SALT
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES
+from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.tools import INVISIBLE_CHARS, encode_json
@@ -296,8 +298,16 @@ class LoultServer:
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         if isBinary:
-            return self.sendClose(code=4002,
-                                  reason='Binary data is not accepted')
+            if self.cookie in SOUND_BROADCASTER_COOKIES:
+                try:
+                    _, _ = wave.open(BytesIO(payload))
+                    self._broadcast_to_channel(binary_payload=payload)
+                except wave.Error:
+                    return self.sendClose(code=4002,
+                                          reason='Invalid wav sound file')
+            else:
+                return self.sendClose(code=4002,
+                                      reason='Binary data is not accepted')
 
         try:
             msg = json.loads(payload.decode('utf-8'))
