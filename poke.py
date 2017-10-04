@@ -298,9 +298,10 @@ class LoultServer:
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         if isBinary:
-            if self.cookie in SOUND_BROADCASTER_COOKIES:
+            print("%s sending a sound file" % self.raw_cookie)
+            if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
                 try:
-                    _, _ = wave.open(BytesIO(payload))
+                    _ = wave.open(BytesIO(payload))
                     self._broadcast_to_channel(binary_payload=payload)
                 except wave.Error:
                     return self.sendClose(code=4002,
@@ -308,36 +309,36 @@ class LoultServer:
             else:
                 return self.sendClose(code=4002,
                                       reason='Binary data is not accepted')
-
-        try:
-            msg = json.loads(payload.decode('utf-8'))
-        except json.JSONDecodeError:
-            return self.sendClose(code=4001, reason='Malformed JSON.')
-
-        if 'msg' in msg:
-            msg['msg'] = sub(INVISIBLE_CHARS, '', msg['msg'])
-
-        if msg['type'] == 'msg':
-            # when the message is just a simple text message (regular chat)
-            ensure_future(self._msg_handler(msg))
-
-        elif msg["type"] == "attack":
-            # when the current client attacks someone else
-            ensure_future(self._attack_handler(msg))
-
-        elif msg["type"] == "move":
-            # when a user moves
-            ensure_future(self._move_handler(msg))
-
-        elif msg["type"] in Ban.ban_types:
-            ensure_future(self._ban_handler(msg))
-
-        elif msg['type'] in ('me', 'bot'):
-            ensure_future(self._extra_handler(msg))
-
         else:
-            return self.sendClose(code=4003,
-                                  reason='Unrecognized command type.')
+            try:
+                msg = json.loads(payload.decode('utf-8'))
+            except json.JSONDecodeError:
+                return self.sendClose(code=4001, reason='Malformed JSON.')
+
+            if 'msg' in msg:
+                msg['msg'] = sub(INVISIBLE_CHARS, '', msg['msg'])
+
+            if msg['type'] == 'msg':
+                # when the message is just a simple text message (regular chat)
+                ensure_future(self._msg_handler(msg))
+
+            elif msg["type"] == "attack":
+                # when the current client attacks someone else
+                ensure_future(self._attack_handler(msg))
+
+            elif msg["type"] == "move":
+                # when a user moves
+                ensure_future(self._move_handler(msg))
+
+            elif msg["type"] in Ban.ban_types:
+                ensure_future(self._ban_handler(msg))
+
+            elif msg['type'] in ('me', 'bot'):
+                ensure_future(self._extra_handler(msg))
+
+            else:
+                return self.sendClose(code=4003,
+                                      reason='Unrecognized command type.')
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
@@ -489,8 +490,6 @@ if __name__ == "__main__":
     factory.setProtocolOptions(
             autoPingInterval=60,
             autoPingTimeout=30,
-            maxFramePayloadSize=4096,
-            maxMessagePayloadSize=4096,
         )
 
     coro = loop.create_server(factory, '127.0.0.1', 9000)
