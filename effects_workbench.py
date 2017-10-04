@@ -4,6 +4,7 @@ import random
 import wave
 from asyncio import get_event_loop
 from hashlib import md5
+from tkinter.tix import AUTO
 
 import numpy
 import pyaudio
@@ -14,8 +15,8 @@ from scipy.io.wavfile import read
 from salt import SALT
 from tools.audio_tools import mix_tracks
 from tools import AudioEffect, PhonemicEffect, PoiloEffect, PitchRandomizerEffect, PhonemicFofoteEffect, VowelExchangeEffect
-from tools import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
-    ContradictorEffect
+from tools.effects.effects import SkyblogEffect, AutotuneEffect, GrandSpeechMasterEffect, CrapweEffect, ReverbManEffect, \
+    ContradictorEffect, RobotVoiceEffect, PitchShiftEffect
 from tools.phonems import PhonemList, FrenchPhonems
 from tools.users import User
 
@@ -96,9 +97,9 @@ class SpeechDeformation(PhonemicEffect):
         return phonems
 
 
-fake_cookie = md5(("6225f3ff26c0424c069233193a39466" + SALT).encode('utf8')).digest()
+fake_cookie = md5(("6225f3ff26c044c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [ContradictorEffect(),TestEffect()]:
+for effect in [ContradictorEffect(),AutotuneEffect(), PitchShiftEffect(), RobotVoiceEffect()]:
     user.state.add_effect(effect)
 
 msg = """Non mais là les mecs faut se détendre si vous voulez sortir moi jme

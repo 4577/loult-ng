@@ -24,6 +24,10 @@ BANNED_WORDS = [r"(?i).*\bTrump\b.*", r"(?i).*\bfag(got)?\b.*"]
 
 MOD_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
 
+# Here are the cookies of users that can broadcast sound to other users. For those users, when they send a
+# wav saound binary, the sound is just passed to other users with no modifications
+SOUND_BROADCASTER_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
+
 # Name of a netfilter table with a chain whose hook is 'input' (resp. 'output')
 # in which the sets 'ban' (resp. 'slowban') are present. If you use the sample
 # config file for nftables you don't need to change anything here.
