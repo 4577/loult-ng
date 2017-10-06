@@ -1,14 +1,18 @@
-from tools.effects.effects import PitchShiftEffect, ContradictorEffect
-from .effects.effects import (Effect, SnebwewEffect, ReverbManEffect, TouretteEffect, RobotVoiceEffect,
-                      GhostEffect, SpeechMasterEffect, PoiloEffect, PitchRandomizerEffect,
-                      PhonemicNwwoiwwEffect, PhonemicFofoteEffect, AccentMarseillaisEffect, AngryRobotVoiceEffect,
-                      VocalDyslexia, AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect, VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect, AutotuneEffect, VoiceSpeedupEffect,
-                      StutterEffect, GrandSpeechMasterEffect, VowelExchangeEffect, SkyblogEffect)
-from .effects.effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
-from .phonems import PhonemList
-
-
 import random
+
+from .effects.effects import PhonemicEffect, VoiceEffect, AudioEffect, ExplicitTextEffect, HiddenTextEffect
+from .effects.effects import (
+        Effect, SnebwewEffect, ReverbManEffect, TouretteEffect,
+        RobotVoiceEffect, GhostEffect, SpeechMasterEffect, PoiloEffect,
+        PitchRandomizerEffect, PhonemicNwwoiwwEffect, PhonemicFofoteEffect,
+        AccentMarseillaisEffect, AngryRobotVoiceEffect, VocalDyslexia,
+        AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect,
+        VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect,
+        AutotuneEffect, VoiceSpeedupEffect, StutterEffect,
+        GrandSpeechMasterEffect, VowelExchangeEffect, SkyblogEffect,
+        PitchShiftEffect, ContradictorEffect,
+    )
+
 # the multiplier for each tools list sets the "probability" of the effect
 AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, MwfeEffect,
@@ -21,7 +25,7 @@ AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                          ContradictorEffect] + \
                     6 * [AutotuneEffect, PitchRandomizerEffect,
                          RobotVoiceEffect, AngryRobotVoiceEffect]
-# AVAILABLE_EFFECTS = [BeatsEffect] # single tools list used when testing
+#AVAILABLE_EFFECTS = [ContradictorEffect] # single tools list used when testing
 
 
 def get_random_effect() -> Effect:
