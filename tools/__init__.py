@@ -13,11 +13,11 @@ import random
 AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, MwfeEffect,
                          SpoinkEffect, TurboHangoul, GhostEffect, TurboHangoul,
-                         SkyblogEffect] + \
+                         SkyblogEffect, PoiloEffect, AccentAllemandEffect] + \
                     3 * [WpseEffect, SpeechMasterEffect, CrapweEffect,
                          VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
                          StutterEffect, GrandSpeechMasterEffect, TouretteEffect,
-                         VowelExchangeEffect, PitchShiftEffect, PoiloEffect,
+                         VowelExchangeEffect, PitchShiftEffect,
                          ContradictorEffect] + \
                     6 * [AutotuneEffect, PitchRandomizerEffect,
                          RobotVoiceEffect, AngryRobotVoiceEffect]
