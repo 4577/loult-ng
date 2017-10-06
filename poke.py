@@ -20,11 +20,15 @@ from typing import List, Dict, Set, Tuple
 from autobahn.websocket.types import ConnectionDeny
 from salt import SALT
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES
+from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.tools import INVISIBLE_CHARS, encode_json
 from tools.users import User
+
+
+class UnauthorizedCookie(Exception):
+    pass
 
 
 class ClientLogAdapter(logging.LoggerAdapter):
@@ -108,7 +112,10 @@ class LoultServer:
         """Triggered once the WSS is opened. Mainly consists of registering the user in the channel, and
         sending the channel's information (connected users and the backlog) to the user"""
         # telling the  connected users'register to register the current user in the current channel
-        self.channel_obj, self.user = self.loult_state.channel_connect(self, self.cookie, self.channel_n)
+        try:
+            self.channel_obj, self.user = self.loult_state.channel_connect(self, self.cookie, self.channel_n)
+        except UnauthorizedCookie: # this means the user's cookie was denied
+            self.sendClose(code=4005, reason='Too many cookies already connected to your IP')
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
         my_userlist = OrderedDict([(user_id , deepcopy(user.info))
@@ -195,7 +202,7 @@ class LoultServer:
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
-        """Sends a wav file from a path relative to the current directory."""
+        """Opens a wav file from a path relative to the current directory."""
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
         with open(full_path, "rb") as sound_file:
             return sound_file.read()
@@ -358,12 +365,15 @@ class LoultServer:
 
 
 class Channel:
+
     def __init__(self, channel_name, state):
         self.name = channel_name
         self.loult_state = state
         self.clients = set()  # type:Set[LoultServer]
         self.users = OrderedDict()  # type:OrderedDict[str, User]
         self.backlog = []  # type:List
+        # this is used to track how many cookies we have per connected IP in that channel
+        self.ip_cookies_tracker = dict()  # type: Dict[str,Set[bytes]]
 
     def _signal_user_connect(self, client: LoultServer, user: User):
         client.send_json(type='connect', date=time() * 1000, **user.info)
@@ -381,6 +391,9 @@ class Channel:
                 self.clients.discard(client)
                 del self.users[user.user_id]
 
+                # removing the client/user's cookie from the ip-cookie tracker
+                self.ip_cookies_tracker[client.ip].remove(client.cookie)
+
                 for client in self.clients:
                     self._signal_user_disconnect(client, user)
 
@@ -391,6 +404,15 @@ class Channel:
             pass
 
     def user_connect(self, new_user : User, client : LoultServer):
+        if client.ip in self.ip_cookies_tracker:
+            if client.cookie not in self.ip_cookies_tracker[client.ip]:
+                if len(self.ip_cookies_tracker[client.ip]) >= MAX_COOKIES_PER_IP:
+                    raise UnauthorizedCookie()
+                else:
+                    self.ip_cookies_tracker[client.ip].add(client.cookie)
+        else:
+            self.ip_cookies_tracker[client.ip] = {client.cookie}
+
         if new_user.user_id not in self.users:
             for other_client in self.clients:
                 if other_client != client:
