@@ -4,7 +4,6 @@ import random
 import wave
 from asyncio import get_event_loop
 from hashlib import md5
-from tkinter.tix import AUTO
 
 import numpy
 import pyaudio
