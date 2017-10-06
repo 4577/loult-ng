@@ -5,6 +5,7 @@ from datetime import timedelta, datetime
 from re import compile as regex
 from struct import pack
 from typing import Tuple, List
+from os import path
 
 from config import FLOOD_DETECTION_WINDOW, BANNED_WORDS, FLOOD_WARNING_TIMEOUT, FLOOD_DETECTION_MSG_PER_SEC, \
     ATTACK_RESTING_TIME
@@ -12,6 +13,9 @@ from tools import pokemons
 
 from tools.tools import AudioRenderer, SpoilerBipEffect, prepare_text_for_tts
 from .phonems import PhonemList
+
+with open(path.join(path.dirname(path.realpath(__file__)), "data/adjectifs.txt")) as adj_file:
+    adjectives = adj_file.read().split()
 
 
 class VoiceParameters:
@@ -30,16 +34,18 @@ class VoiceParameters:
 
 class PokeParameters:
 
-    def __init__(self, color, poke_id):
+    def __init__(self, color, poke_id, adj_id):
         self.color = color
         self.poke_id = poke_id
         self.pokename = pokemons.pokemon[self.poke_id]
+        self.poke_adj = adjectives[adj_id]
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
         color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 0.8, 0.9)
         return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
-                   (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1) # poke id
+                   (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1,
+                   (cookie_hash[5] | (cookie_hash[6] << 14)) % len(adjectives) + 1) # poke id
 
 
 class UserState:
@@ -154,7 +160,8 @@ class User:
                 'params': {
                     'name': self.poke_params.pokename,
                     'img': str(self.poke_params.poke_id).zfill(3),
-                    'color': self.poke_params.color
+                    'color': self.poke_params.color,
+                    'adjective' : self.poke_params.poke_adj
                 }
             }
         return self._info
