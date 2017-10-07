@@ -132,16 +132,15 @@ class VenerEffect(EffectGroup):
             monkey_patched.rate, monkey_patched.track_data = read(sndfile)
         return [self.UPPERCASEEffect(), monkey_patched]
 
-
 class AmbianceEffect(AudioEffect):
     """Adds a random mood to the audio"""
     NAME = "ambiance"
     TIMEOUT = 180
     effects_mapping = {
-        "starwars_mood" : ("lasèw", 0.1),
+        "starwars_mood": ("lasèw", 0.1),
         # "bonfire_mood" : ("les feux de l'amouw", 0.6),
-        "seastorm_mood" : ("bretagne", 0.08),
-        "war_mood" : ("wesh yé ou ryan ce pd", 0.2),
+        "seastorm_mood": ("bretagne", 0.08),
+        "war_mood": ("wesh yé ou ryan ce pd", 0.2),
     }
     data_folder = path.join(path.dirname(path.realpath(__file__)), "data/ambiance/")
 
@@ -158,11 +157,10 @@ class AmbianceEffect(AudioEffect):
 
     def process(self, wave_data: numpy.ndarray):
         padding_time = self.rate * 2
-        rnd_pos = random.randint(0,len(self.track_data) - len(wave_data) - padding_time)
+        rnd_pos = random.randint(0, len(self.track_data) - len(wave_data) - padding_time)
         return mix_tracks(self.track_data[rnd_pos:rnd_pos + len(wave_data) + padding_time] * self.gain,
                           wave_data,
                           align="center")
-
 
 class BeatsEffect(AudioEffect):
     main_dir = path.join(path.dirname(path.realpath(__file__)), "data/beats/")

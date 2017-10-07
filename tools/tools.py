@@ -58,6 +58,8 @@ class AudioRenderer:
         return lang, voice, sex, volume
 
     def _wav_format(self, wav : bytes):
+        """Since the wav returned by Mbrola has an incomplete header (size of the wav isn't set), this
+        function sets the wav's RIFF header to their actual values"""
         return wav[:4] + pack('<I', len(wav) - 8) + wav[8:40] + pack('<I', len(wav) - 44) + wav[44:]
 
     async def string_to_audio(self, text : str, lang : str, voice_params : 'VoiceParameters') -> bytes:
