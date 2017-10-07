@@ -98,7 +98,7 @@ class SpeechDeformation(PhonemicEffect):
 
 fake_cookie = md5(("6225f3ff26c044c069233193a39466" + SALT).encode('utf8')).digest()
 user = User(fake_cookie, "wesh", None)
-for effect in [ContradictorEffect(),AutotuneEffect(), PitchShiftEffect(), GodSpeakingEffect()]:
+for effect in [AutotuneEffect(), GodSpeakingEffect()]:
     user.state.add_effect(effect)
 
 msg = """Non mais là les mecs faut se détendre si vous voulez sortir moi jme
