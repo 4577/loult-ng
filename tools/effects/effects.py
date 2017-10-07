@@ -18,7 +18,6 @@ from tools.phonems import PhonemList, Phonem, FrenchPhonems
 from tools.users import VoiceParameters
 from .melody import chord_progressions, get_harmonies
 
-
 # TODO : effet théatre, effet speech random
 # guitar raggea + maitre de l'élocution
 # effet javanais
@@ -195,12 +194,18 @@ class ContradictorEffect(ExplicitTextEffect):
 
     def process(self, text : str):
         if random.randint(1, 3) == 1:
-            splitted = text.split()  # fak ye baudrive
+            splitted = text.split()
             reconstructed = ''
+            previous_was_negation = False
             for word in splitted:
-                reconstructed += word + " "
-                if self.verb_tree.has_leaf(Leaf(word)): # testing if it's a verb
-                    reconstructed += 'pas '
+                if word.lower() in ["pas", "pa", "aps"]:
+                    previous_was_negation = True
+                else:
+                    reconstructed += word + " "
+                    if previous_was_negation and self.verb_tree.has_leaf(Leaf(word)): # testing if it's a verb
+                        reconstructed += 'pas'
+                        previous_was_negation = False
+
             return  reconstructed
         else:
             return text
@@ -281,7 +286,7 @@ class PhonemicFofoteEffect(PhonemicEffect):
 
 
 class AccentAllemandEffect(PhonemicEffect):
-    NAME = "aus meinem Vaterland"
+    NAME = "accent shleu"
     TIMEOUT = 150
     _tranlation_table = {"Z" : "S", # je -> che
                          "v" : "f", # vous -> fous
@@ -668,16 +673,29 @@ class MwfeEffect(EffectGroup):
 class GodSpeakingEffect(EffectGroup):
     TIMEOUT = 120
     NAME = "gode mode"
-    _sound_file = path.join(path.dirname(path.realpath(__file__)),
-                            "data/godspeaking/godspeaking.wav")
+
+    class BackgroundEffect(AudioEffect):
+        """Adds a mood to the audio"""
+        NAME = "ambiance"
+        TIMEOUT = 120
+        _sound_file = path.join(path.dirname(path.realpath(__file__)),
+                                "data/godspeaking/godspeaking.wav")
+        _gain = 0.4
+
+        def __init__(self):
+            super().__init__()
+            with open(self._sound_file, "rb") as sndfile:
+                self.rate, self.track_data = read(sndfile)
+
+        def process(self, wave_data: numpy.ndarray):
+            padding_time = self.rate * 2
+            rnd_pos = random.randint(0, len(self.track_data) - len(wave_data) - padding_time)
+            return mix_tracks(self.track_data[rnd_pos:rnd_pos + len(wave_data) + padding_time] * self._gain,
+                              wave_data,
+                              align="center")
 
     @property
     def effects(self):
-        monkey_patched = AmbianceEffect()
-        monkey_patched._timeout = 120
-        monkey_patched.gain = 0.4
-        with open(self._sound_file, "rb") as sndfile:
-            monkey_patched.rate, monkey_patched.track_data = read(sndfile)
-        return [ReverbManEffect(), monkey_patched]
+        return [ReverbManEffect(), self.BackgroundEffect()]
 
 
