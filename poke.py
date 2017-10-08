@@ -123,7 +123,7 @@ class LoultServer:
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.send_json(type='userlist', users=list(my_userlist.values()))
-        self.send_json(type='backlog', msgs=self.channel_obj.backlog)
+        self.send_json(type='backlog', msgs=self.channel_obj.backlog, date=time() * 1000)
 
         self.cnx = True  # connected!
         self.logger.info('has fully open a connection')
@@ -288,6 +288,11 @@ class LoultServer:
         for client in [client for client in self.channel_obj.clients if client.user.user_id == user_id]:
             client.send_json(type="banned",
                              msg="ofwere")
+
+        # and everyone is notified of the ban as to instigate fear in the heart of others
+        self._broadcast_to_channel(type='antiflood', event='banned',
+                                   flooder_id=user_id,
+                                   date=time() * 1000)
 
         connected_list = {client.ip for client in self.channel_obj.clients
                           if client.user.user_id == user_id}
