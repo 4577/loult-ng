@@ -16,7 +16,7 @@ from .effects.effects import (
 # the multiplier for each tools list sets the "probability" of the effect
 AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, SnebwewEffect, VoiceSpeedupEffect,
                          PhonemicFofoteEffect, VieuxPortEffect, MwfeEffect,
-                         SpoinkEffect, TurboHangoul, GhostEffect, TurboHangoul,
+                         TurboHangoul, GhostEffect, TurboHangoul,
                          SkyblogEffect, PoiloEffect, AccentAllemandEffect] + \
                     3 * [WpseEffect, SpeechMasterEffect, CrapweEffect,
                          VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
