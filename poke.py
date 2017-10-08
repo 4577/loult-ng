@@ -20,11 +20,15 @@ from typing import List, Dict, Set, Tuple
 from autobahn.websocket.types import ConnectionDeny
 from salt import SALT
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES
+from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.tools import INVISIBLE_CHARS, encode_json
 from tools.users import User
+
+
+class UnauthorizedCookie(Exception):
+    pass
 
 
 class ClientLogAdapter(logging.LoggerAdapter):
@@ -108,7 +112,10 @@ class LoultServer:
         """Triggered once the WSS is opened. Mainly consists of registering the user in the channel, and
         sending the channel's information (connected users and the backlog) to the user"""
         # telling the  connected users'register to register the current user in the current channel
-        self.channel_obj, self.user = self.loult_state.channel_connect(self, self.cookie, self.channel_n)
+        try:
+            self.channel_obj, self.user = self.loult_state.channel_connect(self, self.cookie, self.channel_n)
+        except UnauthorizedCookie: # this means the user's cookie was denied
+            self.sendClose(code=4005, reason='Too many cookies already connected to your IP')
 
         # copying the channel's userlist info and telling the current JS client which userid is "its own"
         my_userlist = OrderedDict([(user_id , deepcopy(user.info))
@@ -116,7 +123,7 @@ class LoultServer:
         my_userlist[self.user.user_id]['params']['you'] = True  # tells the JS client this is the user's pokemon
         # sending the current user list to the client
         self.send_json(type='userlist', users=list(my_userlist.values()))
-        self.send_json(type='backlog', msgs=self.channel_obj.backlog)
+        self.send_json(type='backlog', msgs=self.channel_obj.backlog, date=time() * 1000)
 
         self.cnx = True  # connected!
         self.logger.info('has fully open a connection')
@@ -195,7 +202,7 @@ class LoultServer:
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
-        """Sends a wav file from a path relative to the current directory."""
+        """Opens a wav file from a path relative to the current directory."""
         full_path = path.join(path.dirname(path.realpath(__file__)), relative_path)
         with open(full_path, "rb") as sound_file:
             return sound_file.read()
@@ -277,6 +284,16 @@ class LoultServer:
             self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
 
+        # before even running the ban, each clients of the concerned user is notified of the ban
+        for client in [client for client in self.channel_obj.clients if client.user.user_id == user_id]:
+            client.send_json(type="banned",
+                             msg="ofwere")
+
+        # and everyone is notified of the ban as to instigate fear in the heart of others
+        self._broadcast_to_channel(type='antiflood', event='banned',
+                                   flooder_id=user_id,
+                                   date=time() * 1000)
+
         connected_list = {client.ip for client in self.channel_obj.clients
                           if client.user.user_id == user_id}
         backlog_list = {ip for userid, ip in self.loult_state.ip_backlog
@@ -298,9 +315,10 @@ class LoultServer:
     def onMessage(self, payload, isBinary):
         """Triggered when a user receives a message"""
         if isBinary:
-            if self.cookie in SOUND_BROADCASTER_COOKIES:
+            print("%s sending a sound file" % self.raw_cookie)
+            if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
                 try:
-                    _, _ = wave.open(BytesIO(payload))
+                    _ = wave.open(BytesIO(payload))
                     self._broadcast_to_channel(binary_payload=payload)
                 except wave.Error:
                     return self.sendClose(code=4002,
@@ -308,36 +326,36 @@ class LoultServer:
             else:
                 return self.sendClose(code=4002,
                                       reason='Binary data is not accepted')
-
-        try:
-            msg = json.loads(payload.decode('utf-8'))
-        except json.JSONDecodeError:
-            return self.sendClose(code=4001, reason='Malformed JSON.')
-
-        if 'msg' in msg:
-            msg['msg'] = sub(INVISIBLE_CHARS, '', msg['msg'])
-
-        if msg['type'] == 'msg':
-            # when the message is just a simple text message (regular chat)
-            ensure_future(self._msg_handler(msg))
-
-        elif msg["type"] == "attack":
-            # when the current client attacks someone else
-            ensure_future(self._attack_handler(msg))
-
-        elif msg["type"] == "move":
-            # when a user moves
-            ensure_future(self._move_handler(msg))
-
-        elif msg["type"] in Ban.ban_types:
-            ensure_future(self._ban_handler(msg))
-
-        elif msg['type'] in ('me', 'bot'):
-            ensure_future(self._extra_handler(msg))
-
         else:
-            return self.sendClose(code=4003,
-                                  reason='Unrecognized command type.')
+            try:
+                msg = json.loads(payload.decode('utf-8'))
+            except json.JSONDecodeError:
+                return self.sendClose(code=4001, reason='Malformed JSON.')
+
+            if 'msg' in msg:
+                msg['msg'] = sub(INVISIBLE_CHARS, '', msg['msg'])
+
+            if msg['type'] == 'msg':
+                # when the message is just a simple text message (regular chat)
+                ensure_future(self._msg_handler(msg))
+
+            elif msg["type"] == "attack":
+                # when the current client attacks someone else
+                ensure_future(self._attack_handler(msg))
+
+            elif msg["type"] == "move":
+                # when a user moves
+                ensure_future(self._move_handler(msg))
+
+            elif msg["type"] in Ban.ban_types:
+                ensure_future(self._ban_handler(msg))
+
+            elif msg['type'] in ('me', 'bot'):
+                ensure_future(self._extra_handler(msg))
+
+            else:
+                return self.sendClose(code=4003,
+                                      reason='Unrecognized command type.')
 
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
@@ -352,12 +370,15 @@ class LoultServer:
 
 
 class Channel:
+
     def __init__(self, channel_name, state):
         self.name = channel_name
         self.loult_state = state
         self.clients = set()  # type:Set[LoultServer]
         self.users = OrderedDict()  # type:OrderedDict[str, User]
         self.backlog = []  # type:List
+        # this is used to track how many cookies we have per connected IP in that channel
+        self.ip_cookies_tracker = dict()  # type: Dict[str,Set[bytes]]
 
     def _signal_user_connect(self, client: LoultServer, user: User):
         client.send_json(type='connect', date=time() * 1000, **user.info)
@@ -375,6 +396,9 @@ class Channel:
                 self.clients.discard(client)
                 del self.users[user.user_id]
 
+                # removing the client/user's cookie from the ip-cookie tracker
+                self.ip_cookies_tracker[client.ip].remove(client.cookie)
+
                 for client in self.clients:
                     self._signal_user_disconnect(client, user)
 
@@ -385,6 +409,15 @@ class Channel:
             pass
 
     def user_connect(self, new_user : User, client : LoultServer):
+        if client.ip in self.ip_cookies_tracker:
+            if client.cookie not in self.ip_cookies_tracker[client.ip]:
+                if len(self.ip_cookies_tracker[client.ip]) >= MAX_COOKIES_PER_IP:
+                    raise UnauthorizedCookie()
+                else:
+                    self.ip_cookies_tracker[client.ip].add(client.cookie)
+        else:
+            self.ip_cookies_tracker[client.ip] = {client.cookie}
+
         if new_user.user_id not in self.users:
             for other_client in self.clients:
                 if other_client != client:
@@ -489,8 +522,6 @@ if __name__ == "__main__":
     factory.setProtocolOptions(
             autoPingInterval=60,
             autoPingTimeout=30,
-            maxFramePayloadSize=4096,
-            maxMessagePayloadSize=4096,
         )
 
     coro = loop.create_server(factory, '127.0.0.1', 9000)

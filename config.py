@@ -33,3 +33,6 @@ SOUND_BROADCASTER_COOKIES = ["put your cookies here; not their hashes, not useri
 # config file for nftables you don't need to change anything here.
 NFTABLES_INPUT = 'filter'
 NFTABLES_OUTPUT = 'filter'
+
+# maximum number of simultaneously connected cookies an IP can have
+MAX_COOKIES_PER_IP = 2
