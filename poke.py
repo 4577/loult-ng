@@ -137,7 +137,8 @@ class LoultServer:
     def _broadcast_to_channel(self, binary_payload=None, **kwargs):
         msg = encode_json(kwargs)
         for client in self.channel_obj.clients:
-            client.sendMessage(msg)
+            if kwargs: # in case there is no "text" message to be broadcasted
+                client.sendMessage(msg)
             if binary_payload:
                 client.send_binary(binary_payload)
 
