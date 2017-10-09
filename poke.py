@@ -285,12 +285,12 @@ class LoultServer:
             return self.send_json(**info)
 
         # before even running the ban, each clients of the concerned user is notified of the ban
-        for client in [client for client in self.channel_obj.clients if client.user.user_id == user_id]:
+        for client in [client for client in self.channel_obj.clients if client.user and client.user.user_id == user_id]:
             client.send_json(type="banned",
                              msg="ofwere")
 
         connected_list = {client.ip for client in self.channel_obj.clients
-                          if client.user.user_id == user_id}
+                          if client.user and client.user.user_id == user_id}
         backlog_list = {ip for userid, ip in self.loult_state.ip_backlog
                         if userid == user_id}
         todo = connected_list | backlog_list
