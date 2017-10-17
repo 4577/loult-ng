@@ -101,7 +101,12 @@
 			row.appendChild(dt);
 
 			chat.appendChild(row);
+
+			if(msg.userid !== you)
+				x += 1 / (1 + (l * 0.3));
 		}
+		else if (msg.userid === you)
+			x -= 3 / (1 + (l * 0.3));
 
 		lastRow.appendChild(text);
 		lastId = uid;
@@ -149,6 +154,8 @@
 			underlay.style.backgroundImage = 'url("/dev/pokemon/' + params.img + '.png")';
 			you = userid;
 			lv.innerHTML = users[you].name + ' niveau ' + l;
+			if(l === 1 && x === 0)
+				x += 20;
 		}
 
 		userlist.appendChild(row);
@@ -400,8 +407,6 @@
 					underlay.className = 'pulse';
 				}
 
-				x -= (lastMsg === input.value ? 6 : 3) / (1 + (l * 0.1));
-
 				lastMsg = input.value;
 				input.value = '';
 				
@@ -502,13 +507,11 @@
 					break;
 
 					case 'banned':
+						document.cookie = 'lv=1; Path=/';
 						banned = true;
 						ws.close();
 					break;
 				}
-
-				if(msg.userid !== you)
-					x += 2 / (1 + (l * 0.1));
 			}
 			else if(!lastMuted && audio && volume.gain.value > 0) {
 				context.decodeAudioData(msg.data, function(buf) {
@@ -549,7 +552,7 @@
 			lv.innerHTML = users[you].name + ' niveau ' + ++l;
 			document.cookie = 'lv=' + l + '; Path=/';
 		}
-		else if(x <= 0)
+		else if(x <= 1)
 			x = 0;
 		xp.style.width = x + '%';
 	}
