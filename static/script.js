@@ -1,22 +1,23 @@
 ﻿﻿document.addEventListener('DOMContentLoaded', function() {
+	var l = document.cookie.match(/lv=(\d+)/) ? parseInt(document.cookie.match(/lv=(\d+)/)[1]) : 1;
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var userlist = document.getElementById('userlist');
 	var underlay = document.getElementById('underlay');
-	var usertbl = document.getElementById('usertbl');
-	var chatbox = document.getElementById('chatbox');
-	var chattbl = document.getElementById('chattbl');
 	var input = document.getElementById('input');
-	var theme = localStorage.theme || 'day';
-	var left = (localStorage.left === 'true');
-	var dt = (localStorage.dt === 'true');
-	var hr = (localStorage.hr === 'true');
+	var chat = document.getElementById('chat');
+	var lv = document.getElementById('lv');
+	var xp = document.getElementById('xp');
+	var theme = localStorage.theme || 'night';
 	var waitTime = 1000;
+	var banned = false;
 	var users = {};
 	var muted = [];
 	var you = null;
+	var count = 0;
 	var lastMsg;
+	var lastRow;
 	var lastId;
-	var lastTd;
+	var x = 0;
 	var ws;
 
 	// DOM-related functions
@@ -25,97 +26,96 @@
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
-				run: msg => msg.replace(/https?:\/\/[^< ]*[^<*.,?! :]/g, '<a href="$&" target="_blank">$&</a>'),
+				run: msg => msg.replace(/https?:\/\/[^< ]*[^<*.,?! :]/g, '<a href="$&" target="_blank">$&</a>')
 			},
 			{
 				test: msg => msg.includes('**'),
-				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/gu, '<span class="spoiler">$1</span>'),
+				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/gu, '<span class="spoiler">$1</span>')
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
-				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>$&'),
+				run: msg => msg.replace(/<a href="https?:\/\/vocaroo.com\/i\/(\w+)" target="_blank">https?:\/\/vocaroo.com\/i\/\w+<\/a>/g, '<audio controls><source src="http://vocaroo.com/media_command.php?media=$1&command=download_mp3" type="audio/mpeg"><source src="http://vocaroo.com/media_command.php?media=$1&command=download_webm" type="audio/webm"></audio>$&')
 			},
 			{
 				test: msg => msg.startsWith('&gt;'),
-				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>'),
+				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>')
 			}
 		];
 
 		var tests = rules.filter(rule => ('test' in rule) && rule.test(raw_msg));
-		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);;
+		return tests.filter(rule => 'run' in rule).reduce((prev, rule) => rule.run(prev), raw_msg);
 	};
 
-	var addLine = function(pkmn, txt, datemsg, trclass, uid) {
+	var addLine = function(pkmn, txt, datemsg, rowclass, uid) {
+		var atBottom = (chat.scrollTop === (chat.scrollHeight - chat.offsetHeight));
 		var uid = uid || null;
-		var trclass = trclass || [];
-		var tr = document.createElement('tr');
-		var td = document.createElement('td');
-		var trclass = trclass || [];
-		var uid = uid || null;
-		var parsed = txt;
+		var text = document.createElement('div');
+		text.innerHTML = txt;
 
-		if(pkmn.color) {
-			parsed = parser(txt);
-			tr.style.color = pkmn.color;
-		}
+		if(lastId !== uid || pkmn.name === 'info') {
+			var row = document.createElement('div');
+			var msg = document.createElement('div');
 
-		if(pkmn === 'info' || trclass.indexOf('me') > -1) {
-			var i = document.createElement('i');
-			i.className = 'material-icons';
-			i.appendChild(document.createTextNode('info_outline'));
-			td.appendChild(i);
-			tr.appendChild(td);
-			lastTd = td;
-		}
-		else if(lastId !== uid || lastTd.getElementsByTagName('i').length > 0) {
-			var label = document.createElement('label');
-			label.appendChild(document.createTextNode(pkmn.name));
-			label.style.backgroundImage = 'url("/pokemon/' + pkmn.img + '.gif")';
-			td.style.backgroundImage = 'url("/img/pokemon/' + pkmn.img + '.gif")';
-			label.className = (left ? 'left' : 'right');
-			td.appendChild(label);
-			tr.appendChild(td);
-			lastTd = td;
-		}
-		else {
-			lastTd.rowSpan = ++lastTd.rowSpan;
-			trclass.push('merged');
-		}
+			if(pkmn.name === 'info') {
+				var i = document.createElement('i');
+				i.className = 'material-icons';
+				i.appendChild(document.createTextNode('info_outline'));
+				row.appendChild(i);
 
+				if(pkmn.color)
+					row.style.color = pkmn.color;
+			}
+			else {
+				var pic = document.createElement('div');
+				var img = document.createElement('img');
+				var picture = document.createElement('picture');
+				var source1 = document.createElement('source');
+				var source2 = document.createElement('source');
+
+				img.src = '/pokemon/' + pkmn.img + '.gif';
+				source1.setAttribute('srcset', '/pokemon/' + pkmn.img + '.gif');
+				source1.setAttribute('media', '(max-width: 1024px)');
+				source2.setAttribute('srcset', '/img/pokemon/' + pkmn.img + '.gif');
+				source2.setAttribute('media', '(min-width: 1025px)');
+
+				picture.appendChild(source1);
+				picture.appendChild(source2);
+				picture.appendChild(img);
+				pic.appendChild(picture);
+				row.appendChild(pic);
+
+				var name = document.createElement('div');
+				name.appendChild(document.createTextNode(pkmn.name + ' ' + pkmn.adjective));
+				name.style.color = pkmn.color;
+				msg.appendChild(name);
+
+				row.style.borderColor = pkmn.color;
+			}
+
+			row.className = rowclass;
+			row.appendChild(msg);
+			lastRow = msg;
+
+			var dt = document.createElement('div');
+			dt.appendChild(document.createTextNode((new Date(datemsg)).toLocaleTimeString('fr-FR')));
+			row.appendChild(dt);
+
+			chat.appendChild(row);
+
+			if(uid !== you)
+				x += 1 / (1 + (l * 0.3));
+		}
+		else if (uid === you)
+			x -= 3 / (1 + (l * 0.3));
+
+		lastRow.appendChild(text);
 		lastId = uid;
 
-		if(trclass.indexOf('me') > -1)
-			parsed = 'Le ' + pkmn.name + ' sauvage ' + parsed;
+		if(!document.hasFocus() && pkmn.name !== 'info')
+			document.title = '(' + ++count + ') Loult.family';
 
-		td = document.createElement('td');
-		td.innerHTML = parsed;
-		tr.appendChild(td);
-
-		td = document.createElement('td');
-		var sp = document.createElement('span');
-		if(dt)
-			sp.className = 'show';
-		sp.appendChild(document.createTextNode((new Date(datemsg)).toLocaleDateString()));
-		td.appendChild(sp);
-
-		sp = document.createElement('span');
-		if(dt && hr)
-			sp.className = 'show';
-		sp.appendChild(document.createTextNode(' '));
-		td.appendChild(sp);
-
-		sp = document.createElement('span');
-		if(hr)
-			sp.className = 'show';
-		sp.appendChild(document.createTextNode((new Date(datemsg)).toLocaleTimeString()));
-		td.appendChild(sp);
-		tr.appendChild(td);
-		tr.className = trclass.join(' ');
-
-		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
-		chattbl.appendChild(tr);
 		if(atBottom)
-			chatbox.scrollTop = chatbox.scrollHeight;
+			chat.scrollTop = chat.scrollHeight;
 	};
 
 	var addUser = function(userid, params) {
@@ -127,51 +127,66 @@
 		if(ambtn.checked && muted.indexOf(userid) === -1)
 			muted.push(userid);
 		
-		var tr = document.createElement('tr');
-		var td = document.createElement('td');
-		var label = document.createElement('label');
-		label.appendChild(document.createTextNode(params.name));
-		label.style.color = params.color;
-		label.style.backgroundImage = 'url("/pokemon/' + params.img + '.gif")';
-		label.className = 'left';
-		td.appendChild(label);
-		tr.appendChild(td);
-		td = document.createElement('td');
+		var row = document.createElement('li');
+		row.appendChild(document.createTextNode(params.name));
+		row.style.color = params.color;
+		row.style.backgroundImage = 'url("/pokemon/' + params.img + '.gif")';
+		row.className = 'left';
 
 		if(!params.you) {
-			var sound = document.createElement('div');
 			var i = document.createElement('i');
-			sound.className = 'btn';
 			i.className = 'material-icons';
 			i.appendChild(document.createTextNode('volume_' + (muted.indexOf(userid) != -1 ? 'off' : 'up')));
-			sound.appendChild(i);
-			td.appendChild(sound);
+			row.appendChild(i);
 
-			sound.onmousedown = function() {
-				var mt = (muted.indexOf(userid) != -1);
-				if(!mt) {
-					muted.push(userid);
-					i.innerHTML = 'volume_off';
-				}
-				else {
+			i.onmousedown = function() {
+				if(muted.indexOf(userid) != -1) {
 					muted.splice(muted.indexOf(userid), 1);
 					i.innerHTML = 'volume_up';
+				}
+				else {
+					muted.push(userid);
+					i.innerHTML = 'volume_off';
 				}
 			};
 		}
 		else {
 			underlay.style.backgroundImage = 'url("/dev/pokemon/' + params.img + '.png")';
 			you = userid;
+			lv.innerHTML = users[you].name + ' niveau ' + l;
 		}
 
-		tr.appendChild(td);
-		usertbl.appendChild(tr);
-		users[userid].dom = tr;
+		userlist.appendChild(row);
+		users[userid].dom = row;
 	};
 
 	var delUser = function(userid) {
-		usertbl.removeChild(users[userid].dom);
+		userlist.removeChild(users[userid].dom);
 		delete users[userid];
+	};
+
+	// Focus-related functions
+
+	var dontFocus = false;
+
+	var refocus = function(evt) {
+		if(!dontFocus && !window.getSelection().toString())
+			input.focus();
+	};
+
+	document.body.addEventListener('mouseup', refocus, false);
+
+	window.addEventListener('resize', function(evt) {
+		chat.scrollTop = chat.scrollHeight;
+		refocus();
+	});
+
+	window.onfocus = function() {
+		 if(count > 0) {
+			document.title = 'Loult.family';
+			count = 0;
+		}
+		refocus();
 	};
 
 	// Preferences
@@ -180,72 +195,33 @@
 	var overlay = document.getElementById('overlay');
 	var cover = document.getElementById('cover');
 	var close = document.getElementById('close');
-	var rightbtn = document.getElementById('right');
-	var leftbtn = document.getElementById('left');
 	var themes = document.getElementById('theme');
 	var ambtn = document.getElementById('am');
-	var dtbtn = document.getElementById('dt');
-	var hrbtn = document.getElementById('hr');
 	var head = document.getElementById('head');
 	var main = document.getElementById('main');
+	var foot = document.getElementById('foot');
 
 	var openWindow = function() {
+		dontFocus = true;
+		input.blur();
 		overlay.style.display = 'block';
-		head.className = main.className = 'blur-in';
+		head.className = main.className = foot.className = 'blur-in';
 	};
 	var closeWindow = function() {
+		dontFocus = false;
+		refocus();
 		overlay.style.display = 'none';
-		head.className = main.className = '';
+		head.className = main.className = foot.className = '';
 	};
 
 	gear.onclick = openWindow;
-	cover.onclick = closeWindow;
-	close.onclick = closeWindow;
-
-	rightbtn.checked = !left;
-	leftbtn.checked = left;
-	var align = function(evt) {
-		localStorage.left = left = !rightbtn.checked;
-		var rows = document.querySelectorAll('#chattbl td:first-child label');
-		for(var i = 0; i < rows.length; i++)
-			rows[i].className = (left ? 'left' : 'right');
-	};
-	rightbtn.onclick = leftbtn.onclick = align;
-
-	dtbtn.checked = dt;
-	dtbtn.onchange = function(evt) {
-		localStorage.dt = dt = dtbtn.checked;
-		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
-		var rows = document.querySelectorAll('#chattbl td:last-child span:first-child');
-		for(var i = 0; i < rows.length; i++)
-			rows[i].className = (dt ? 'show' : '');
-		mid(atBottom);
-	};
-
-	hrbtn.checked = hr;
-	hrbtn.onchange = function(evt) {
-		localStorage.hr = hr = hrbtn.checked;
-		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
-		var rows = document.querySelectorAll('#chattbl td:last-child span:last-child');
-		for(var i = 0; i < rows.length; i++)
-			rows[i].className = (hr ? 'show' : '');
-		mid(atBottom);
-	};
-
-	var mid = function(atBottom) {
-		var rows = document.querySelectorAll('#chattbl td:last-child span:nth-child(2)');
-		for(var i = 0; i < rows.length; i++)
-			rows[i].className = ((dt && hr) ? 'show' : '');
-		if(atBottom)
-			chatbox.scrollTop = chatbox.scrollHeight;
-	};
+	cover.onclick = close.onclick = closeWindow;
 
 	document.body.className = themes.value = theme;
 
 	themes.onchange = function() {
-		localStorage.theme = theme = this.value;
-		document.body.className = theme;
-		chatbox.scrollTop = chatbox.scrollHeight;
+		document.body.className = localStorage.theme = theme = this.value;
+		chat.scrollTop = chat.scrollHeight;
 	};
 
 	// Languages
@@ -254,12 +230,12 @@
 	var lang = document.cookie.match(/lang=(\w{2})/);
 
 	if(!lang) {
-		var l = navigator.language.substr(0, 2);
-		switch(l) {
+		var ln = navigator.language.substr(0, 2);
+		switch(ln) {
 			case 'fr':
 			case 'es':
 			case 'de':
-				lang = l;
+				lang = ln;
 			break;
 			default:
 				lang = 'en';
@@ -276,40 +252,10 @@
 		document.cookie = 'lang=' + lang + '; Path=/';
 	};
 
-	// Focus-related functions
-
-	var dontFocus = false;
-
-	select.addEventListener('focus', function() {
-		dontFocus = true;
-	}, false);
-
-	themes.addEventListener('focus', function() {
-		dontFocus = true;
-	}, false);
-
-	var refocus = function(evt) {
-		setTimeout(function() {
-			if(!dontFocus && !window.getSelection().toString())
-				input.focus();
-			else if(dontFocus)
-				dontFocus = false;
-		}, 10);
-	};
-
-	window.addEventListener('focus', refocus, false);
-	document.body.addEventListener('mouseup', refocus, false);
-
-	window.addEventListener('resize', function(evt) {
-		chatbox.scrollTop = chatbox.scrollHeight;
-	});
-
 	// Sound and volume
 
-	if(audio)
-	{
+	if(audio) {
 		var vol = document.getElementById('vol');
-		var speaker = document.getElementById('speaker');
 		var volrange = document.getElementById('volrange');
 		var context = new (window.AudioContext || webkitAudioContext)();
 		var volume = (context.createGain ? context.createGain() : context.createGainNode());
@@ -330,7 +276,7 @@
 			changeIcon(volrange.value);
 		}
 
-		speaker.onclick = function() {
+		vol.onclick = function() {
 			volume.gain.value = (volume.gain.value > 0 ? 0 : volrange.value * 0.01);
 			changeIcon(volume.gain.value * 100);
 		};
@@ -341,24 +287,19 @@
 	// Speech
 
 	if('webkitSpeechRecognition' in window) {
+		var mic = document.getElementById('mic');
 		var recognition = new webkitSpeechRecognition();
 		var recognizing = false;
 
-		var chatentry = document.getElementById('chatentry');
-		var div = document.createElement('div');
-		var i = document.createElement('i');
-		div.className = 'btn';
-		i.className = 'material-icons';
-		i.appendChild(document.createTextNode('mic_none'));
-		div.appendChild(i);
-		chatentry.appendChild(div);
-		div.onclick = function () {
+		mic.innerHTML = 'mic_none';
+
+		mic.onclick = function () {
 			if(recognizing) {
 				recognition.stop();
-				i.innerHTML = 'mic_off';
+				mic.innerHTML = 'mic_none';
 				return;
 			}
-			i.innerHTML = 'mic';
+			mic.innerHTML = 'mic';
 			recognition.lang = lang + '-' + ((lang === 'en') ? 'US' : lang.toUpperCase());
 			recognition.start();
 			input.value = '';
@@ -403,11 +344,11 @@
 	var userswitch = document.getElementById('userswitch');
 
 	userswitch.onclick = function() {
-		var atBottom = (chatbox.scrollTop === (chatbox.scrollHeight - chatbox.offsetHeight));
-		userlist.style.width = (userlist.style.width === '0px' ? '185px' : '0px');
-		underlay.style.right = userlist.style.width;
+		var atBottom = (chat.scrollTop === (chat.scrollHeight - chat.offsetHeight));
+		userlist.style.width = (userlist.style.width === '0px' ? '200px' : '0px');
+		head.style.paddingRight = underlay.style.right = userlist.style.width;
 		if(atBottom)
-			chatbox.scrollTop = chatbox.scrollHeight;
+			chat.scrollTop = chat.scrollHeight;
 	};
 
 	// WebSocket-related functions
@@ -438,16 +379,22 @@
 					}
 					else if(trimed.match(/^\/(help|aide)$/i)) {
 						var d = new Date;
-						addLine('info', "/attaque, /attack : Lancer une attaque sur quelqu'un. Exemple : /attaque Miaouss", d, ['part']);
-						addLine('info', "/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?", d, ['part']);
+						addLine('info', '/attaque, /attack : Lancer une attaque sur quelqu\'un. Exemple : /attaque Miaouss', d, 'part');
+						addLine('info', '/en, /es, /fr, /de : Envoyer un message dans une autre langue. Exemple : /en Where is Pete Ravi?', d, 'part');
 						if(audio)
-							addLine('info', "/volume, /vol : Régler le volume rapidement. Exemple : /volume 50", d, ['part']);
-						addLine('info', "/me : Réaliser une action. Exemple: /me essaie la commande /me.", d, ['part']);
-						addLine('info', "> : Indique une citation. Exemple : >Je ne reviendrais plus ici !", d, ['part']);
-						addLine('info', "** ** : Masquer une partie d'un message. Exemple : Carapuce est un **chic type** !", d, ['part']);
+							addLine('info', '/volume, /vol : Régler le volume rapidement. Exemple : /volume 50', d, 'part');
+						addLine('info', '/me : Réaliser une action. Exemple: /me essaie la commande /me.', d, 'part');
+						addLine('info', '> : Indique une citation. Exemple : >Je ne reviendrais plus ici !', d, 'part');
+						addLine('info', '** ** : Masquer une partie d\'un message. Exemple : Carapuce est un **chic type** !', d, 'part');
 					}
 					else if(trimed.match(/^\/me\s/i))
 						ws.send(JSON.stringify({type: 'me', msg: trimed.substr(4)}));
+					else if(trimed.match(/^\/poker$/i))
+						document.body.className = 'poker night';
+					else if(trimed.match(/^\/rainbow$/i))
+						document.body.className = 'rainbow night';
+					else if(trimed.match(/^\/spin$/i))
+						document.body.className = theme + ' rotate' + (Math.floor(Math.random() * 3) + 1);
 					else {
 						ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 						underlay.className = 'pulse';
@@ -460,6 +407,7 @@
 
 				lastMsg = input.value;
 				input.value = '';
+				
 			}
 			else if(evt.keyCode === 38 || evt.keyCode === 40) {
 				evt.preventDefault();
@@ -478,46 +426,53 @@
 
 				switch(msg.type) {
 					case 'msg':
-					case 'me':
 					case 'bot':
 						if(!lastMuted)
-							addLine(users[msg.userid], msg.msg, msg.date, [msg.type], msg.userid);
+							addLine(users[msg.userid], parser(msg.msg), msg.date, msg.type, msg.userid);
+					break;
+
+					case 'me':
+						if(!lastMuted)
+							addLine({name : 'info', color : users[msg.userid].color}, 'Le ' + users[msg.userid].name + ' ' + users[msg.userid].adjective + ' ' + parser(msg.msg), msg.date, 'me');
 					break;
 
 					case 'connect':
 						addUser(msg.userid, msg.params);
 						if(!lastMuted)
-							addLine('info', 'Un ' + msg.params.name + ' sauvage apparaît !', msg.date, ['log']);
+							addLine({name : 'info'}, 'Un ' + msg.params.name + ' ' + msg.params.adjective + ' apparaît !', msg.date, 'log');
 					break;
 
 					case 'disconnect':
 						if(!lastMuted)
-							addLine('info', 'Le ' + users[msg.userid].name + " sauvage s'enfuit !", msg.date, ['log', 'part']);
+							addLine({name : 'info'}, 'Le ' + users[msg.userid].name + ' ' + users[msg.userid].adjective + ' s\'enfuit !', msg.date, 'part');
 						delUser(msg.userid);
 					break;
 
 					case 'attack':
 						switch(msg['event']) {
 							case 'attack':
-								addLine('info', users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', msg.date, ['log']);
+								addLine({name : 'info'}, users[msg.attacker_id].name + ' attaque ' + users[msg.defender_id].name + ' !', msg.date, 'log');
 							break;
+
 							case 'dice':
-								addLine('info', users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !', msg.date, ['log']);
+								addLine({name : 'info'}, users[msg.attacker_id].name + ' tire un ' + msg.attacker_dice + ' + ('+ msg.attacker_bonus + '), ' + users[msg.defender_id].name + ' tire un ' + msg.defender_dice + ' + (' + msg.defender_bonus + ') !', msg.date, 'log');
 							break;
+
 							case 'effect':
-								addLine('info', users[msg.target_id].name + " est maintenant affecté par l'effet " + msg.effect + ' !', msg.date, ['log']);
-								if(msg.target_id === you)
-								{
+								addLine({name : 'info'}, users[msg.target_id].name + ' est maintenant affecté par l\'effet ' + msg.effect + ' !', msg.date, 'log');
+								if(msg.target_id === you) {
 									var d = new Date(msg.date);
 									d.setSeconds(d.getSeconds() + msg.timeout);
-									setTimeout(function() { addLine('info', "L'effet " + msg.effect + ' est terminé.', d, ['log', 'part']); }, msg.timeout * 1000);
+									setTimeout(function() { addLine({name : 'info'}, 'L\'effet ' + msg.effect + ' est terminé.', d, 'part'); }, msg.timeout * 1000);
 								}
 							break;
+
 							case 'invalid':
-								addLine('info', "Impossible d'attaquer pour le moment, ou pokémon invalide", msg.date, ['log', 'kick']);
+								addLine({name : 'info'}, 'Impossible d\'attaquer pour le moment, ou pokémon invalide', msg.date, 'kick');
 							break;
+
 							case 'nothing':
-								addLine('info', 'Il ne se passe rien...', msg.date, ['log', 'part']);
+								addLine({name : 'info'}, 'Il ne se passe rien...', msg.date, 'part');
 							break;
 						}
 					break;
@@ -525,10 +480,11 @@
 					case 'antiflood':
 						switch(msg['event']) {
 							case 'banned':
-								addLine('info', users[msg.flooder_id].name + ' est un sale flooder. Il a été banni temporairement.', msg.date, ['log', 'kick']);
+								addLine({name : 'info'}, 'Le ' + users[msg.flooder_id].name + ' ' + users[msg.flooder_id].adjective + ' était trop faible. Il est libre maintenant.', msg.date, 'kick');
 							break;
+
 							case 'flood_warning':
-								addLine('info', 'Attention, vous avez été détecté comme flooder. Dernier avertissement.', msg.date, ['log', 'kick']);
+								addLine({name : 'info'}, 'Attention, la qualité de vos contributions semble en baisse. Prenez une grande inspiration.', msg.date, 'kick');
 							break;
 						}
 					break;
@@ -540,8 +496,18 @@
 
 					case 'backlog':
 						for(var i = 0; i < msg.msgs.length; i++)
-							addLine(msg.msgs[i].user, msg.msgs[i].msg, msg.msgs[i].date, ['backlog', msg.msgs[i].type], msg.msgs[i].userid);
-						addLine('info', 'Vous êtes connecté.', (new Date), ['log']);
+							if(msg.msgs[i].type === 'me')
+								addLine({name : 'info', color : msg.msgs[i].user.color}, 'Le ' + msg.msgs[i].user.name + ' ' + msg.msgs[i].user.adjective + ' ' + parser(msg.msgs[i].msg), msg.msgs[i].date, 'backlog me');
+							else
+								addLine(msg.msgs[i].user, parser(msg.msgs[i].msg), msg.msgs[i].date, 'backlog ' + msg.msgs[i].type, msg.msgs[i].userid);
+
+						addLine({name : 'info'}, 'Vous êtes connecté.', (new Date), 'log');
+					break;
+
+					case 'banned':
+						document.cookie = 'lv=1; Path=/';
+						banned = true;
+						ws.close();
 					break;
 				}
 			}
@@ -563,12 +529,31 @@
 			for(var i in users)
 				delUser(i);
 
-			addLine('info', 'Vous êtes déconnecté, réessai...', (new Date), ['log', 'part']);
+			if(banned)
+				addLine({name : 'info'}, 'CIVILISE TOI FILS DE PUTE', (new Date), 'kick');
+			
+			addLine({name : 'info'}, 'Vous êtes déconnecté.', (new Date), 'part');
 
-			window.setTimeout(wsConnect, waitTime);
-			waitTime = Math.min(waitTime * 2, 120000);
+			if(!banned) {
+				addLine({name : 'info'}, 'Nouvelle connexion en cours...', (new Date), 'part');
+				window.setTimeout(wsConnect, waitTime);
+				waitTime = Math.min(waitTime * 2, 120000);
+			}
 		};
 	};
 
 	wsConnect();
+	
+	var tick = function() {
+		if(x >= 100) {
+			x -= 100;
+			lv.innerHTML = users[you].name + ' niveau ' + ++l;
+			document.cookie = 'lv=' + l + '; Path=/';
+		}
+		else if(x <= 1)
+			x = 0;
+		xp.style.width = x + '%';
+	}
+	
+	setInterval(tick, 2000);
 });
