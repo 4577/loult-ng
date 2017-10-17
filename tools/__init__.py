@@ -7,7 +7,7 @@ from .effects.effects import (
         PitchRandomizerEffect, PhonemicNwwoiwwEffect, PhonemicFofoteEffect,
         AccentMarseillaisEffect, AngryRobotVoiceEffect, VocalDyslexia,
         AccentAllemandEffect, CrapweEffect, TurboHangoul, MwfeEffect,
-        VieuxPortEffect, GodSpeakingEffect, WpseEffect, SpoinkEffect,
+        VieuxPortEffect, GodSpeakingEffect, WpseEffect,
         AutotuneEffect, VoiceSpeedupEffect, StutterEffect,
         GrandSpeechMasterEffect, VowelExchangeEffect, SkyblogEffect,
         PitchShiftEffect, ContradictorEffect,
