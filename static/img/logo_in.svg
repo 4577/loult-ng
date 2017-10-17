@@ -1,0 +1,58 @@
+<svg viewBox="0 0 373.5 153.5" id="Logo" version="1.2" baseProfile="tiny" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<style type="text/css">
+		#Logo {
+			fill: #aa7f3d;
+			stroke: #EEBE7B;
+			stroke-miterlimit: 5;
+			animation: Shadow 12s ease-out;
+		}
+
+		.Animate-Draw {
+			fill-opacity: 0;
+			animation-timing-function: linear;
+			animation-fill-mode: forwards;
+			animation-iteration: 1;
+			animation-name: DrawLine, FadeStroke;
+			animation-duration: 10s, 2s;
+			animation-delay: 0s, 12s;
+		}
+
+		#Draw-Logo {
+			stroke-dashArray: 1000;
+			stroke-dashoffset: 1000;
+			stroke-width: 5;
+			stroke: #4355a3;
+		}
+
+		@keyframes DrawLine {
+			to {
+				stroke-dashArray: 1000;
+				stroke-dashOffset: 500; 
+			}
+		}
+
+		@keyframes FadeStroke {
+			to { stroke-opacity: 0; }
+		}
+
+		@keyframes Shadow {
+			0% { filter: drop-shadow( 0 0 5px #4355a3 ); }
+			80% { filter: drop-shadow( 0 0 5px #4355a3 ); }
+			100% { filter: drop-shadow( 0 0 0 #4355a3 ); }
+		}
+	</style>
+	<defs>
+		<g>
+			<path id="Letter-L1" d="M60.9,146.3l-28.2-86l-9.4,2.8L7.9,20.5L72,0l19.8,87.5l33.7-13.6l14.2,48.9L60.9,146.3z M47,,14.2L55.8,28.1l-21.3,6.6l0.9,1.9L47,33.3z"/>
+			<path id="Letter-O" d="M129.3,110.8c-9,0-17.7-2.6-24.5-7.2C88.2,92.3,84.1,71.1,94.8,52c7.9-14.1,19.8-23.7,33.5-27.1    c11.1-2.8,22.3-1,31.4,4.9c8.6,5.5,14.2,14.2,16,24.5c2.2,13-2,27.4-11.4,39.6C155,105.7,141.9,110.8,129.3,110.8z"/>
+			<path id="Letter-U" class="Text" d="M195.7,120.6c-5,0-9.9-0.8-14.8-2.4c-5.1-1.6-9.6-4.1-13.4-7.3l-0.1-0.1c-3.1-2.7-5.6-6.5-7.5-11.3    c-1.6-3.9-2.8-8.5-3.8-13.8c-0.9-4.9-1.5-10-1.9-15.2c-0.4-5.1-0.6-10.2-0.6-15.1c0-3.8,0.1-7.3,0.3-10.6l-6.7-1.6l-1-30.8    l52.5,4.3l0,0.6l36.7,2.8l1.2,8.1c0.6,4.2,1.2,9.1,1.6,14.6c0.4,5.5,0.6,11,0.6,16.5c0,6.1-0.3,12-0.9,17.3    c-0.6,5.7-1.7,10.9-3.2,15.4c-1,3.1-2.8,6.3-5.5,9.8c-2.3,3-4.8,5.8-7.5,8.3c-2.8,2.6-5.3,4.6-7.6,6l-0.3,0.2    C208.7,119.2,202.6,120.6,195.7,120.6z"/>
+			<path id="Letter-L2" class="Text" d="M265,138.3l-38.8-8.1l-16.4-3.6l19-93.3l-9,0.3l8.1-30.6l54.5,1L259.1,86l17.4,2.4L265,138.3z M244.7,25.1z"/>
+			<path id="Letter-T" class="Text" d="M308.3,147.9l-40.4-21.5l23.5-57.8l-28.4-12.9l18.2-36.4l92.4,36.2l-16,39.9L334,86.6L308.3,147.9z      M295.3,117.1c0.5,0.3,1.1,0.9l24.8-59.2l-2.3-0.9L295.3,117.1z"/>
+		</g>
+	</defs>
+	<use id="Draw-Logo" class="Animate-Draw" xlink:href="#Letter-L1" />
+	<use id="Draw-Logo" class="Animate-Draw" xlink:href="#Letter-O" />
+	<use id="Draw-Logo" class="Animate-Draw" xlink:href="#Letter-U" />
+	<use id="Draw-Logo" class="Animate-Draw" xlink:href="#Letter-L2" />
+	<use id="Draw-Logo" class="Animate-Draw" xlink:href="#Letter-T" />
+</svg> 
