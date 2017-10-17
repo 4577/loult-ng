@@ -1,4 +1,5 @@
 ﻿﻿document.addEventListener('DOMContentLoaded', function() {
+	var l = document.cookie.match(/lv=(\d+)/) ? parseInt(document.cookie.match(/lv=(\d+)/)[1]) : 1;
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var userlist = document.getElementById('userlist');
 	var underlay = document.getElementById('underlay');
@@ -17,7 +18,6 @@
 	var lastRow;
 	var lastId;
 	var x = 0;
-	var l = 1;
 	var ws;
 
 	// DOM-related functions
@@ -225,12 +225,12 @@
 	var lang = document.cookie.match(/lang=(\w{2})/);
 
 	if(!lang) {
-		var l = navigator.language.substr(0, 2);
-		switch(l) {
+		var ln = navigator.language.substr(0, 2);
+		switch(ln) {
 			case 'fr':
 			case 'es':
 			case 'de':
-				lang = l;
+				lang = ln;
 			break;
 			default:
 				lang = 'en';
@@ -547,6 +547,7 @@
 		if(x >= 100) {
 			x -= 100;
 			lv.innerHTML = users[you].name + ' niveau ' + ++l;
+			document.cookie = 'lv=' + l + '; Path=/';
 		}
 		else if(x <= 0)
 			x = 0;
