@@ -102,10 +102,10 @@
 
 			chat.appendChild(row);
 
-			if(msg.userid !== you)
+			if(uid !== you)
 				x += 1 / (1 + (l * 0.3));
 		}
-		else if (msg.userid === you)
+		else if (uid === you)
 			x -= 3 / (1 + (l * 0.3));
 
 		lastRow.appendChild(text);
