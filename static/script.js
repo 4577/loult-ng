@@ -154,8 +154,6 @@
 			underlay.style.backgroundImage = 'url("/dev/pokemon/' + params.img + '.png")';
 			you = userid;
 			lv.innerHTML = users[you].name + ' niveau ' + l;
-			if(l === 1 && x === 0)
-				x += 20;
 		}
 
 		userlist.appendChild(row);
