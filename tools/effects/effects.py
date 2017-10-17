@@ -132,22 +132,6 @@ class SnebwewEffect(ExplicitTextEffect):
         return reconstructed
 
 
-class SpoinkEffect(ExplicitTextEffect):
-    NAME = "mme"
-    TIMEOUT = 150
-    _spoink_punchlines = ["hihihi", "onwww", "jtm", "jvm", "c'est genre hyper irrespectueux", "onwwwwww",
-                          "onw pleuwww", "pleplpleplelepelepeleuwww", "peuw", "jtm mr", "t two cwle",
-                          "dacowe"]
-
-    def process(self, text : str):
-        if random.randint(0, 3) != 0:
-            if random.randint(0, 4) == 0:
-                text = "hihihihi " + text
-        else:
-            text = random.choice(self._spoink_punchlines)
-        return text
-
-
 class PoiloEffect(ExplicitTextEffect):
     NAME = "poil au snèbwèw"
     TIMEOUT = 180
@@ -240,6 +224,7 @@ class SpeechMasterEffect(HiddenTextEffect):
         reconstructed = " ".join([word + random.choice(self.available_punctuation)
                                   for word in space_splitted])
         return reconstructed
+
 
 class SkyblogEffect(ExplicitTextEffect):
     """Increases your style by 64%"""
@@ -537,8 +522,8 @@ class GhostEffect(AudioEffect):
     TIMEOUT = 120
 
     def process(self, wave_data: numpy.ndarray):
-        reverb, reverse = ReverbManEffect(), tools.ReversedEffect()
-        return reverse.process(reverb.process(reverse.process(wave_data)))
+        reverb = ReverbManEffect()
+        return reverb.process(wave_data[::-1])[::-1]
 
 
 class RobotVoiceEffect(AudioEffect):

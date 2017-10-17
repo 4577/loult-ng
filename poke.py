@@ -137,7 +137,8 @@ class LoultServer:
     def _broadcast_to_channel(self, binary_payload=None, **kwargs):
         msg = encode_json(kwargs)
         for client in self.channel_obj.clients:
-            client.sendMessage(msg)
+            if kwargs: # in case there is no "text" message to be broadcasted
+                client.sendMessage(msg)
             if binary_payload:
                 client.send_binary(binary_payload)
 
@@ -285,7 +286,7 @@ class LoultServer:
             return self.send_json(**info)
 
         # before even running the ban, each clients of the concerned user is notified of the ban
-        for client in [client for client in self.channel_obj.clients if client.user.user_id == user_id]:
+        for client in [client for client in self.channel_obj.clients if client.user and client.user.user_id == user_id]:
             client.send_json(type="banned",
                              msg="ofwere")
 
@@ -295,7 +296,7 @@ class LoultServer:
                                    date=time() * 1000)
 
         connected_list = {client.ip for client in self.channel_obj.clients
-                          if client.user.user_id == user_id}
+                          if client.user and client.user.user_id == user_id}
         backlog_list = {ip for userid, ip in self.loult_state.ip_backlog
                         if userid == user_id}
         todo = connected_list | backlog_list
