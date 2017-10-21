@@ -313,20 +313,25 @@ class LoultServer:
             self.logger.info(log_msg.format(**info, ip=todo))
             self.send_json(**info)
 
-    def onMessage(self, payload, isBinary):
-        """Triggered when a user receives a message"""
-        if isBinary:
-            print("%s sending a sound file" % self.raw_cookie)
-            if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
-                try:
-                    _ = wave.open(BytesIO(payload))
-                    self._broadcast_to_channel(binary_payload=payload)
-                except wave.Error:
-                    return self.sendClose(code=4002,
-                                          reason='Invalid wav sound file')
-            else:
+    def _handle_binary(self, payload):
+        print("%s sending a sound file" % self.raw_cookie)
+        if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
+            try:
+                _ = wave.open(BytesIO(payload))
+                self._broadcast_to_channel(type="audio_broadcast", userid=self.user.user_id,
+                                           binary_payload=payload)
+            except wave.Error:
                 return self.sendClose(code=4002,
-                                      reason='Binary data is not accepted')
+                                      reason='Invalid wav sound file')
+        else:
+            return self.sendClose(code=4002,
+                                  reason='Binary data is not accepted')
+
+    def onMessage(self, payload, isBinary):
+        """Triggered when a user sends any type of message to the server"""
+        if isBinary:
+            self._handle_binary(payload)
+
         else:
             try:
                 msg = json.loads(payload.decode('utf-8'))
