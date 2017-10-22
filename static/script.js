@@ -23,6 +23,7 @@
 	// DOM-related functions
 
 	var parser = function(raw_msg) {
+		var profane = new RegExp('(^\|[ \n\r\t.,\'"\+!?-]+)(tg|fdp|put+(e|ain)|bi+t+e|cul|couille|chat+e|chien+(?:as+)?e|salope?|(pd)+|p(?:é|è|ai|ay)d(?:é|è|ai|ay)|salaud|sc?hnec?k|(?:em)?merd(?:e|ier|eux|eur)|bordel|queue|foutre|nique|encul(?:é|er)|enfoiré|branleu?r|fiotte|burne|chi(?:er?|é)|con(?:ne|n?ard|n?asse)?)([ \n\r\t.,\'"\+!?-]+\|$)', 'gi');
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
@@ -30,7 +31,7 @@
 			},
 			{
 				test: msg => msg.includes('**'),
-				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/gu, '<span class="spoiler">$1</span>')
+				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/g, '<span class="spoiler">$1</span>')
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
@@ -39,6 +40,10 @@
 			{
 				test: msg => msg.startsWith('&gt;'),
 				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>')
+			},
+			{
+				test: msg => msg.match(profane),
+				run: msg => msg.replace(profane, function(matched){ return '<span class="pinktext">' + '♥'.repeat(matched.length) + '</span>'; })
 			}
 		];
 

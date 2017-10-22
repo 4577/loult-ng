@@ -359,6 +359,10 @@ a:hover, li > i:hover, footer i:hover, #window input:hover, #window label:hover,
 	font-family: monospace;
 }
 
+.pinktext {
+	color: #F6F;
+}
+
 #close:hover {
 	background: #F33 !important;
 }
