@@ -43,7 +43,7 @@
 			},
 			{
 				test: msg => msg.match(profane),
-				run: msg => msg.replace(profane, function(matched){ return '<span class="pinktext">' + '♥'.repeat(matched.length) + '</span>'; })
+				run: msg => msg.replace(profane, function(matched){ return '<span class="pinktext">' + matched.replace(/\S/gi, '♥') + '</span>'; })
 			}
 		];
 
