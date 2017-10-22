@@ -23,7 +23,7 @@
 	// DOM-related functions
 
 	var parser = function(raw_msg) {
-		var profane = new RegExp('(^\|[ \n\r\t.,\'"\+!?-]+)(tg|fdp|put+(e|ain)|bi+t+e|cul|couille|chat+e|chien+(?:as+)?e|salope?|(pd)+|p(?:é|è|ai|ay)d(?:é|è|ai|ay)|salaud|sc?hnec?k|(?:em)?merd(?:e|ier|eux|eur)|bordel|queue|foutre|nique|encul(?:é|er)|enfoiré|branleu?r|fiotte|burne|chi(?:er?|é)|con(?:ne|n?ard|n?asse)?)([ \n\r\t.,\'"\+!?-]+\|$)', 'gi');
+		var profane = new RegExp('(?:^\|[ \n\r\t.,\'"\+!?-]+)(tg|fdp|put+(e|ain)|bi+t+e|cul|couille|chat+e|chien+(?:as+)?e|salope?|(pd)+|p(?:é|è|ai|ay)d(?:é|è|ai|ay)|salaud|sc?hnec?k|(?:em)?merd(?:e|ier|eux|eur)|bordel|queue|foutre|nique|encul(?:é|er)|enfoiré|branleu?r|fiotte|burne|chi(?:er?|é)|con(?:ne|n?ard|n?asse)?)(?:[ \n\r\t.,\'"\+!?-]+\|$)', 'gi');
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
