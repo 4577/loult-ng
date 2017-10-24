@@ -181,13 +181,19 @@ class LoultServer:
             self.sendend = calc_sendend
 
         output_msg = escape(output_msg)
+
         # send to the backlog
         info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
-
-        # broadcast message and rendered audio to all clients in the channel
-        self._broadcast_to_channel(type='msg', userid=self.user.user_id,
-                                   msg=output_msg, date=info['date'],
-                                   binary_payload=wav if synth else None)
+        if not self.user.state.is_shadowbanned:
+            # broadcast message and rendered audio to all clients in the channel
+            self._broadcast_to_channel(type='msg', userid=self.user.user_id,
+                                       msg=output_msg, date=info['date'],
+                                       binary_payload=wav if synth else None)
+        else: # we just send the message to the current client
+            self.send_json(type='msg', userid=self.user.user_id,
+                           msg=output_msg, date=info['date'])
+            if synth:
+                self.send_binary(wav)
 
     @auto_close
     async def _extra_handler(self, msg_data: Dict):
@@ -198,8 +204,12 @@ class LoultServer:
             return
 
         info = self.channel_obj.log_to_backlog(user_id, output_msg, kind=msg_type)
-        self._broadcast_to_channel(type=msg_type, msg=output_msg,
-                                   userid=user_id, date=info['date'])
+        if not self.user.state.is_shadowbanned:
+            self._broadcast_to_channel(type=msg_type, msg=output_msg,
+                                       userid=user_id, date=info['date'])
+        else: # user is shadowbanned, so it's only sent to the
+            self.send_json(type=msg_type, msg=output_msg,
+                           userid=user_id, date=info['date'])
 
     @lru_cache()
     def _open_sound_file(self, relative_path):
@@ -210,6 +220,10 @@ class LoultServer:
 
     @auto_close
     async def _attack_handler(self, msg_data : Dict):
+        #if the user's shadownbanned, well, we just ignore the attack
+        if self.user.state.is_shadowbanned:
+            self.send_json(type='attack', event='invalid')
+
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
@@ -222,7 +236,7 @@ class LoultServer:
         if adversary is None:
             self.send_json(type='attack', event='invalid')
         elif (now - self.user.state.last_attack < timedelta(seconds=ATTACK_RESTING_TIME)):
-            return
+            self.send_json(type='attack', event='invalid')
         else:
             self._broadcast_to_channel(type='attack', date=time() * 1000,
                                        event='attack',
@@ -313,7 +327,26 @@ class LoultServer:
             self.logger.info(log_msg.format(**info, ip=todo))
             self.send_json(**info)
 
-    def _handle_binary(self, payload):
+    @auto_close
+    async def _shadowban_handler(self, msg_data : Dict):
+        user_id = msg_data['userid']
+
+        if self.raw_cookie not in MOD_COOKIES:
+            self.logger.info('unauthorized access to ban tools')
+            return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
+
+        shadowbanned_user = self.channel_obj.users[user_id]
+        if msg_data["action"] == "on":
+            shadowbanned_user.state.is_shadowbanned = True
+            loult_state.shadowbanned_cookies.add(shadowbanned_user.cookie_hash)
+            self.send_json(type="shadowban", user_id=user_id, state="on")
+        elif msg_data["action"] == "off":
+            shadowbanned_user.state.is_shadowbanned = False
+            loult_state.shadowbanned_cookies.remove(shadowbanned_user.cookie_hash)
+            self.send_json(type="shadowban", user_id=user_id, state="off")
+
+    @auto_close
+    async def _binary_handler(self, payload):
         print("%s sending a sound file" % self.raw_cookie)
         if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
             try:
@@ -327,10 +360,11 @@ class LoultServer:
             return self.sendClose(code=4002,
                                   reason='Binary data is not accepted')
 
+
     def onMessage(self, payload, isBinary):
         """Triggered when a user sends any type of message to the server"""
         if isBinary:
-            self._handle_binary(payload)
+            ensure_future(self._binary_handler(payload))
 
         else:
             try:
@@ -355,6 +389,9 @@ class LoultServer:
 
             elif msg["type"] in Ban.ban_types:
                 ensure_future(self._ban_handler(msg))
+
+            elif msg["type"] == "shadowban":
+                ensure_future(self._shadowban_handler(msg))
 
             elif msg['type'] in ('me', 'bot'):
                 ensure_future(self._extra_handler(msg))
@@ -424,6 +461,9 @@ class Channel:
         else:
             self.ip_cookies_tracker[client.ip] = {client.cookie}
 
+        if new_user.cookie_hash in self.loult_state.shadowbanned_cookies:
+            new_user.state.is_shadowbanned = True
+
         if new_user.user_id not in self.users:
             for other_client in self.clients:
                 if other_client != client:
@@ -467,6 +507,7 @@ class LoultServerState:
         self.chans = {} # type:Dict[str,Channel]
         self.banned_cookies = set() #type:Set[str]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
+        self.shadowbanned_cookies = set()
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict

@@ -63,6 +63,7 @@ class UserState:
         self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood
         self._banned_words = [regex(word) for word in banned_words]
+        self.is_shadowbanned = False # User has been shadowbanned
 
 
     def __setattr__(self, name, value):
@@ -136,6 +137,7 @@ class User:
         self.voice_params = VoiceParameters.from_cookie_hash(cookie_hash)
         self.poke_params = PokeParameters.from_cookie_hash(cookie_hash)
         self.user_id = cookie_hash.hex()[-16:]
+        self.cookie_hash = cookie_hash
 
         self.channel = channel
         self.clients = [client]
