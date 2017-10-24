@@ -184,11 +184,12 @@ main {
 
 #chat > div > :not(:nth-child(2)) {
 	white-space: nowrap;
-	width: 80px;
+	width: 70px;
 }
 
 #chat > div > div:last-child {
 	font-family: monospace;
+	padding-right: 5px;
 	text-align: right;
 	line-height: 24px;
 	font-size: 11px;
@@ -203,19 +204,29 @@ main {
 	border-radius: 99px;
 	position: relative;
 	overflow: hidden;
-	height: 80px;
-	width: 80px;
+	height: 70px;
 	border-right: 2px solid rgba(0, 0, 0, 0.5);
 	border-bottom: 2px solid rgba(0, 0, 0, 0.5);	
 }
 
-#chat > div > div:first-child > picture > img {
+#chat > div > div:first-child > img {
 	position: absolute;
+	margin: auto;
+	display: none;
+}
+
+#chat > div > div:first-child > img:first-child {
+	top: auto;
+	left: 4px;
+	right: auto;
+	bottom: 6px;
+}
+
+#chat > div > div:first-child > img:last-child {
 	top: -100%;
 	left: -100%;
 	right: -100%;
 	bottom: -100%;
-	margin: auto;
 }
 
 #chat > div > :nth-child(2) {
@@ -348,6 +359,10 @@ a:hover, li > i:hover, footer i:hover, #window input:hover, #window label:hover,
 	font-family: monospace;
 }
 
+.pinktext {
+	color: #F6F;
+}
+
 #close:hover {
 	background: #F33 !important;
 }
@@ -409,9 +424,9 @@ a:hover, li > i:hover, footer i:hover, #window input:hover, #window label:hover,
 	right: 0;
 	bottom: 0;
 	max-width: 680px;
-	max-height: 540px;
+	max-height: 700px;
 	width: 680px;
-	height: 540px;
+	height: 700px;
 	margin: auto;
 	background: #f9f9f9;
 	box-shadow: 0 0 15px #BBB;
@@ -511,6 +526,7 @@ select {
 		top: 50px;
 		bottom: 125px;
 		height: auto;
+		width: 0px;
 		border-top: 2px solid #BBB;
 		border-bottom: 2px solid #BBB;
 	}
@@ -562,21 +578,96 @@ select {
 		padding: 10px;
 		font-size: 40px;
 	}
+	
+	head {
+		padding-right: 0;
+	}
+	
+	#underlay {
+		right: 0;
+	}
 }
 
-@media screen and (max-width: 1024px) {
-	#chat > div > :first-child {
-		width: 40px;
-		max-width: 40px;
-		max-height: 40px;
-	}
+.comic {
+	font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+	font-weight: bold;
+}
 
-	#chat > div > div:first-child > picture > img {
-		left: 4px;
-		bottom: 6px;
-		right: auto;
-		top: auto;
-	}
+.mono {
+	font-family: monospace;
+}
+
+.cozy #chat > div > div:first-child > img:first-child {
+	display: none;
+}
+
+.cozy #chat > div > div:first-child > img:last-child {
+	display: block;
+}
+
+.compact #chat > div > div:first-child > img:first-child {
+	display: block;
+}
+
+.compact #chat > div > div:first-child > img:last-child {
+	display: none;
+}
+
+.compact #chat > div > :first-child {
+	width: 40px;
+	max-width: 40px;
+	max-height: 40px;
+}
+
+.console #chat > div > i, .console #chat > div > div:first-child, .console #chat > div > div:first-child > img {
+	display: none;
+}
+
+.console #chat > div > div:nth-child(2) {
+	text-align: left !important;
+	padding-left: 5px;
+}
+
+.console #chat > div > div:nth-child(2) > div:first-child {
+	float: left;
+	height: 100%;
+}
+
+.console #chat > div:not(.log):not(.part):not(.me):not(.kick) > div:nth-child(2) > div:first-child::after {
+	content: ':';
+	padding: 0 5px;
+}
+
+.console #chat > div {
+	padding: 0;
+}
+
+.console #chat > div > div:last-child {
+	line-height: inherit;
+	font-size: inherit;
+}
+
+.blue main, .blue ul, .blue footer > div, .blue #window, .blue #window > div:first-child {
+	border-color: #0074d9;
+}
+
+.blue header, .blue #window > div:first-child, .blue footer > div > i, .blue footer, .blue #close {
+	background: #0074d9;
+}
+
+.blue footer > div > i, .blue #close, .blue #window > div:first-child {
+	color: #EEE;
+}
+
+.blue #close {
+	padding: 5px;
+	border-radius: 99px;
+	border: 2px solid #DDD;
+}
+
+.blue #close:hover {
+	background: #0074d9 !important;
+	opacity: 0.8;
 }
 
 .night, .night ul, .night #window, .night #input, .night select {
@@ -596,7 +687,7 @@ select {
 	border-color: #111;
 }
 
- .night footer > div > i {
+.night footer > div > i {
 	border-color: #222;
 }
 
@@ -634,17 +725,20 @@ select {
 	border-color: #222;
 }
 
-.comic {
-	font-family: 'Comic Sans MS', 'Comic Sans', cursive;
-	font-weight: bold;
+.poker.cozy #chat > div > div:first-child {
+	border: 10px solid #FFF;
 }
 
-.comic #underlay {
-	background: none !important;
+.poker.compact #chat > div > div:first-child {
+	border: 5px solid #FFF;
+}
+
+.poker #chat > div > div:first-child > img:first-child {
+	left: 0;
+	bottom: 3px;
 }
 
 .poker #chat > div > div:first-child {
-	border: 10px solid #FFF;
 	background-color: #111 !important;
 }
 
@@ -658,36 +752,31 @@ select {
 	border-bottom-color: inherit;
 }
 
-.rotate1 #chat {
-	transform: rotate(90deg);
-	margin: 0 15px;
-}
-
-.rotate2 #chat {
+.flip #chat, .flip ul {
 	transform: rotate(180deg);
-}
-
-.rotate3 #chat {
-	transform: rotate(270deg);
-	margin: 0 15px;
-}
-
-.rotate1 ul, .rotate2 ul, .rotate3 ul {
-	transform: rotate(180deg);
+	direction: rtl;
+	padding: 5px;
 	border: 0;
 }
 
-.rotate1 main, .rotate3 main {
-	-webkit-box-direction: row-reverse;
-	-ms-flex-direction: row-reverse;
-	flex-direction: row-reverse;
+.omg #underlay {
+	background-image: url("/img/logo_shiny.svg") !important;
+	background-size: 90%
 }
 
-.rainbow main i, .rainbow footer i, .rainbow #chat > div:nth-last-of-type(-n+50) > div > div:first-child, .rainbow .me:nth-last-of-type(-n+50), .rainbow .log:nth-last-of-type(-n+50), .rainbow .part:nth-last-of-type(-n+50) {
-	-webkit-animation: fader 5s infinite;
-	-moz-animation: fader 5s infinite;
-	-ms-animation: fader 5s infinite;
-	animation: fader 5s infinite;
+.omg header {
+	display: none;
+}
+
+.omg main {
+	border-top: 0;
+}
+
+.rainbow i, .rainbow a, .rainbow #chat > div:nth-last-of-type(-n+50) > div > div:first-child, .rainbow .me:nth-last-of-type(-n+50), .rainbow .log:nth-last-of-type(-n+50), .rainbow .part:nth-last-of-type(-n+50) {
+	-webkit-animation: fader 10s infinite;
+	-moz-animation: fader 10s infinite;
+	-ms-animation: fader 10s infinite;
+	animation: fader 10s infinite;
 }
 
 @keyframes fader {

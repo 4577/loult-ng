@@ -1,4 +1,4 @@
-﻿﻿document.addEventListener('DOMContentLoaded', function() {
+﻿document.addEventListener('DOMContentLoaded', function() {
 	var l = document.cookie.match(/lv=(\d+)/) ? parseInt(document.cookie.match(/lv=(\d+)/)[1]) : 1;
 	var audio = (window.AudioContext || typeof webkitAudioContext !== 'undefined');
 	var userlist = document.getElementById('userlist');
@@ -7,7 +7,7 @@
 	var chat = document.getElementById('chat');
 	var lv = document.getElementById('lv');
 	var xp = document.getElementById('xp');
-	var theme = localStorage.theme || 'night';
+	var theme = (localStorage.theme && localStorage.theme.split(' ').length > 2) ? localStorage.theme : 'cozy night sans';
 	var waitTime = 1000;
 	var banned = false;
 	var users = {};
@@ -23,6 +23,7 @@
 	// DOM-related functions
 
 	var parser = function(raw_msg) {
+		var profane = new RegExp('(?:^\|[ \n\r\t.,\'"\+!?-]+)(tg|fdp|put+(e|ain)|bi+t+e|cul|couille|chat+e|chien+(?:as+)?e|salope?|(pd)+|p(?:é|è|ai|ay)d(?:é|è|ai|ay)|salaud|sc?hnec?k|(?:em)?merd(?:e|ier|eux|eur)|bordel|queue|foutre|nique|encul(?:é|er)|enfoiré|branleu?r|fiotte|burne|chi(?:er?|é)|con(?:ne|n?ard|n?asse)?)(?:[ \n\r\t.,\'"\+!?-]+\|$)', 'gi');
 		var rules = [
 			{
 				test: msg => msg.includes('http'),
@@ -30,7 +31,7 @@
 			},
 			{
 				test: msg => msg.includes('**'),
-				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/gu, '<span class="spoiler">$1</span>')
+				run: msg => msg.replace(/\*{2}([^\*]+)\*{2}?/g, '<span class="spoiler">$1</span>')
 			},
 			{
 				test: msg => msg.includes('://vocaroo.com/i/'),
@@ -39,6 +40,10 @@
 			{
 				test: msg => msg.startsWith('&gt;'),
 				run: msg => msg.replace(/(.+)/g, '<span class="greentext">$1</span>')
+			},
+			{
+				test: msg => msg.match(profane),
+				run: msg => msg.replace(profane, function(matched){ return '<span class="pinktext">' + matched.replace(/\S/gi, '♥') + '</span>'; })
 			}
 		];
 
@@ -67,21 +72,13 @@
 			}
 			else {
 				var pic = document.createElement('div');
-				var img = document.createElement('img');
-				var picture = document.createElement('picture');
-				var source1 = document.createElement('source');
-				var source2 = document.createElement('source');
+				var img1 = document.createElement('img');
+				var img2 = document.createElement('img');
 
-				img.src = '/pokemon/' + pkmn.img + '.gif';
-				source1.setAttribute('srcset', '/pokemon/' + pkmn.img + '.gif');
-				source1.setAttribute('media', '(max-width: 1024px)');
-				source2.setAttribute('srcset', '/img/pokemon/' + pkmn.img + '.gif');
-				source2.setAttribute('media', '(min-width: 1025px)');
-
-				picture.appendChild(source1);
-				picture.appendChild(source2);
-				picture.appendChild(img);
-				pic.appendChild(picture);
+				img1.src = '/pokemon/' + pkmn.img + '.gif';
+				img2.src = '/img/pokemon/' + pkmn.img + '.gif';
+				pic.appendChild(img1);
+				pic.appendChild(img2);
 				row.appendChild(pic);
 
 				var name = document.createElement('div');
@@ -106,7 +103,7 @@
 				x += 1 / (1 + (l * 0.3));
 		}
 		else if (uid === you)
-			x -= 3 / (1 + (l * 0.3));
+			x -= 3 / (1 + (l * 0.6));
 
 		lastRow.appendChild(text);
 		lastId = uid;
@@ -195,32 +192,52 @@
 	var overlay = document.getElementById('overlay');
 	var cover = document.getElementById('cover');
 	var close = document.getElementById('close');
-	var themes = document.getElementById('theme');
 	var ambtn = document.getElementById('am');
 	var head = document.getElementById('head');
 	var main = document.getElementById('main');
 	var foot = document.getElementById('foot');
+	var themes = document.getElementById('theme');
+	var colors = document.getElementById('color');
+	var fonts = document.getElementById('font');
+	var settings = theme.split(' ');
 
 	var openWindow = function() {
 		dontFocus = true;
 		input.blur();
 		overlay.style.display = 'block';
-		head.className = main.className = foot.className = 'blur-in';
+		head.className = main.className = foot.className = bar.className = 'blur-in';
 	};
+
 	var closeWindow = function() {
 		dontFocus = false;
 		refocus();
 		overlay.style.display = 'none';
-		head.className = main.className = foot.className = '';
+		head.className = main.className = foot.className = bar.className = '';
 	};
 
 	gear.onclick = openWindow;
 	cover.onclick = close.onclick = closeWindow;
 
-	document.body.className = themes.value = theme;
+	document.body.className = theme;
+	themes.value = settings[0];
+	colors.value = settings[1];
+	fonts.value = settings[2];
 
 	themes.onchange = function() {
-		document.body.className = localStorage.theme = theme = this.value;
+		settings[0] = this.value;
+		document.body.className = localStorage.theme = theme = settings.join(' ');
+		chat.scrollTop = chat.scrollHeight;
+	};
+
+	colors.onchange = function() {
+		settings[1] = this.value;
+		document.body.className = localStorage.theme = theme = settings.join(' ');
+		chat.scrollTop = chat.scrollHeight;
+	};
+
+	fonts.onchange = function() {
+		settings[2] = this.value;
+		document.body.className = localStorage.theme = theme = settings.join(' ');
 		chat.scrollTop = chat.scrollHeight;
 	};
 
@@ -373,8 +390,8 @@
 						ws.send(JSON.stringify({type: 'msg', msg: trimed.substr(4), lang: trimed.substr(1, 2).toLowerCase()}));
 						underlay.className = 'pulse';
 					}
-					else if(trimed.match(/^\/vol(ume)?\s(100|\d{1,2})$/i) && audio) {
-						volrange.value = trimed.match(/\d+$/i)[0];
+					else if(trimed.match(/^\/vol(ume)?\s(\d+)$/i) && audio) {
+						volrange.value = Math.min(100, trimed.match(/\d+$/i)[0]);
 						changeVolume();
 					}
 					else if(trimed.match(/^\/(help|aide)$/i)) {
@@ -389,12 +406,8 @@
 					}
 					else if(trimed.match(/^\/me\s/i))
 						ws.send(JSON.stringify({type: 'me', msg: trimed.substr(4)}));
-					else if(trimed.match(/^\/poker$/i))
-						document.body.className = 'poker night';
-					else if(trimed.match(/^\/rainbow$/i))
-						document.body.className = 'rainbow night';
-					else if(trimed.match(/^\/spin$/i))
-						document.body.className = theme + ' rotate' + (Math.floor(Math.random() * 3) + 1);
+					else if(trimed.match(/^\/(poker|rainbow|flip|omg)$/i))
+						document.body.className = theme + ' ' + trimed.substr(1);
 					else {
 						ws.send(JSON.stringify({type: 'msg', msg: trimed, lang: lang}));
 						underlay.className = 'pulse';
@@ -468,7 +481,7 @@
 							break;
 
 							case 'invalid':
-								addLine({name : 'info'}, 'Impossible d\'attaquer pour le moment, ou pokémon invalide', msg.date, 'kick');
+								addLine({name : 'info'}, 'Impossible d\'attaquer pour le moment, ou pokémon invalide', (new Date), 'kick');
 							break;
 
 							case 'nothing':
@@ -550,7 +563,7 @@
 			lv.innerHTML = users[you].name + ' niveau ' + ++l;
 			document.cookie = 'lv=' + l + '; Path=/';
 		}
-		else if(x <= 1)
+		else if(x <= 0)
 			x = 0;
 		xp.style.width = x + '%';
 	}
