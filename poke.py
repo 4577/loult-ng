@@ -196,7 +196,9 @@ class LoultServer:
                 self.send_binary(wav)
 
     @auto_close
-    async def _extra_handler(self, msg_data: Dict):
+    async def _norender_msg_handler(self, msg_data: Dict):
+        """This handler is for messages that are displayed without a sound render, like bot status messages or
+        /me commands"""
         msg_type = msg_data['type']
         user_id = self.user.user_id
         output_msg = escape(msg_data['msg'])
@@ -220,10 +222,6 @@ class LoultServer:
 
     @auto_close
     async def _attack_handler(self, msg_data : Dict):
-        #if the user's shadownbanned, well, we just ignore the attack
-        if self.user.state.is_shadowbanned:
-            self.send_json(type='attack', event='invalid')
-
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
@@ -299,10 +297,11 @@ class LoultServer:
             self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
 
-        # before even running the ban, each clients of the concerned user is notified of the ban
-        for client in [client for client in self.channel_obj.clients if client.user and client.user.user_id == user_id]:
-            client.send_json(type="banned",
-                             msg="ofwere")
+        if "signal_client" in msg_data:
+            # before even running the ban, each clients of the concerned user is notified of the ban
+            for client in [client for client in self.channel_obj.clients if client.user and client.user.user_id == user_id]:
+                client.send_json(type="banned",
+                                 msg="ofwere")
 
         # and everyone is notified of the ban as to instigate fear in the heart of others
         self._broadcast_to_channel(type='antiflood', event='banned',
@@ -394,7 +393,7 @@ class LoultServer:
                 ensure_future(self._shadowban_handler(msg))
 
             elif msg['type'] in ('me', 'bot'):
-                ensure_future(self._extra_handler(msg))
+                ensure_future(self._norender_msg_handler(msg))
 
             else:
                 return self.sendClose(code=4003,

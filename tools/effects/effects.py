@@ -6,6 +6,7 @@ from functools import partial
 from itertools import cycle
 from os import path
 from typing import List
+from math import ave
 
 import numpy
 from pysndfx import AudioEffectsChain
@@ -476,6 +477,21 @@ class PitchRandomizerEffect(PhonemicEffect):
                 current_multiplier = random.random() * self._multiplier_range * (1 if random.randint(0,1) else -1) + 1
             phonem.pitch_modifiers = [(duration, int(pitch * current_multiplier))
                                       for duration, pitch in phonem.pitch_modifiers]
+        return phonems
+
+class CyborgEffect(PhonemicEffect):
+    NAME = "cyborg"
+    TIMEOUT = 180
+
+    def process(self, phonems: PhonemList):
+        for phonem in phonems:
+            if phonem.name in FrenchPhonems.VOWELS and random.randint(1, 1) == 1:
+                phonem.duration *= 2
+                if phonem.pitch_modifiers:
+                    orgnl_pitch_avg = average([pitch for pos, pitch in phonem.pitch_modifiers])
+                else:
+                    orgnl_pitch_avg = 150
+                phonem.set_from_pitches_list([orgnl_pitch_avg + ((-1) ** i * 80) for i in range(25)])
         return phonems
 
 #### Here are the voice effets ####
