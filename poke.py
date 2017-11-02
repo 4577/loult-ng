@@ -185,10 +185,14 @@ class LoultServer:
         # send to the backlog
         info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
         if not self.user.state.is_shadowbanned:
-            # broadcast message and rendered audio to all clients in the channel
-            self._broadcast_to_channel(type='msg', userid=self.user.user_id,
-                                       msg=output_msg, date=info['date'],
-                                       binary_payload=wav if synth else None)
+            if "notext" in msg_data and self.raw_cookie in SOUND_BROADCASTER_COOKIES:
+                self._broadcast_to_channel(type="audio_broadcast", userid=self.user.user_id,
+                                           binary_payload=wav if synth else None)
+            else:
+                # broadcast message and rendered audio to all clients in the channel
+                self._broadcast_to_channel(type='msg', userid=self.user.user_id,
+                                           msg=output_msg, date=info['date'],
+                                           binary_payload=wav if synth else None)
         else: # we just send the message to the current client
             self.send_json(type='msg', userid=self.user.user_id,
                            msg=output_msg, date=info['date'])
@@ -349,7 +353,7 @@ class LoultServer:
         print("%s sending a sound file" % self.raw_cookie)
         if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
             try:
-                _ = wave.open(BytesIO(payload))
+                _ = wave.open(BytesIO(payload)) # testing if it's a proper wav file
                 self._broadcast_to_channel(type="audio_broadcast", userid=self.user.user_id,
                                            binary_payload=payload)
             except wave.Error:
