@@ -1,6 +1,9 @@
 # in seconds, the time a pokemon has to wait before being able to attack again
 ATTACK_RESTING_TIME = 30
 
+# Time before a user can talk after connecting, in seconds
+TIME_BEFORE_TALK = 5
+
 # in seconds, the time during which a users's message are "remembered"
 FLOOD_DETECTION_WINDOW = 4
 

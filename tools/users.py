@@ -58,7 +58,7 @@ class UserState:
 
         self.effects = {cls: [] for cls in
                         (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
-
+        self.connection_time = datetime.now()
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
         self.timestamps = list()
         self.has_been_warned = False # User has been warned he shouldn't flood

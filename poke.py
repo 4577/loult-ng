@@ -20,7 +20,8 @@ from typing import List, Dict, Set, Tuple
 from autobahn.websocket.types import ConnectionDeny
 from salt import SALT
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP
+from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP, \
+    TIME_BEFORE_TALK
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.tools import INVISIBLE_CHARS, encode_json
@@ -169,9 +170,12 @@ class LoultServer:
 
     @auto_close
     async def _msg_handler(self, msg_data : Dict):
+        now = datetime.now()
+        if (now - self.user.state.connection_time).seconds < TIME_BEFORE_TALK:
+            return self.send_json(type='wait')
+
         if self._check_flood(msg_data['msg']):
             return
-        now = datetime.now()
         # user object instance renders both the output sound and output text
         output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
         # estimating the end of the current voice render, to rate limit
