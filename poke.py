@@ -102,8 +102,12 @@ class LoultServer:
             raise ConnectionDeny(403, 'temporarily banned for flooding.')
 
         self.cookie = cookie_hash
-        self.channel_n = request.path.lower().split('/', 2)[-1]
-        self.channel_n = sub("/.*", "", self.channel_n)
+        #  trashed cookies are automatically redirected to a "trash" channel
+        if self.cookie in self.loult_state.trashed_cookies:
+            self.channel_n = "cancer"
+        else:
+            self.channel_n = request.path.lower().split('/', 2)[-1]
+            self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
 
@@ -339,7 +343,7 @@ class LoultServer:
         user_id = msg_data['userid']
 
         if self.raw_cookie not in MOD_COOKIES:
-            self.logger.info('unauthorized access to ban tools')
+            self.logger.info('unauthorized access to shadowban tools')
             return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
 
         shadowbanned_user = self.channel_obj.users[user_id]
@@ -351,6 +355,25 @@ class LoultServer:
             shadowbanned_user.state.is_shadowbanned = False
             loult_state.shadowbanned_cookies.remove(shadowbanned_user.cookie_hash)
             self.send_json(type="shadowban", user_id=user_id, state="off")
+
+    @auto_close
+    async def _trash_handler(self, msg_data: Dict):
+        user_id = msg_data['userid']
+
+        if self.raw_cookie not in MOD_COOKIES:
+            self.logger.info('unauthorized access to trash tools')
+            return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
+
+        trashed_user = self.channel_obj.users[user_id]
+        if msg_data["action"] == "on":
+            loult_state.trashed_cookies.add(trashed_user.cookie_hash)
+            self.send_json(type="trash", user_id=user_id, state="on")
+            for client in self.channel_obj.clients:
+                if client.user == self.user:
+                    client.sendClose(code=4006,reason="Reconnect please")
+        elif msg_data["action"] == "off":
+            loult_state.trashed_cookies.remove(trashed_user.cookie_hash)
+            self.send_json(type="trash", user_id=user_id, state="off")
 
     @auto_close
     async def _binary_handler(self, payload):
@@ -399,6 +422,9 @@ class LoultServer:
 
             elif msg["type"] == "shadowban":
                 ensure_future(self._shadowban_handler(msg))
+
+            elif msg["type"] == "trash":
+                ensure_future(self._trash_handler(msg))
 
             elif msg['type'] in ('me', 'bot'):
                 ensure_future(self._norender_msg_handler(msg))
@@ -515,6 +541,7 @@ class LoultServerState:
         self.banned_cookies = set() #type:Set[str]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
         self.shadowbanned_cookies = set()
+        self.trashed_cookies = set()
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
