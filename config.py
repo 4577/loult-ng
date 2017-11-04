@@ -1,5 +1,5 @@
 # in seconds, the time a pokemon has to wait before being able to attack again
-ATTACK_RESTING_TIME = 30
+ATTACK_RESTING_TIME = 15
 
 # Time before a user can talk after connecting, in seconds
 TIME_BEFORE_TALK = 5
@@ -23,15 +23,15 @@ BAN_TIME = 1
 # For example, [r".*\bTrump\b.*"] will match any sentence
 # containing the word "Trump", but won't match "Trumped".
 # For case insensitivity, use (?i) before your regex.
-BANNED_WORDS = [r"(?i).*\bTrump\b.*", r"(?i).*\bfag(got)?\b.*"]
+BANNED_WORDS = [r"(?i).*\bissou\b.*", r"(?i).*\bchancla\b.*", r"(?i).*\Michel Sardou\b.*", r"(?i).*\bDrucker\b.*"]
 
-MOD_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
+MOD_COOKIES = ["wikiwiki"]
 
 # Here are the cookies of users that can broadcast sound to other users. For those users, when they send a
 # wav saound binary, the sound is just passed to other users with no modifications
 # Alos, cookies that are allowed to render text to sound and not send the text of their message
 # (thus sending "sound-only" messages)
-SOUND_BROADCASTER_COOKIES = ["put your cookies here; not their hashes, not userids, the actual cookies' id key"]
+SOUND_BROADCASTER_COOKIES = ["wikiwiki"]
 
 
 # Name of a netfilter table with a chain whose hook is 'input' (resp. 'output')
