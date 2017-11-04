@@ -20,7 +20,8 @@ from typing import List, Dict, Set, Tuple
 from autobahn.websocket.types import ConnectionDeny
 from salt import SALT
 
-from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP
+from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP, \
+    TIME_BEFORE_TALK
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
 from tools.tools import INVISIBLE_CHARS, encode_json
@@ -101,8 +102,12 @@ class LoultServer:
             raise ConnectionDeny(403, 'temporarily banned for flooding.')
 
         self.cookie = cookie_hash
-        self.channel_n = request.path.lower().split('/', 2)[-1]
-        self.channel_n = sub("/.*", "", self.channel_n)
+        #  trashed cookies are automatically redirected to a "trash" channel
+        if self.cookie in self.loult_state.trashed_cookies:
+            self.channel_n = "cancer"
+        else:
+            self.channel_n = request.path.lower().split('/', 2)[-1]
+            self.channel_n = sub("/.*", "", self.channel_n)
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
 
@@ -169,9 +174,12 @@ class LoultServer:
 
     @auto_close
     async def _msg_handler(self, msg_data : Dict):
+        now = datetime.now()
+        if (now - self.user.state.connection_time).seconds < TIME_BEFORE_TALK:
+            return self.send_json(type='wait')
+
         if self._check_flood(msg_data['msg']):
             return
-        now = datetime.now()
         # user object instance renders both the output sound and output text
         output_msg, wav = await self.user.render_message(msg_data["msg"], msg_data.get("lang", "fr"))
         # estimating the end of the current voice render, to rate limit
@@ -185,10 +193,14 @@ class LoultServer:
         # send to the backlog
         info = self.channel_obj.log_to_backlog(self.user.user_id, output_msg)
         if not self.user.state.is_shadowbanned:
-            # broadcast message and rendered audio to all clients in the channel
-            self._broadcast_to_channel(type='msg', userid=self.user.user_id,
-                                       msg=output_msg, date=info['date'],
-                                       binary_payload=wav if synth else None)
+            if "notext" in msg_data and self.raw_cookie in SOUND_BROADCASTER_COOKIES:
+                self._broadcast_to_channel(type="audio_broadcast", userid=self.user.user_id,
+                                           binary_payload=wav if synth else None)
+            else:
+                # broadcast message and rendered audio to all clients in the channel
+                self._broadcast_to_channel(type='msg', userid=self.user.user_id,
+                                           msg=output_msg, date=info['date'],
+                                           binary_payload=wav if synth else None)
         else: # we just send the message to the current client
             self.send_json(type='msg', userid=self.user.user_id,
                            msg=output_msg, date=info['date'])
@@ -196,7 +208,9 @@ class LoultServer:
                 self.send_binary(wav)
 
     @auto_close
-    async def _extra_handler(self, msg_data: Dict):
+    async def _norender_msg_handler(self, msg_data: Dict):
+        """This handler is for messages that are displayed without a sound render, like bot status messages or
+        /me commands"""
         msg_type = msg_data['type']
         user_id = self.user.user_id
         output_msg = escape(msg_data['msg'])
@@ -220,10 +234,6 @@ class LoultServer:
 
     @auto_close
     async def _attack_handler(self, msg_data : Dict):
-        #if the user's shadownbanned, well, we just ignore the attack
-        if self.user.state.is_shadowbanned:
-            self.send_json(type='attack', event='invalid')
-
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
 
@@ -299,10 +309,11 @@ class LoultServer:
             self.logger.info('unauthorized access to ban tools')
             return self.send_json(**info)
 
-        # before even running the ban, each clients of the concerned user is notified of the ban
-        for client in [client for client in self.channel_obj.clients if client.user and client.user.user_id == user_id]:
-            client.send_json(type="banned",
-                             msg="ofwere")
+        if "signal_client" in msg_data:
+            # before even running the ban, each clients of the concerned user is notified of the ban
+            for client in [client for client in self.channel_obj.clients if client.user and client.user.user_id == user_id]:
+                client.send_json(type="banned",
+                                 msg="ofwere")
 
         # and everyone is notified of the ban as to instigate fear in the heart of others
         self._broadcast_to_channel(type='antiflood', event='banned',
@@ -332,7 +343,7 @@ class LoultServer:
         user_id = msg_data['userid']
 
         if self.raw_cookie not in MOD_COOKIES:
-            self.logger.info('unauthorized access to ban tools')
+            self.logger.info('unauthorized access to shadowban tools')
             return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
 
         shadowbanned_user = self.channel_obj.users[user_id]
@@ -346,11 +357,30 @@ class LoultServer:
             self.send_json(type="shadowban", user_id=user_id, state="off")
 
     @auto_close
+    async def _trash_handler(self, msg_data: Dict):
+        user_id = msg_data['userid']
+
+        if self.raw_cookie not in MOD_COOKIES:
+            self.logger.info('unauthorized access to trash tools')
+            return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
+
+        trashed_user = self.channel_obj.users[user_id]
+        if msg_data["action"] == "on":
+            loult_state.trashed_cookies.add(trashed_user.cookie_hash)
+            self.send_json(type="trash", user_id=user_id, state="on")
+            for client in self.channel_obj.clients:
+                if client.user == self.user:
+                    client.sendClose(code=4006,reason="Reconnect please")
+        elif msg_data["action"] == "off":
+            loult_state.trashed_cookies.remove(trashed_user.cookie_hash)
+            self.send_json(type="trash", user_id=user_id, state="off")
+
+    @auto_close
     async def _binary_handler(self, payload):
         print("%s sending a sound file" % self.raw_cookie)
         if self.raw_cookie in SOUND_BROADCASTER_COOKIES:
             try:
-                _ = wave.open(BytesIO(payload))
+                _ = wave.open(BytesIO(payload)) # testing if it's a proper wav file
                 self._broadcast_to_channel(type="audio_broadcast", userid=self.user.user_id,
                                            binary_payload=payload)
             except wave.Error:
@@ -393,8 +423,11 @@ class LoultServer:
             elif msg["type"] == "shadowban":
                 ensure_future(self._shadowban_handler(msg))
 
+            elif msg["type"] == "trash":
+                ensure_future(self._trash_handler(msg))
+
             elif msg['type'] in ('me', 'bot'):
-                ensure_future(self._extra_handler(msg))
+                ensure_future(self._norender_msg_handler(msg))
 
             else:
                 return self.sendClose(code=4003,
@@ -508,6 +541,7 @@ class LoultServerState:
         self.banned_cookies = set() #type:Set[str]
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
         self.shadowbanned_cookies = set()
+        self.trashed_cookies = set()
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
