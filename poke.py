@@ -347,11 +347,11 @@ class LoultServer:
             return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
 
         shadowbanned_user = self.channel_obj.users[user_id]
-        if msg_data["action"] == "on":
+        if msg_data["action"] == "apply":
             shadowbanned_user.state.is_shadowbanned = True
             loult_state.shadowbanned_cookies.add(shadowbanned_user.cookie_hash)
             self.send_json(type="shadowban", user_id=user_id, state="on")
-        elif msg_data["action"] == "off":
+        elif msg_data["action"] == "remove":
             shadowbanned_user.state.is_shadowbanned = False
             loult_state.shadowbanned_cookies.remove(shadowbanned_user.cookie_hash)
             self.send_json(type="shadowban", user_id=user_id, state="off")
@@ -365,13 +365,13 @@ class LoultServer:
             return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
 
         trashed_user = self.channel_obj.users[user_id]
-        if msg_data["action"] == "on":
+        if msg_data["action"] == "apply":
             loult_state.trashed_cookies.add(trashed_user.cookie_hash)
             self.send_json(type="trash", user_id=user_id, state="on")
             for client in self.channel_obj.clients:
                 if client.user == self.user:
                     client.sendClose(code=4006,reason="Reconnect please")
-        elif msg_data["action"] == "off":
+        elif msg_data["action"] == "remove":
             loult_state.trashed_cookies.remove(trashed_user.cookie_hash)
             self.send_json(type="trash", user_id=user_id, state="off")
 
