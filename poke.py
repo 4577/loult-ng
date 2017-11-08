@@ -296,7 +296,7 @@ class LoultServer:
     async def _ban_handler(self, msg_data : Dict):
         user_id = msg_data['userid']
         ban_type = msg_data['type']
-        state = msg_data['state']
+        action = msg_data['action']
         timeout = msg_data.get('timeout', None)
         info = {'type': ban_type, 'userid': user_id}
 
@@ -315,10 +315,11 @@ class LoultServer:
                 client.send_json(type="banned",
                                  msg="ofwere")
 
-        # and everyone is notified of the ban as to instigate fear in the heart of others
-        self._broadcast_to_channel(type='antiflood', event='banned',
-                                   flooder_id=user_id,
-                                   date=time() * 1000)
+        if action == "apply" and ban_type == "ban":
+            # and everyone is notified of the ban as to instigate fear in the heart of others
+            self._broadcast_to_channel(type='antiflood', event='banned',
+                                       flooder_id=user_id,
+                                       date=time() * 1000)
 
         connected_list = {client.ip for client in self.channel_obj.clients
                           if client.user and client.user.user_id == user_id}
@@ -329,7 +330,7 @@ class LoultServer:
         log_msg = '{type}:{ip}:{userid}:resulted in "{state}"'
 
         try:
-            ban = Ban(ban_type, state, timeout)
+            ban = Ban(ban_type, action, timeout)
             info['state'] = await ban(todo)
             self.logger.info(log_msg.format(**info, ip=todo))
             self.send_json(**info)
@@ -344,17 +345,17 @@ class LoultServer:
 
         if self.raw_cookie not in MOD_COOKIES:
             self.logger.info('unauthorized access to shadowban tools')
-            return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
+            return self.send_json(type="shadowban", userid=user_id, state="unauthorized")
 
         shadowbanned_user = self.channel_obj.users[user_id]
-        if msg_data["action"] == "on":
+        if msg_data["action"] == "apply":
             shadowbanned_user.state.is_shadowbanned = True
             loult_state.shadowbanned_cookies.add(shadowbanned_user.cookie_hash)
-            self.send_json(type="shadowban", user_id=user_id, state="on")
-        elif msg_data["action"] == "off":
+            self.send_json(type="shadowban", userid=user_id, state="apply_ok")
+        elif msg_data["action"] == "remove":
             shadowbanned_user.state.is_shadowbanned = False
             loult_state.shadowbanned_cookies.remove(shadowbanned_user.cookie_hash)
-            self.send_json(type="shadowban", user_id=user_id, state="off")
+            self.send_json(type="shadowban", userid=user_id, state="remove_ok")
 
     @auto_close
     async def _trash_handler(self, msg_data: Dict):
@@ -362,18 +363,18 @@ class LoultServer:
 
         if self.raw_cookie not in MOD_COOKIES:
             self.logger.info('unauthorized access to trash tools')
-            return self.send_json(type="shadowban", user_id=user_id, state="unauthorized")
+            return self.send_json(type="shadowban", userid=user_id, state="unauthorized")
 
         trashed_user = self.channel_obj.users[user_id]
-        if msg_data["action"] == "on":
+        if msg_data["action"] == "apply":
             loult_state.trashed_cookies.add(trashed_user.cookie_hash)
-            self.send_json(type="trash", user_id=user_id, state="on")
+            self.send_json(type="trash", userid=user_id, state="apply_ok")
             for client in self.channel_obj.clients:
-                if client.user == self.user:
+                if client.user.user_id == user_id:
                     client.sendClose(code=4006,reason="Reconnect please")
-        elif msg_data["action"] == "off":
+        elif msg_data["action"] == "remove":
             loult_state.trashed_cookies.remove(trashed_user.cookie_hash)
-            self.send_json(type="trash", user_id=user_id, state="off")
+            self.send_json(type="trash", userid=user_id, state="remove_ok")
 
     @auto_close
     async def _binary_handler(self, payload):
