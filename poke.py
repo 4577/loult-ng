@@ -208,6 +208,18 @@ class LoultServer:
                 self.send_binary(wav)
 
     @auto_close
+    async def _pm_handler(self, msg_data: Dict):
+        # cleaning up none values in case of fuckups
+        msg_data = {key: value for key, value in msg_data.items() if value is not None}
+        targer_id, target = self.channel_obj.get_user_by_name(msg_data["target"], msg_data.get("order", 1) - 1)
+        if target is None:
+            self.send_json(type='private_msg', event='invalid')
+        for client in self.channel_obj.clients:
+            if client.user == target:
+                client.send_json(type='private_msg', msg=msg_data["msg"])
+
+
+    @auto_close
     async def _norender_msg_handler(self, msg_data: Dict):
         """This handler is for messages that are displayed without a sound render, like bot status messages or
         /me commands"""
@@ -370,7 +382,7 @@ class LoultServer:
             loult_state.trashed_cookies.add(trashed_user.cookie_hash)
             self.send_json(type="trash", userid=user_id, state="apply_ok")
             for client in self.channel_obj.clients:
-                if client.user.user_id == user_id:
+                if client.user is not None and client.user.user_id == user_id:
                     client.sendClose(code=4006,reason="Reconnect please")
         elif msg_data["action"] == "remove":
             loult_state.trashed_cookies.remove(trashed_user.cookie_hash)
@@ -409,6 +421,10 @@ class LoultServer:
             if msg['type'] == 'msg':
                 # when the message is just a simple text message (regular chat)
                 ensure_future(self._msg_handler(msg))
+
+            if msg['type'] == 'private_msg':
+                # when it's a private message destined to a specific user
+                ensure_future(self._pm_handler(msg))
 
             elif msg["type"] == "attack":
                 # when the current client attacks someone else
