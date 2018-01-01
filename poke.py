@@ -21,10 +21,10 @@ from autobahn.websocket.types import ConnectionDeny
 from salt import SALT
 
 from config import ATTACK_RESTING_TIME, BAN_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, MAX_COOKIES_PER_IP, \
-    TIME_BEFORE_TALK
+    TIME_BEFORE_TALK, TIME_BETWEEN_CONNECTIONS
 from tools.ban import Ban, BanFail
 from tools.combat import CombatSimulator
-from tools.tools import INVISIBLE_CHARS, encode_json
+from tools.tools import INVISIBLE_CHARS, encode_json, OrderedDequeDict
 from tools.users import User
 
 
@@ -84,6 +84,13 @@ class LoultServer:
     def onConnect(self, request):
         """HTTP-level request, triggered when the client opens the WSS connection"""
        	self.ip = request.headers['x-real-ip']
+
+        # checking if this IP's last login isn't too close from this one
+        if self.ip in self.loult_state.ip_last_login:
+            if (datetime.now() - self.loult_state.ip_last_login[self.ip]).seconds < TIME_BETWEEN_CONNECTIONS:
+                raise ConnectionDeny(403, 'Wait some time before trying to connect')
+        self.loult_state.ip_last_login[self.ip] = datetime.now()
+
         self.logger.info('attempting a connection')
 
         # trying to extract the cookie from the request header. Else, creating a new cookie and
@@ -559,6 +566,7 @@ class LoultServerState:
         self.ip_backlog = deque(maxlen=100) #type: Tuple(str, str)
         self.shadowbanned_cookies = set()
         self.trashed_cookies = set()
+        self.ip_last_login = OrderedDequeDict()
 
     def channel_connect(self, client : LoultServer, user_cookie : str, channel_name : str) -> Tuple[Channel, User]:
         # if the channel doesn't exist, we instanciate it and add it to the channel dict
