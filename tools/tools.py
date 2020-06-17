@@ -223,7 +223,7 @@ def open_sound_file(relative_path):
 
 class OrderedDequeDict(OrderedDict):
 
-    def __init__(self, size=100, *args, **kwargs):
+    def __init__(self, size=1000, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.size = size
 

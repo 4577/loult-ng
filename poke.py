@@ -10,7 +10,7 @@ from tools.client import ClientRouter, LoultServerProtocol
 from tools.handlers import (MessageHandler, BinaryHandler, TrashHandler, BanHandler, ShadowbanHandler,
                             NoRenderMsgHandler, AttackHandler, PrivateMessageHandler, MoveHandler,
                             InventoryListingHandler, ObjectGiveHandler, ObjectUseHandler, ObjectTrashHandler,
-                            ListChannelInventoryHandler, ObjectTakeHandler, WeaponsGrantHandler)
+                            ListChannelInventoryHandler, ObjectTakeHandler, WeaponsGrantHandler, ForensicsGrantHandler)
 from tools.state import LoultServerState
 
 if __name__ == "__main__":
@@ -75,7 +75,8 @@ if __name__ == "__main__":
     router.add_route(field="mod", value="shadowban", handler_class=ShadowbanHandler)
     for ban_type in Ban.ban_types:
         router.add_route(field="mod", value=ban_type, handler_class=BanHandler)
-    router.add_route(field="mod", value="grant", handler_class=WeaponsGrantHandler)
+    router.add_route(field="mod", value="arms", handler_class=WeaponsGrantHandler)
+    router.add_route(field="mod", value="forensics", handler_class=ForensicsGrantHandler)
 
 
     class AutobahnLoultServerProtocol(LoultServerProtocol, WebSocketServerProtocol):

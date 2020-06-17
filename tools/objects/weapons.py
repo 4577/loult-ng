@@ -1,6 +1,7 @@
 from itertools import cycle
 from pathlib import Path
 from time import time as timestamp
+from typing import List
 
 from .base import LoultObject, destructible, targeted, for_militia, userlist_dist, cooldown, inert, DATA_FOLDER
 
@@ -40,8 +41,10 @@ class RobinHoodsBow(LoultObject):
             for obj in target_objs:
                 self.targeted_user.state.inventory.remove(obj)
                 self.channel.inventory.add(obj)
-        self.notify_channel(msg=f"{self.user_fullname} vole à {self.targeted_user.poke_params.fullname} pour donner aux pauvres",
-                            binary_payload=self._load_byte(self.BOW_FX))
+        self.notify_channel(
+            msg=f"{self.user_fullname} vole à {self.targeted_user.poke_params.fullname} pour donner aux pauvres",
+            binary_payload=self._load_byte(self.BOW_FX))
+
 
 @destructible
 @inert
@@ -83,23 +86,25 @@ class MilitiaSniper(LoultObject):
             return self.NAME + " (vide)"
 
     def use(self, obj_params):
-        # TODO : add a "scope" last argument maybe
+        #  TODO : add a "scope" last argument maybe
         if self.remaining_bullets <= 0:
             return self.notify_serv(msg="Plus de munitions!")
         self.remaining_bullets -= 1
-        self.notify_channel(msg=f"{self.user_fullname} tire au fusil sniper calibre .50 sur {self.targeted_user.poke_params.fullname}",
-                            binary_payload=self._load_byte(self.SNIPER_FX))
+        self.notify_channel(
+            msg=f"{self.user_fullname} tire au fusil sniper calibre .50 sur {self.targeted_user.poke_params.fullname}",
+            binary_payload=self._load_byte(self.SNIPER_FX))
         self.channel.broadcast(type='antiflood', event='banned',
                                flooder_id=self.targeted_userid,
                                date=timestamp() * 1000)
         for client in self.targeted_user.clients:
-            self.loult_state.ban_ip(client.ip)
+            self.loult_state.apply_ban(ip=client.ip)
             client.sendClose(code=4006, reason="Reconnect later.")
         splashed_usrs = [usr for usr in self.server.channel_obj.users.values()
                          if userlist_dist(self.channel, self.targeted_userid, usr.user_id) < 2
                          and usr is not self.targeted_user]
         splashed_usrs = ", ".join(usr.poke_params.fullname for usr in splashed_usrs)
-        self.notify_channel(msg=f"{splashed_usrs} se sont faits éclabousser de sang et de cervelle de {self.targeted_user.poke_params.fullname}")
+        self.notify_channel(
+            msg=f"{splashed_usrs} se sont faits éclabousser de sang et de cervelle de {self.targeted_user.poke_params.fullname}")
 
 
 @for_militia
@@ -119,7 +124,7 @@ class MilitiaSniperAmmo(LoultObject):
         emptiest_gun = users_guns[0]
         emptiest_gun.remaining_bullets = 7
         self.notify_serv(msg="PGM Hécate II chargé!")
-        self.server.send_binary(self._load_byte(self.RELOADING_FX))
+        self.channel.broadcast(self._load_byte(self.RELOADING_FX))
         self.should_be_destroyed = True
 
 
@@ -128,6 +133,8 @@ class ClientSidePunitiveObject(LoultObject):
     MSG = ""
 
     def use(self, obj_params):
+        for client in self.targeted_user.clients:
+            self.loult_state.apply_ban(ip=client.ip)
         for client in self.server.user.clients:
             client.send_json(type="notification", msg=self.MSG % self.targeted_user.poke_params.fullname)
         for client in self.targeted_user.clients:
@@ -148,3 +155,29 @@ class Screamer(ClientSidePunitiveObject):
     NAME = "SCR34-MR"
     EVENT = "cactus"
     MSG = "Redirection vers un site adapté pour %s"
+
+
+@for_militia
+@targeted()
+class UserInspector(LoultObject):
+    NAME = "Gadget d'inspecteur"
+
+    def use(self, obj_params):
+        from ..users import PokeParameters
+        last_identities = []
+        for client in self.targeted_user.clients:
+            for cookie in self.loult_state.id_backlog.get_ip_cookies(client.ip):
+                last_identities.append(PokeParameters.from_cookie_hash(cookie).fullname)
+        self.notify_serv(f"Dernières identités pour cet utilisateur: {' ,'.join(last_identities)}")
+        last_channels = self.loult_state.id_backlog.get_cookie_channels(self.targeted_user.cookie_hash)
+        self.notify_serv(f"Deniers canaux pour cet utilisateur: {' ,'.join(last_channels)}")
+
+
+@for_militia
+class ChannelSniffer(LoultObject):
+    NAME = "Renifleuw de canaux"
+
+    def use(self, obj_params: List):
+        channels_summary = ", ".join([f"{channel.name} ({len(channel.users)})"
+                                      for channel in self.loult_state.chans.values()])
+        self.notify_serv(f"Canaux ouverts : {channels_summary}")

@@ -9,7 +9,7 @@ from scipy.io import wavfile
 from config import ATTACK_RESTING_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, TIME_BEFORE_TALK, \
     MAX_ITEMS_IN_INVENTORY, MILITIA_COOKIES
 from .objects.weapons import MilitiaSniper, MilitiaSniperAmmo, Civilisator, \
-    Screamer
+    Screamer, UserInspector, ChannelSniffer
 from tools.tools import open_sound_file
 from .ban import Ban, BanFail
 from .combat import CombatSimulator
@@ -53,13 +53,8 @@ class BinaryHandler(BaseHandler):
 
     async def handle(self, payload: bytes):
         if self.server.raw_cookie in SOUND_BROADCASTER_COOKIES:
-            try:
-                _ = wavfile.read(BytesIO(payload)) # testing if it's a proper wav file
-                self.channel_obj.broadcast(type="audio_broadcast", userid=self.user.user_id,
-                                           binary_payload=payload)
-            except:
-                return self.server.sendClose(code=4002,
-                                             reason='Invalid wav sound file')
+            self.channel_obj.broadcast(type="audio_broadcast", userid=self.user.user_id,
+                                       binary_payload=payload)
         else:
             return self.server.sendClose(code=4002,
                                          reason='Binary data is not accepted')
@@ -296,7 +291,7 @@ class ShadowbanHandler(MsgBaseHandler):
         shadowbanned_user = self.channel_obj.users[user_id]
         if msg_data["action"] == "apply":
             shadowbanned_user.state.is_shadowbanned = True
-            self.loult_state.shadowbanned_cookies.add(shadowbanned_user.cookie_hash)
+            self.loult_state.apply_ban.add(shadowbanned_user.cookie_hash)
             self.server.send_json(type="shadowban", userid=user_id, state="apply_ok")
         elif msg_data["action"] == "remove":
             shadowbanned_user.state.is_shadowbanned = False
@@ -451,3 +446,12 @@ class WeaponsGrantHandler(MsgBaseHandler):
             self.user.state.inventory.add(MilitiaSniperAmmo())
         self.user.state.inventory.add(Civilisator())
         self.user.state.inventory.add(Screamer())
+
+
+class ForensicsGrantHandler(MsgBaseHandler):
+    """Grants forensics tools to the user"""
+
+    @cookie_check(MILITIA_COOKIES)
+    async def handle(self, msg_data: Dict):
+        self.user.state.inventory.add(UserInspector())
+        self.user.state.inventory.add(ChannelSniffer())
