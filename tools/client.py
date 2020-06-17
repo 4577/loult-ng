@@ -149,6 +149,7 @@ class LoultServerProtocol:
                     self.channel_n = "cancer"
             else:
                 self.channel_n = "cancer"
+
         self.sendend = datetime.now()
         self.lasttxt = datetime.now()
 
