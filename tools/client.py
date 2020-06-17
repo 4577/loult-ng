@@ -113,10 +113,10 @@ class LoultServerProtocol:
         self.ip = request.headers['x-real-ip']
 
         # checking if this IP's last login isn't too close from this one
-        if self.ip in self.loult_state.ip_last_login:
-            if (datetime.now() - self.loult_state.ip_last_login[self.ip]).seconds < TIME_BETWEEN_CONNECTIONS:
+        ip_backlog = self.loult_state.id_backlog.ip_last_login
+        if self.ip in ip_backlog:
+            if (datetime.now() - ip_backlog[self.ip]).seconds < TIME_BETWEEN_CONNECTIONS:
                 raise ConnectionDeny(403, 'Wait some time before trying to connect')
-        self.loult_state.ip_last_login[self.ip] = datetime.now()
 
         self.logger.debug('attempting a connection')
 
@@ -132,12 +132,12 @@ class LoultServerProtocol:
         self.raw_cookie = ck
         cookie_hash = md5((ck + SALT).encode('utf8')).digest()
 
-        if cookie_hash in self.loult_state.banned_cookies or self.ip in self.loult_state.banned_ips:
+        if self.loult_state.is_banned(cookie=cookie_hash, ip=self.ip):
             raise ConnectionDeny(403, 'temporarily banned.')
 
         self.cookie = cookie_hash
-        #  trashed cookies are automatically redirected to a "trash" channel
-        if self.cookie in self.loult_state.trashed_cookies:
+        #  trashed users are automatically redirected to a "trash" channel
+        if self.loult_state.is_trashed(cookie=cookie_hash, ip=self.ip):
             self.channel_n = "cancer"
         else:
             self.channel_n = request.path.lower().split('/', 2)[-1]
@@ -208,8 +208,6 @@ class LoultServerProtocol:
     def onClose(self, wasClean, code, reason):
         """Triggered when the WS connection closes. Mainly consists of deregistering the user"""
         if self.cnx:
-            # This lets moderators ban an user even after their disconnection
-            self.loult_state.ip_backlog.append((self.user.user_id, self.ip))
             self.channel_obj.channel_leave(self, self.user)
             # emptying user inventory to the channel's common inventory
             for obj in self.user.state.inventory.objects:
