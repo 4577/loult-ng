@@ -12,7 +12,6 @@ import json
 from config import FLOOD_DETECTION_WINDOW, BANNED_WORDS, FLOOD_WARNING_TIMEOUT, FLOOD_DETECTION_MSG_PER_SEC, \
     ATTACK_RESTING_TIME
 from tools import pokemons
-from tools.objects.inventory import UserInventory
 
 from tools.tools import AudioRenderer, SpoilerBipEffect, prepare_text_for_tts, emojize
 from voxpopuli import PhonemeList
@@ -109,6 +108,7 @@ class UserState:
         self._banned_words = [regex(word) for word in banned_words]
         self.is_shadowbanned = False  #  User has been shadowbanned
 
+        from .objects.inventory import UserInventory
         self.inventory = UserInventory()
 
     def __setattr__(self, name, value):

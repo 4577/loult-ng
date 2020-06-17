@@ -10,7 +10,6 @@ import yaml
 from dataclasses import dataclass
 
 from .base import userlist_dist, LoultObject, cooldown, destructible, targeted, inert, clonable, DATA_FOLDER
-from ..effects import AudioEffect
 from ..effects.effects import ExplicitTextEffect, GrandSpeechMasterEffect, StutterEffect, VocalDyslexia, \
     VowelExchangeEffect, FlowerEffect, CaptainHaddockEffect, FapEffect
 from ..tools import cached_loader

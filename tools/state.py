@@ -193,16 +193,16 @@ class IdentitiesBacklog:
         self.ip_last_login[ip] = datetime.now()
 
     def get_cookie_ips(self, cookie: str):
-        return [conn.ip for conn in self.backlog if conn.cookie == cookie]
+        return set(conn.ip for conn in self.backlog if conn.cookie == cookie)
 
     def get_ip_cookies(self, ip: str):
-        return [conn.cookie for conn in self.backlog if conn.ip == ip]
+        return set(conn.cookie for conn in self.backlog if conn.ip == ip)
 
     def get_cookie_channels(self, cookie: str):
-        return [conn.channel for conn in self.backlog if conn.cookie == cookie]
+        return set(conn.channel for conn in self.backlog if conn.cookie == cookie)
 
     def ip_backlog(self):
-        return set([conn.ip for conn in self.backlog])
+        return set(conn.ip for conn in self.backlog)
 
 
 class LoultServerState:

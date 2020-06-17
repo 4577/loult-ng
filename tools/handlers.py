@@ -1,19 +1,16 @@
 from datetime import datetime, timedelta
 from html import escape
-from io import BytesIO
 from time import time as timestamp
 from typing import Dict
 
-from scipy.io import wavfile
-
 from config import ATTACK_RESTING_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, TIME_BEFORE_TALK, \
     MAX_ITEMS_IN_INVENTORY, MILITIA_COOKIES
-from .objects.weapons import MilitiaSniper, MilitiaSniperAmmo, Civilisator, \
-    Screamer, UserInspector, ChannelSniffer
 from tools.tools import open_sound_file
 from .ban import Ban, BanFail
 from .combat import CombatSimulator
-from .objects import LoultObject
+from .objects import LoultObject, ScrollOfQurk
+from .objects.weapons import MilitiaSniper, MilitiaSniperAmmo, Civilisator, \
+    Screamer, UserInspector, ChannelSniffer
 
 
 def cookie_check(cookie_list):
@@ -455,3 +452,20 @@ class ForensicsGrantHandler(MsgBaseHandler):
     async def handle(self, msg_data: Dict):
         self.user.state.inventory.add(UserInspector())
         self.user.state.inventory.add(ChannelSniffer())
+
+
+class QurkMasterHandler(MsgBaseHandler):
+    """Grants forensics tools to the user"""
+
+    @cookie_check(MILITIA_COOKIES)
+    async def handle(self, msg_data: Dict):
+        if msg_data.get("params"):
+            params = msg_data["params"]
+            if len(params) == 1:
+                _, user = self.channel_obj.get_user_by_name(params[0], 0)
+            else:
+                _, user = self.channel_obj.get_user_by_name(params[0], int(params[1]))
+            user.state.inventory.add(ScrollOfQurk())
+        else:
+            for _ in range(5):
+                self.user.state.inventory.add(ScrollOfQurk())
