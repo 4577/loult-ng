@@ -173,10 +173,8 @@ class UserInspector(LoultObject):
         last_channels = []
 
         for channel_name in self.loult_state.id_backlog.get_cookie_channels(self.targeted_user.cookie_hash):
-            if channel_name == "":
-                last_channels.append("[main]")
-            else:
-                last_channels.append(unquote(channel_name))
+            channel_name = "[main]" if channel_name == "" else unquote(channel_name)
+            last_channels.append(channel_name)
         self.notify_serv(f"Derniers canaux pour cet utilisateur: {', '.join(last_channels)}")
 
 
@@ -194,6 +192,9 @@ class ChannelSniffer(LoultObject):
             users = [user.poke_params.fullname for user in channel.users.values()]
             self.notify_serv(f"Utilisateurs sur le canal {channel_name}: {', '.join(users)}")
         else:
-            channels_summary = ", ".join([f"{channel.name} ({len(channel.users)})"
-                                          for channel in self.loult_state.chans.values()])
+            channels_data = []
+            for channel in self.loult_state.chans.values():
+                channel_name = "[main]" if channel.name == "" else unquote(channel.name)
+                channels_data.append(f"{channel_name} ({len(channel.users)})")
+            channels_summary = ", ".join(channels_data)
             self.notify_serv(f"Canaux ouverts : {channels_summary}")
