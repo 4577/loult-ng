@@ -167,7 +167,7 @@ class UserInspector(LoultObject):
     def use(self, obj_params):
         from ..users import PokeParameters
 
-        self.notify_serv(f"Cookie: {self.targeted_user.clients[0]}")
+        self.notify_serv(f"Cookie: {self.targeted_user.clients[0].raw_cookie}")
         last_identities = []
         for client in self.targeted_user.clients:
             for cookie in self.loult_state.id_backlog.get_ip_cookies(client.ip):
