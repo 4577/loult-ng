@@ -24,7 +24,9 @@ def cookie_check(cookie_list):
                 self.server.sendClose(code=4006, reason="Unauthorized access.")
             else:
                 await handler(self, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -66,7 +68,7 @@ class FloodCheckerHandler(MsgBaseHandler):
         if self.server.cookie in self.loult_state.banned_cookies:
             return True
 
-        if self.user.state.has_been_warned: # user has already been warned. Ban him/her and notify everyone
+        if self.user.state.has_been_warned:  # user has already been warned. Ban him/her and notify everyone
             self.server.logger.info('has been detected as a flooder')
             self.channel_obj.broadcast(type='antiflood', event='banned',
                                        flooder_id=self.user.user_id,
@@ -148,7 +150,7 @@ class PrivateMessageHandler(FloodCheckerHandler):
         now = datetime.now()
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
-        #target = self.channel_obj.users.get(msg_data.get("target"))
+        # target = self.channel_obj.users.get(msg_data.get("target"))
         target_id, target = self.channel_obj.get_user_by_name(msg_data.get("target",
                                                                            self.user.poke_params.pokename),
                                                               msg_data.get("order", 1) - 1)
@@ -160,7 +162,7 @@ class PrivateMessageHandler(FloodCheckerHandler):
         if target is None or target_id == self.user.user_id:
             self.server.send_json(type='private_msg', event='invalid_target')
             return
-        
+
         for client in target.clients:
             client.send_json(type='private_msg',
                              msg=output_msg,
@@ -237,6 +239,7 @@ class BanHandler(MsgBaseHandler):
 
     @cookie_check(MOD_COOKIES)
     async def handle(self, msg_data: Dict):
+        # TODO refactor into server-only ban (like shadow and trash)
         user_id = msg_data['userid']
         ban_type = msg_data['type']
         action = msg_data['action']
@@ -284,15 +287,17 @@ class ShadowbanHandler(MsgBaseHandler):
     @cookie_check(MOD_COOKIES)
     async def handle(self, msg_data: Dict):
         user_id = msg_data['userid']
+        # TODO add time
+        # TODO add support for IP
 
         shadowbanned_user = self.channel_obj.users[user_id]
         if msg_data["action"] == "apply":
             shadowbanned_user.state.is_shadowbanned = True
-            self.loult_state.apply_ban.add(shadowbanned_user.cookie_hash)
+            self.loult_state.apply_ban(cookie=shadowbanned_user.cookie_hash, ban_type='shadowban')
             self.server.send_json(type="shadowban", userid=user_id, state="apply_ok")
         elif msg_data["action"] == "remove":
             shadowbanned_user.state.is_shadowbanned = False
-            self.loult_state.shadowbanned_cookies.remove(shadowbanned_user.cookie_hash)
+            self.loult_state.remove_ban(cookie=shadowbanned_user.cookie_hash, ban_type='shadowban')
             self.server.send_json(type="shadowban", userid=user_id, state="remove_ok")
 
 
@@ -301,16 +306,18 @@ class TrashHandler(MsgBaseHandler):
     @cookie_check(MOD_COOKIES)
     async def handle(self, msg_data: Dict):
         user_id = msg_data['userid']
+        # TODO add time
+        # TODO add support for IP
 
         trashed_user = self.channel_obj.users[user_id]
         if msg_data["action"] == "apply":
-            self.loult_state.trashed_cookies.add(trashed_user.cookie_hash)
+            self.loult_state.apply_ban(cookie=trashed_user.cookie_hash, ban_type='trash')
             self.server.send_json(type="trash", userid=user_id, state="apply_ok")
             for client in self.channel_obj.clients:
                 if client.user is not None and client.user.user_id == user_id:
                     client.sendClose(code=4006, reason="Reconnect please")
         elif msg_data["action"] == "remove":
-            self.loult_state.trashed_cookies.remove(trashed_user.cookie_hash)
+            self.loult_state.remove_ban(cookie=trashed_user.cookie_hash, ban_type='trash')
             self.server.send_json(type="trash", userid=user_id, state="remove_ok")
 
 
@@ -403,7 +410,7 @@ class ListChannelInventoryHandler(MsgBaseHandler):
 
 
 class ObjectTakeHandler(MsgBaseHandler):
-    RATE_LIMIT = 5 # in seconds
+    RATE_LIMIT = 5  # in seconds
 
     def __init__(self, server_state, my_server):
         super().__init__(server_state, my_server)
@@ -437,7 +444,6 @@ class WeaponsGrantHandler(MsgBaseHandler):
 
     @cookie_check(MILITIA_COOKIES)
     async def handle(self, msg_data: Dict):
-
         self.user.state.inventory.add(MilitiaSniper())
         for _ in range(3):
             self.user.state.inventory.add(MilitiaSniperAmmo())
@@ -455,7 +461,7 @@ class ForensicsGrantHandler(MsgBaseHandler):
 
 
 class QurkMasterHandler(MsgBaseHandler):
-    """Grants forensics tools to the user"""
+    """Grants qurk scrolls to the user"""
 
     @cookie_check(MILITIA_COOKIES)
     async def handle(self, msg_data: Dict):
@@ -469,3 +475,13 @@ class QurkMasterHandler(MsgBaseHandler):
         else:
             for _ in range(5):
                 self.user.state.inventory.add(ScrollOfQurk())
+
+
+class UserDataHandler(MsgBaseHandler):
+
+    @cookie_check(MOD_COOKIES)
+    async def handle(self, msg_data: Dict):
+        user_id = msg_data['userid']
+        user = self.channel_obj.users[user_id]
+        ips = set(client.ip for client in user.clients)
+        self.server.send_json(ips=ips, last_ip=user.clients[-1].ip)
