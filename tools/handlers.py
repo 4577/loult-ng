@@ -10,7 +10,7 @@ from .ban import Ban, BanFail
 from .combat import CombatSimulator
 from .objects import LoultObject, ScrollOfQurk
 from .objects.weapons import MilitiaSniper, MilitiaSniperAmmo, Civilisator, \
-    Screamer, UserInspector, ChannelSniffer
+    Screamer, UserInspector, ChannelSniffer, Impersonator
 
 
 def cookie_check(cookie_list):
@@ -458,6 +458,7 @@ class ForensicsGrantHandler(MsgBaseHandler):
     async def handle(self, msg_data: Dict):
         self.user.state.inventory.add(UserInspector())
         self.user.state.inventory.add(ChannelSniffer())
+        self.user.state.inventory.add(Impersonator())
 
 
 class QurkMasterHandler(MsgBaseHandler):
@@ -479,7 +480,7 @@ class QurkMasterHandler(MsgBaseHandler):
 
 class UserDataHandler(MsgBaseHandler):
 
-    @cookie_check(MOD_COOKIES)
+    @cookie_check(MOD_COOKIES + MILITIA_COOKIES)
     async def handle(self, msg_data: Dict):
         user_id = msg_data['userid']
         user = self.channel_obj.users[user_id]

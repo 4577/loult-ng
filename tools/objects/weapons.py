@@ -1,3 +1,4 @@
+import asyncio
 from itertools import cycle
 from pathlib import Path
 from time import time as timestamp
@@ -165,17 +166,19 @@ class UserInspector(LoultObject):
 
     def use(self, obj_params):
         from ..users import PokeParameters
+
+        self.notify_serv(f"Cookie: {self.targeted_user.clients[0]}")
         last_identities = []
         for client in self.targeted_user.clients:
             for cookie in self.loult_state.id_backlog.get_ip_cookies(client.ip):
                 last_identities.append(PokeParameters.from_cookie_hash(cookie).fullname)
-        self.notify_serv(f"Dernières identités pour cet utilisateur: {', '.join(last_identities)}")
+        self.notify_serv(f"Dernières identités: {', '.join(last_identities)}")
         last_channels = []
 
         for channel_name in self.loult_state.id_backlog.get_cookie_channels(self.targeted_user.cookie_hash):
             channel_name = "[main]" if channel_name == "" else unquote(channel_name)
             last_channels.append(channel_name)
-        self.notify_serv(f"Derniers canaux pour cet utilisateur: {', '.join(last_channels)}")
+        self.notify_serv(f"Derniers canaux: {', '.join(last_channels)}")
 
 
 @for_militia
@@ -198,3 +201,33 @@ class ChannelSniffer(LoultObject):
                 channels_data.append(f"{channel_name} ({len(channel.users)})")
             channels_summary = ", ".join(channels_data)
             self.notify_serv(f"Canaux ouverts : {channels_summary}")
+
+@for_militia
+@targeted(mandatory=False)
+class Impersonator(LoultObject):
+    NAME = "Impersonateur"
+
+    def __init__(self):
+        super().__init__()
+        self.impersonated_user = None
+
+    async def send_message(self, msg):
+        output_msg, wav = await self.impersonated_user.render_message(msg, "fr")
+        date = timestamp() * 1000
+        self.channel.broadcast(type='msg', userid=self.impersonated_user.user_id,
+                               msg=output_msg, date=date,
+                               binary_payload=wav)
+
+    def use(self, obj_params: List):
+        if self.targeted_user is not None:
+            self.impersonated_user = self.targeted_user
+            self.notify_serv(f"Utilisateur {self.targeted_user.poke_params.fullname} visé")
+        else:
+            if len(self.impersonated_user.clients) < 1:
+                self.notify_serv("L'utilisateur n'est plus connecté!")
+            else:
+                msg = " ".join(obj_params)
+                loop = asyncio.get_event_loop()
+                loop.create_task(self.send_message(msg))
+
+

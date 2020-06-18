@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Type, List
 
-from config import MILITIA_COOKIES
+from config import MILITIA_COOKIES, MOD_COOKIES
 
 DATA_FOLDER = Path(__file__).absolute().parent / Path("data")
 
@@ -80,11 +80,11 @@ class LoultObject:
             offset = 0
 
         self.targeted_userid, self.targeted_user = self.channel.get_user_by_name(target, offset)
-        if self.targeted_user is None:
+        if self.targeted_user is None and self.TARGET_MANDATORY:
             self.notify_serv(msg="L'utilisateur visé n'existe pas")
 
     def _check_militia(self):
-        if self.server.raw_cookie not in MILITIA_COOKIES:
+        if self.server.raw_cookie not in MILITIA_COOKIES + MOD_COOKIES:
             self.notify_serv(msg="Ceci est une arme pour militiens, utilisation non autorisée!",
                              bin_payload=self._load_byte(self.ERROR_FX))
             self.server.sendClose(code=4006, reason="Unauthorized object")

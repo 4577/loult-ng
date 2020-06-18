@@ -4,3 +4,4 @@ salt.py
 venv/
 config.py
 .vscode
+notebooks
