@@ -231,3 +231,42 @@ class Impersonator(LoultObject):
                 loop.create_task(self.send_message(msg))
 
 
+@for_militia
+@targeted()
+class TVRemote(LoultObject):
+    NAME = "Télécommande"
+
+    def use(self, obj_params: List):
+        if len(obj_params) == 2:
+            mute_type = obj_params[1]
+        elif len(obj_params) == 3:
+            mute_type = obj_params[2]
+        else:
+            mute_type = "mute"
+
+        if mute_type == "ban":
+            self.loult_state.apply_ban(cookie=self.targeted_user.cookie_hash,
+                                       ban_type='ban',
+                                       duration=30 * 3600)
+            for client in list(self.targeted_user.clients):
+                self.loult_state.apply_ban(cookie=client.ip,
+                                           ban_type='ban',
+                                           duration=30 * 3600)
+                client.sendClose(code=4006, reason="Reconnect please")
+            self.notify_serv(f"User {self.targeted_user.poke_params.fullname} banned")
+        elif mute_type == "trash":
+            self.loult_state.apply_ban(cookie=self.targeted_user.cookie_hash,
+                                       ban_type='trash',
+                                       duration=30 * 3600)
+            for client in list(self.targeted_user.clients):
+                self.loult_state.apply_ban(cookie=client.ip,
+                                           ban_type='trash',
+                                           duration=30 * 3600)
+                client.sendClose(code=4006, reason="Reconnect please")
+            self.notify_serv(f"User {self.targeted_user.poke_params.fullname} trashed")
+        else:
+            self.targeted_user.state.is_shadowbanned = True
+            self.loult_state.apply_ban(cookie=self.targeted_user.cookie_hash,
+                                       ban_type='shadowban',
+                                       duration=30 * 3600)
+            self.notify_serv(f"User {self.targeted_user.poke_params.fullname} shadowbanned")

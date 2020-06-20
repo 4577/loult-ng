@@ -10,7 +10,7 @@ from .ban import Ban, BanFail
 from .combat import CombatSimulator
 from .objects import LoultObject, ScrollOfQurk
 from .objects.weapons import MilitiaSniper, MilitiaSniperAmmo, Civilisator, \
-    Screamer, UserInspector, ChannelSniffer, Impersonator
+    Screamer, UserInspector, ChannelSniffer, Impersonator, TVRemote
 
 
 def cookie_check(cookie_list):
@@ -445,10 +445,11 @@ class WeaponsGrantHandler(MsgBaseHandler):
     @cookie_check(MILITIA_COOKIES)
     async def handle(self, msg_data: Dict):
         self.user.state.inventory.add(MilitiaSniper())
-        for _ in range(3):
-            self.user.state.inventory.add(MilitiaSniperAmmo())
         self.user.state.inventory.add(Civilisator())
         self.user.state.inventory.add(Screamer())
+        self.user.state.inventory.add(TVRemote())
+        for _ in range(3):
+            self.user.state.inventory.add(MilitiaSniperAmmo())
 
 
 class ForensicsGrantHandler(MsgBaseHandler):
