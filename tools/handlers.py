@@ -65,7 +65,8 @@ class FloodCheckerHandler(MsgBaseHandler):
         if not self.user.state.check_flood(msg):
             return False
 
-        if self.server.cookie in self.loult_state.banned_cookies:
+        if self.loult_state.is_banned(cookie=self.server.cookie,
+                                      ip=self.server.ip):
             return True
 
         if self.user.state.has_been_warned:  # user has already been warned. Ban him/her and notify everyone
@@ -150,10 +151,13 @@ class PrivateMessageHandler(FloodCheckerHandler):
         now = datetime.now()
         # cleaning up none values in case of fuckups
         msg_data = {key: value for key, value in msg_data.items() if value is not None}
-        # target = self.channel_obj.users.get(msg_data.get("target"))
-        target_id, target = self.channel_obj.get_user_by_name(msg_data.get("target",
-                                                                           self.user.poke_params.pokename),
-                                                              msg_data.get("order", 1) - 1)
+        if "userid" in msg_data:
+            target = self.channel_obj.users.get(msg_data["userid"])
+            target_id = msg_data["userid"]
+        else:
+            target_id, target = self.channel_obj.get_user_by_name(msg_data.get("target",
+                                                                               self.user.poke_params.pokename),
+                                                                  msg_data.get("order", 1) - 1)
 
         output_msg = escape(msg_data['msg'])
         if self._check_flood(output_msg):
@@ -479,11 +483,15 @@ class QurkMasterHandler(MsgBaseHandler):
                 self.user.state.inventory.add(ScrollOfQurk())
 
 
-class UserDataHandler(MsgBaseHandler):
+class UserInspectHandler(MsgBaseHandler):
 
     @cookie_check(MOD_COOKIES + MILITIA_COOKIES)
     async def handle(self, msg_data: Dict):
         user_id = msg_data['userid']
         user = self.channel_obj.users[user_id]
         ips = set(client.ip for client in user.clients)
-        self.server.send_json(ips=ips, last_ip=user.clients[-1].ip)
+        self.server.send_json(type="user_inspect",
+                              ips=ips,
+                              last_ip=user.clients[-1].ip,
+                              user_id=user_id,
+                              cookie=user.clients[0].raw_cookie)
