@@ -756,6 +756,7 @@ class BadCellphoneEffect(AudioEffect):
 
 
 class FapEffect(AudioEffect):
+    NAME = "après-midi loultiste"
     TIMEOUT = 180
     FAP_FX = DATA_FOLDER / Path("fpefpefpe.wav")
 
