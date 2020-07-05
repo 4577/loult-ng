@@ -75,6 +75,7 @@ class Quiver(LoultObject):
 class MilitiaSniper(LoultObject):
     NAME = "PGM Hecate II"
     SNIPER_FX = DATA_FOLDER / Path("sniper_headshot.mp3")
+    ICON = "pgm.gif"
 
     def __init__(self):
         super().__init__()
@@ -114,8 +115,11 @@ class MilitiaSniper(LoultObject):
 class MilitiaSniperAmmo(LoultObject):
     NAME = "Chargeur PGM"
     RELOADING_FX = DATA_FOLDER / Path("gun/reloading.mp3")
+    ICON = "sniper_clip.gif"
 
     def use(self, obj_params):
+        self.channel.broadcast(self._load_byte(self.RELOADING_FX))
+
         # searching in the user's inventory for the emptiest gun to be used on
         users_guns = self.user_inventory.search_by_class(MilitiaSniper)
         users_guns = [gun for gun in users_guns if gun.remaining_bullets < 7]
@@ -126,7 +130,6 @@ class MilitiaSniperAmmo(LoultObject):
         emptiest_gun = users_guns[0]
         emptiest_gun.remaining_bullets = 7
         self.notify_serv(msg="PGM Hécate II chargé!")
-        self.channel.broadcast(self._load_byte(self.RELOADING_FX))
         self.should_be_destroyed = True
 
 
@@ -163,6 +166,7 @@ class Screamer(ClientSidePunitiveObject):
 @targeted()
 class UserInspector(LoultObject):
     NAME = "Gadget d'inspecteur"
+    ICON = "loupe.gif"
 
     def use(self, obj_params):
         from ..users import PokeParameters
@@ -184,6 +188,7 @@ class UserInspector(LoultObject):
 @for_militia
 class ChannelSniffer(LoultObject):
     NAME = "Renifleuw de canaux"
+    ICON = "radar.gif"
 
     def use(self, obj_params: List):
         if obj_params:
@@ -235,6 +240,7 @@ class Impersonator(LoultObject):
 @targeted()
 class TVRemote(LoultObject):
     NAME = "Télécommande"
+    ICON = "remote.gif"
 
     def use(self, obj_params: List):
         if len(obj_params) == 2:
