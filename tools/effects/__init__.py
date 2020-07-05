@@ -10,7 +10,7 @@ from .effects import (GodSpeakingEffect, VoiceSpeedupEffect, PhonemicFofoteEffec
                    ContradictorEffect, PubertyEffect,
                    PitchRandomizerEffect, SnebwewEffect, AutotuneEffect, GrandSpeechMasterEffect, TouretteEffect,
                    BadCellphoneEffect, CaptainHaddockEffect,
-                   Effect, CensorshipEffect)
+                   Effect, CensorshipEffect, FapEffect)
 
 AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, VoiceSpeedupEffect,
                          VieuxPortEffect, MwfeEffect,
@@ -22,7 +22,7 @@ AVAILABLE_EFFECTS = 1 * [GodSpeakingEffect, VoiceSpeedupEffect,
                          VocalDyslexia, ReverbManEffect, PhonemicNwwoiwwEffect,
                          StutterEffect, VowelExchangeEffect, PitchShiftEffect,
                          ContradictorEffect, PubertyEffect, PitchRandomizerEffect,
-                         SnebwewEffect] + \
+                         SnebwewEffect, FapEffect] + \
                     6 * [AutotuneEffect, GrandSpeechMasterEffect, TouretteEffect,
                          PhonemicFofoteEffect, WpseEffect]
 

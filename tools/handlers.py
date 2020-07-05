@@ -74,7 +74,7 @@ class FloodCheckerHandler(MsgBaseHandler):
             self.channel_obj.broadcast(type='antiflood', event='banned',
                                        flooder_id=self.user.user_id,
                                        date=timestamp() * 1000)
-            self.loult_state.ban_cookie(self.server.cookie)
+            self.loult_state.apply_ban(cookie=self.server.cookie)
             self.server.sendClose(code=4004, reason='banned for flooding')
         else:
             # resets the user's msg log, then warns the user
