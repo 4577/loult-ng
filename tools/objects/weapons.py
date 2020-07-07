@@ -3,7 +3,7 @@ from itertools import cycle
 from pathlib import Path
 from time import time as timestamp
 from typing import List
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 
 from .base import LoultObject, destructible, targeted, for_militia, userlist_dist, cooldown, inert, DATA_FOLDER
 
@@ -71,10 +71,12 @@ class Quiver(LoultObject):
 
 
 @for_militia
-@targeted()
+@targeted(mandatory=False)
 class MilitiaSniper(LoultObject):
     NAME = "PGM Hecate II"
     SNIPER_FX = DATA_FOLDER / Path("sniper_headshot.mp3")
+    BOLT_CYCLE_FX = DATA_FOLDER / Path("rifle_bolt_cycle.mp3")
+    EMPTY_TRIGGER_PULL_FX = DATA_FOLDER / Path("empty_trigger_pull.mp3")
     ICON = "pgm.gif"
 
     def __init__(self):
@@ -89,9 +91,17 @@ class MilitiaSniper(LoultObject):
             return self.NAME + " (vide)"
 
     def use(self, obj_params):
-        #  TODO : add a "scope" last argument maybe
+        if self.targeted_user is None:
+            self.channel.broadcast(self._load_byte(self.BOLT_CYCLE_FX))
+            return
+
+        if (len(obj_params) == 2 and obj_params[1] == "aim") or (len(obj_params) == 3 and obj_params[1] == "aim"):
+            self.notify_channel(
+                msg=f"Un point rouge lumineux se ballade sur le front de {self.targeted_user.poke_params.fullname}")
+            return
+
         if self.remaining_bullets <= 0:
-            return self.notify_serv(msg="Plus de munitions!")
+            return self.notify_serv(msg="Plus de munitions!", bin_payload=self._load_byte(self.EMPTY_TRIGGER_PULL_FX))
         self.remaining_bullets -= 1
         self.notify_channel(
             msg=f"{self.user_fullname} tire au fusil sniper calibre .50 sur {self.targeted_user.poke_params.fullname}",
@@ -159,6 +169,7 @@ class Civilisator(ClientSidePunitiveObject):
 class Screamer(ClientSidePunitiveObject):
     NAME = "SCR34-MR"
     EVENT = "cactus"
+    ICON = "cactus.gif"
     MSG = "Redirection vers un site adapté pour %s"
 
 
@@ -193,12 +204,15 @@ class ChannelSniffer(LoultObject):
     def use(self, obj_params: List):
         if obj_params:
             channel_name = obj_params[0]
-            if not channel_name in self.loult_state.chans:
+            if not quote(channel_name) in self.loult_state.chans:
                 self.notify_serv(f"Canal {channel_name} inexistant")
                 return
-            channel = self.loult_state.chans[channel_name]
+            channel = self.loult_state.chans[quote(channel_name)]
             users = [user.poke_params.fullname for user in channel.users.values()]
             self.notify_serv(f"Utilisateurs sur le canal {channel_name}: {', '.join(users)}")
+            self.notify_channel("Backlog: ")
+            for msg_info in channel.backlog:
+                self.notify_channel(msg_info['msg'])
         else:
             channels_data = []
             for channel in self.loult_state.chans.values():
@@ -206,6 +220,7 @@ class ChannelSniffer(LoultObject):
                 channels_data.append(f"{channel_name} ({len(channel.users)})")
             channels_summary = ", ".join(channels_data)
             self.notify_serv(f"Canaux ouverts : {channels_summary}")
+
 
 @for_militia
 @targeted(mandatory=False)
@@ -255,7 +270,7 @@ class TVRemote(LoultObject):
                                        ban_type='ban',
                                        duration=30 * 3600)
             for client in list(self.targeted_user.clients):
-                self.loult_state.apply_ban(cookie=client.ip,
+                self.loult_state.apply_ban(ip=client.ip,
                                            ban_type='ban',
                                            duration=30 * 3600)
                 client.sendClose(code=4006, reason="Reconnect please")
@@ -265,7 +280,7 @@ class TVRemote(LoultObject):
                                        ban_type='trash',
                                        duration=30 * 3600)
             for client in list(self.targeted_user.clients):
-                self.loult_state.apply_ban(cookie=client.ip,
+                self.loult_state.apply_ban(ip=client.ip,
                                            ban_type='trash',
                                            duration=30 * 3600)
                 client.sendClose(code=4006, reason="Reconnect please")
