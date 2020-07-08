@@ -210,9 +210,9 @@ class ChannelSniffer(LoultObject):
             channel = self.loult_state.chans[quote(channel_name)]
             users = [user.poke_params.fullname for user in channel.users.values()]
             self.notify_serv(f"Utilisateurs sur le canal {channel_name}: {', '.join(users)}")
-            self.notify_channel("Backlog: ")
+            self.notify_serv("Backlog: ")
             for msg_info in channel.backlog:
-                self.notify_channel(msg_info['msg'])
+                self.notify_serv(msg_info['msg'])
         else:
             channels_data = []
             for channel in self.loult_state.chans.values():
