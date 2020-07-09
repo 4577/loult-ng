@@ -11,7 +11,7 @@ from tools.handlers import (MessageHandler, BinaryHandler, TrashHandler, BanHand
                             NoRenderMsgHandler, AttackHandler, PrivateMessageHandler, MoveHandler,
                             InventoryListingHandler, ObjectGiveHandler, ObjectUseHandler, ObjectTrashHandler,
                             ListChannelInventoryHandler, ObjectTakeHandler, WeaponsGrantHandler, ForensicsGrantHandler,
-                            QurkMasterHandler)
+                            QurkMasterHandler, LynchUserHandler, PubBrawlHandler)
 from tools.state import LoultServerState
 
 if __name__ == "__main__":
@@ -79,6 +79,8 @@ if __name__ == "__main__":
     router.add_route(field="mod", value="arms", handler_class=WeaponsGrantHandler)
     router.add_route(field="mod", value="forensics", handler_class=ForensicsGrantHandler)
     router.add_route(field="mod", value="qurk", handler_class=QurkMasterHandler)
+    router.add_route(field="mod", value="lynch", handler_class=LynchUserHandler)
+    router.add_route(field="mod", value="brawl", handler_class=PubBrawlHandler)
 
 
     class AutobahnLoultServerProtocol(LoultServerProtocol, WebSocketServerProtocol):
