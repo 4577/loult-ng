@@ -546,9 +546,7 @@ class LynchUserHandler(MsgBaseHandler):
 class PubBrawlHandler(MsgBaseHandler):
 
     @cookie_check(MOD_COOKIES + MILITIA_COOKIES)
-    async def handle(self, msg_data: Dict, targeted_user):
-        usr_list = list(self.channel_obj.users.values())
-        usr_list.remove(targeted_user)
+    async def handle(self, msg_data: Dict):
         for usr in self.channel_obj.users.values():
             usr.state.inventory.add(AlcoholBottle())
         self.channel_obj.broadcast(type="notification",
