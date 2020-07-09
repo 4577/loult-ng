@@ -8,7 +8,8 @@ from config import ATTACK_RESTING_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, 
 from tools.tools import open_sound_file
 from .ban import Ban, BanFail
 from .combat import CombatSimulator
-from .objects import LoultObject, ScrollOfQurk
+from .objects import LoultObject, ScrollOfQurk, AlcoholBottle
+from .objects.objects import BaseballBat
 from .objects.weapons import MilitiaSniper, MilitiaSniperAmmo, Civilisator, \
     Screamer, UserInspector, ChannelSniffer, Impersonator, TVRemote
 
@@ -24,6 +25,43 @@ def cookie_check(cookie_list):
                 self.server.sendClose(code=4006, reason="Unauthorized access.")
             else:
                 await handler(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def targeted(mandatory: bool = False):
+    def decorator(handler):
+        async def wrapper(self, msg_data: Dict):
+            if "user_id" in msg_data:
+                user = self.channel_obj.users.get(msg_data["user_id"], None)
+            elif "params" in msg_data:
+                params = msg_data["params"]
+                if len(params) >= 2 and (params[1].isnumeric() or isinstance(params[1], int)):
+                    order = int(params[1])
+                    _, user = self.channel_obj.get_user_by_name(params[0], order)
+                    if user is not None:
+                        msg_data["params"] = params[2:]
+
+                elif len(params) >= 1:
+                    _, user = self.channel_obj.get_user_by_name(params[0], 0)
+                    if user is not None:
+                        msg_data["params"] = params[1:]
+            else:
+                if mandatory:
+                    self.server.send_json(type="notification",
+                                          msg="Il faut impérativement spécifier un utilisateur pour cette commande")
+                    return
+                else:
+                    user = None
+
+            if user is None and mandatory:
+                self.server.send_json(type="notification",
+                                      msg="Nom ou userid d'utilisateur invalide")
+                return
+
+            await handler(self, msg_data, user)
 
         return wrapper
 
@@ -470,14 +508,10 @@ class QurkMasterHandler(MsgBaseHandler):
     """Grants qurk scrolls to the user"""
 
     @cookie_check(MILITIA_COOKIES)
-    async def handle(self, msg_data: Dict):
-        if msg_data.get("params"):
-            params = msg_data["params"]
-            if len(params) == 1:
-                _, user = self.channel_obj.get_user_by_name(params[0], 0)
-            else:
-                _, user = self.channel_obj.get_user_by_name(params[0], int(params[1]))
-            user.state.inventory.add(ScrollOfQurk())
+    @targeted(mandatory=False)
+    async def handle(self, msg_data: Dict, targeted_user):
+        if targeted_user is not None:
+            targeted_user.state.inventory.add(ScrollOfQurk())
         else:
             for _ in range(5):
                 self.user.state.inventory.add(ScrollOfQurk())
@@ -486,12 +520,36 @@ class QurkMasterHandler(MsgBaseHandler):
 class UserInspectHandler(MsgBaseHandler):
 
     @cookie_check(MOD_COOKIES + MILITIA_COOKIES)
-    async def handle(self, msg_data: Dict):
-        user_id = msg_data['userid']
-        user = self.channel_obj.users[user_id]
-        ips = set(client.ip for client in user.clients)
+    @targeted(mandatory=True)
+    async def handle(self, msg_data: Dict, targeted_user):
+        ips = set(client.ip for client in targeted_user.clients)
         self.server.send_json(type="user_inspect",
                               ips=ips,
-                              last_ip=user.clients[-1].ip,
-                              user_id=user_id,
-                              cookie=user.clients[0].raw_cookie)
+                              last_ip=targeted_user.clients[-1].ip,
+                              user_id=targeted_user,
+                              cookie=targeted_user.clients[0].raw_cookie)
+
+
+class LynchUserHandler(MsgBaseHandler):
+
+    @cookie_check(MOD_COOKIES + MILITIA_COOKIES)
+    @targeted(mandatory=True)
+    async def handle(self, msg_data: Dict, targeted_user):
+        usr_list = list(self.channel_obj.users.values())
+        usr_list.remove(targeted_user)
+        for usr in usr_list:
+            usr.state.inventory.add(BaseballBat(targeted_user.user_id, targeted_user.poke_params.fullname))
+        self.channel_obj.broadcast(type="notification",
+                                   msg="%s va passer un sale quart d'heure!" % targeted_user.poke_params.fullname)
+
+
+class PubBrawlHandler(MsgBaseHandler):
+
+    @cookie_check(MOD_COOKIES + MILITIA_COOKIES)
+    async def handle(self, msg_data: Dict, targeted_user):
+        usr_list = list(self.channel_obj.users.values())
+        usr_list.remove(targeted_user)
+        for usr in self.channel_obj.users.values():
+            usr.state.inventory.add(AlcoholBottle())
+        self.channel_obj.broadcast(type="notification",
+                                   msg="Tournée générale dans le Loult Saloon!")
