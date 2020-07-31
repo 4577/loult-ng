@@ -371,13 +371,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Preferences
-
     var gear = document.getElementById('gear'),
 	overlay = document.getElementById('overlay'),
 	cover = document.getElementById('cover'),
       	embedbtn = document.getElementById('embed'),
 	close = document.getElementById('close'),
-	ambtn = document.getElementById('am'),
+	//ambtn = document.getElementById('am'),
 	head = document.getElementById('head'),
 	main = document.getElementById('main'),
 	foot = document.getElementById('foot'),
@@ -386,12 +385,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	fonts = document.getElementById('font'),
 	settings = theme.split(' ');
 
-    ambtn.checked = localStorage.getItem('automute') == 'true' ? true : false;
+    //ambtn.checked = localStorage.getItem('automute') == 'true' ? true : false;
     embedbtn.checked = localStorage.getItem('embed') == 'true' ? true : false;
 
-    ambtn.onchange = function() {
+    /*ambtn.onchange = function() {
 	localStorage.setItem('automute', ambtn.checked);
-    }
+    }*/
 
     embedbtn.onchange = function() {
 	localStorage.setItem('embed', embedbtn.checked);
@@ -411,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	head.className = main.className = foot.className = '';
     };
 
-    gear.onclick = openWindow;
+    //gear.onclick = openWindow;
     cover.onclick = close.onclick = closeWindow;
 
     var applyTheme = function() {
@@ -609,8 +608,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // WebSocket-related functions
 
     var wsConnect = function() {
-	ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-	//ws = new WebSocket('wss://loult.family/socket/toast');
+	//ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+	ws = new WebSocket('wss://loult.family/socket/toast');
 	ws.binaryType = 'arraybuffer';
 
 	var lastMuted = false;
@@ -1014,3 +1013,19 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     wsConnect();
 });
+
+
+function hover(element) {
+	element.setAttribute('src', 'img/icons/pokedex_on.svg');
+}
+function unhover(element) {
+	element.setAttribute('src', 'img/icons/pokedex.svg');
+}
+
+function openMenu() {
+	var element = document.getElementById("menu");
+	element.classList.toggle("menu-display-false");	
+	
+	var element2 = document.getElementById("wheel");
+	element2.classList.toggle("rotation");
+}

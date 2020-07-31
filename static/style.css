@@ -7,14 +7,6 @@
 	font-weight: normal;
 	font-style: normal;
 }
-@font-face {
-	font-family: "Open Sans";
-	src: url("/fonts/OpenSans-Regular.woff2?v=1.101") format("woff2"), 
-	     url("/fonts/OpenSans-Regular.woff?v=1.101") format("woff"),
-	     url("/fonts/OpenSans-Regular.eot?v=1.101") format("eot");
-	font-weight: normal;
-	font-style: normal;
-}
 
 ::-webkit-scrollbar-track, ::-webkit-scrollbar, ::-webkit-scrollbar-thumb {
 	border: 4px solid #f9f9f9;
@@ -72,6 +64,9 @@ html, body {
 	height: 100%;
 	width: 100%;
 	color: #333;
+}
+body { 
+	overflow: hidden;
 }
 
 header, footer {
@@ -324,15 +319,6 @@ audio + a {
 a:hover, li > i:hover, footer i:hover, #window input:hover, #window label:hover, select:hover {
 	cursor: pointer;
 }
-
-/* à refaire */
-input[type=range]#volrange::-webkit-range-track, input[type=range]#volrange::-moz-range-track ; input[type=range]#volrange::-ms-track 
-input[type=range]#volrange::-webkit-slider-thumb {
-	color: red!important;
-	background: white!important;            
-}
-
-
 
 ul > li:hover > div {
 	display: block;
@@ -717,8 +703,6 @@ select {
   flex: auto;
 }
 
-
-
 #bank_display > .item {
 	display: inline-table;
 	padding: 10px;
@@ -729,6 +713,161 @@ select {
 	width: 32px;
 	height: auto;
 	text-align: center
+}
+
+/***** MENU *****/
+
+#wheel {
+	overflow: hidden;
+	-webkit-transition: -webkit-transform .33s ease-in-out!important;
+	transition: transform .33s ease-in-out!important;
+}
+.rotation {
+	-webkit-transform: rotate(60deg);
+	transform: rotate(60deg);
+}
+
+#loultContainer body, #loultContainer div, #loultContainer footer, #loultContainer header, #loultContainer html, #loultContainer i,
+#loultContainer input, #loultContainer li, #loultContainer main, #loultContainer select, #loultContainer ul {
+	box-sizing: border-box;
+}
+
+.menu-display {
+	display: grid;
+	position: absolute;
+	height: 420px;
+	width: 240px;
+	background-color: #d8e5ea;
+	border-radius: 18px;
+	bottom: 65px;
+	right: 33px;
+	z-index: 50;
+	color: #000;
+	grid-template-columns: 100%;
+	padding: 10px 0 !important;
+}
+
+.menu-display-false {
+	display: none;
+}
+
+.menu-display>div {
+	margin: 0 17px !important;
+	border-bottom: 1px solid #9e9e9e;
+	font-size: .9em;
+	font-weight: 700;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	padding: 15px 0 !important;
+}
+
+.menu-display>div:last-child {
+	border-bottom: none;
+}
+
+.menu-display:after {
+	content: " ";
+	position: absolute;
+	right: 20px;
+	top: 98%;
+	border: 20px solid transparent;
+	border-top-color: #d8e5ea;
+	z-index: 51;
+}
+
+#loultContainer input[type=range] {
+	vertical-align: middle;
+	margin-left: 10px;
+	width: 170px;
+}
+
+input#volrange {
+	height: 1px;
+	margin-top: 7px;
+	margin-left: 10px
+}
+
+input#volrange::-moz-range-track {
+	background: black;
+}
+input#volrange::-moz-range-progress {
+	background-color: #2D8CE5;
+}
+
+input#volrange::-moz-range-thumb {
+	background-color: #2D8CE5;
+	border: none;
+	width: 12px;
+	height: 12px;
+}
+
+#loultContainer input,
+#loultContainer option,
+#loultContainer select {
+	font-family: inherit;
+	font-weight: inherit;
+}
+
+#loultContainer select {
+	background: #f9f9f9;
+	font-size: 20px;
+	border: none;
+	outline: 0;
+}
+select#color, select#lang, select#font, select#theme, select#history {
+	text-align: right;
+	font-size: 1em;
+	font-weight: 700;
+	color: black;
+	background: transparent;
+	text-align-last: right;
+}
+
+#VideoImageSilence {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+}
+
+#VideoImageSilence input:checked {
+	background-color: #2D8CE5!important;
+}
+
+#VideoImageSilence>div {
+	align-items: center;
+}
+
+#VideoImageSilence div:first-child {
+	align-items: baseline;
+}
+
+#VideoImageSilence>div {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#VideoImageSilence input {
+	width: 1.3em;
+	height: 1.3em;
+	background-color: #fff;
+	border-radius: 50%;
+	vertical-align: middle;
+	border: 1px solid #ddd;
+	-webkit-appearance: none;
+	outline: none;
+	cursor: pointer;
+}
+
+#menu-footer > a:nth-of-type(2) {
+	margin-left: -15px;
+}
+
+.pokeballMenu {
+	position: absolute;
+	margin-right: 22px!important;
+	float: left;
+	right: 33px;
 }
 
 /***** RESPONSIVE *****/
@@ -1121,9 +1260,15 @@ select {
 	margin: 3px; 
 	transition: 0.25s;
 }
-.icon:hover > img {
-    transform: scale(1.3);
+
+.icon:hover > img, #pokedex:hover, #roue:hover {
+    transform: scale(1.3)!important;
+}
+/*
+.icon:hover > img, #pokedex:hover, #roue:hover {
+    transform: scale(1.3)!important;
 }				
+*/
 .tooltiptext {
   font-family: "PokemonGB";
   font-size: 10px;
@@ -1161,7 +1306,7 @@ select {
     display: none;
 }
 
-body.bibw {
+body.bibw {/*
   background : -moz-linear-gradient(50% 102.96% 90deg,rgba(2, 58, 104, 1) 0%,rgba(6, 41, 74, 1) 8.72%,rgba(9, 28, 51, 1) 17.44%,rgba(10, 21, 38, 1) 25.72%,rgba(11, 18, 33, 1) 33.07%,rgba(11, 18, 33, 1) 100%);
   background : -webkit-linear-gradient(90deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgba(9, 28, 51, 1) 17.44%, rgba(10, 21, 38, 1) 25.72%, rgba(11, 18, 33, 1) 33.07%, rgba(11, 18, 33, 1) 100%);
   background : -webkit-gradient(linear,50% 102.96% ,50% 3.14% ,color-stop(0,rgba(2, 58, 104, 1) ),color-stop(0.0872,rgba(6, 41, 74, 1) ),color-stop(0.1744,rgba(9, 28, 51, 1) ),color-stop(0.2572,rgba(10, 21, 38, 1) ),color-stop(0.3307,rgba(11, 18, 33, 1) ),color-stop(1,rgba(11, 18, 33, 1) ));
@@ -1169,7 +1314,7 @@ body.bibw {
   background : -ms-linear-gradient(90deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgba(9, 28, 51, 1) 17.44%, rgba(10, 21, 38, 1) 25.72%, rgba(11, 18, 33, 1) 33.07%, rgba(11, 18, 33, 1) 100%);
   -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr='#023A68', endColorstr='#0B1221' ,GradientType=0)";
   background : linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgba(9, 28, 51, 1) 17.44%, rgba(10, 21, 38, 1) 25.72%, rgba(11, 18, 33, 1) 33.07%, rgba(11, 18, 33, 1) 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0B1221',endColorstr='#023A68' , GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0B1221',endColorstr='#023A68' , GradientType=0);*/
 }
 
 .bibw > main {
@@ -1178,6 +1323,11 @@ body.bibw {
 
 .bibw > main > #userlist {
 	margin-right: 25px;
+}
+
+.bibw > .menu-display {
+	bottom: 90px;
+	right: 53px;
 }
 
 .bibw #chat {
@@ -1444,7 +1594,6 @@ ul > li:hover .sword {
 
 	.bibw ul > li {
 		background-color: #023a68;
-    	border-radius: 50px;
 	}
 
 	.bibw > footer#foot > input {
