@@ -200,7 +200,7 @@ links_translation = {'fr': 'cliquez mes petits canards en sucre',
 
 
 def prepare_text_for_tts(text: str, lang: str) -> str:
-    text = sub('(https?://[^ ]*[^.,?! :])', links_translation[lang], text)
+    text = sub('(https?://[^ ]*[^.,?! :])', links_translation.get(lang, links_translation["fr"]), text)
     text = text.replace('#', 'hashtag ')
     return quote(text.strip(' -"\'`$();:.'))
 

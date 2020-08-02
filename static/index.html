@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>Loult.family</title>
     <meta charset="utf-8">
     <meta name="description" content="Le célèbre t'chat Pokémon, anciennement Lou.lt">
@@ -9,176 +9,129 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="/style.css">
     <script src="/script.js"></script>
-  </head>
-  <body>
-    <header id="head">
-      <div>
-	<img src="/img/logo_shiny.svg" alt="Loult 3.3.3">
-      </div>
-    </header>
-    <main id="main">
-      <div id="underlay"></div>
-      <div id="chat">
-      </div>
-      <ul id="userlist"></ul>
-    </main>
-    <footer id="foot">
-      <div id="bank_display"></div>
-      <input autofocus placeholder="Message..." id="input" maxlength="300">
-	<div class="icon" id="vol">
-            <img src="img/icons/flute.svg"/>
-            <span class="tooltiptext">son</span>
-      </div>
-      <div class="icon" id="chest" style="display: none;">
-            <img src="img/icons/coffre.svg" />
-            <div id="inventory_display"></div>
-      </div>
-      <div class="icon" id="gear">
-            <a href="http://wiki.loult.family/last_edits" target="_blank">
-                  <img id="pokedex" src="img/icons/pokedex.svg" onmouseover="hover(this);" onmouseout="unhover(this);" />
-            </a>
-            <span class="tooltiptext">wiki</span>
-      </div>
-      <div class="icon" id="wheel">
-            <img class="" id="roue" src="img/icons/roue-crantee.svg" onclick ="openMenu()">
-            <span class="tooltiptext">menu</span>           
-      </div>
-      <div class="icon" id="userswitch">
-            <img src="img/icons/masterball.svg"/>
-            <span class="tooltiptext">liste</span>
-      </div>
+</head>
+<body>
+<header id="head">
+    <div>
+        <img src="/img/logo_shiny.svg" alt="Loult 3.3.3">
+    </div>
+</header>
+<main id="main">
+    <div id="underlay"></div>
+    <div id="chat">
+    </div>
+    <ul id="userlist"></ul>
+</main>
+<footer id="foot">
+    <div id="bank_display"></div>
+    <input autofocus placeholder="Message..." id="input" maxlength="300">
+    <div class="icon" id="vol">
+        <img src="img/icons/flute.svg"/>
+        <span class="tooltiptext">son</span>
+    </div>
+    <div class="icon" id="chest" style="display: none;">
+        <img src="img/icons/coffre.svg" />
+        <div id="inventory_display"></div>
+    </div>
+    <div class="icon" id="wiki_display">
+        <a href="http://wiki.loult.family/last_edits" target="_blank">
+            <img id="pokedex" src="img/icons/pokedex.svg" />
+        </a>
+        <span class="tooltiptext">WikiLoult</span>
+    </div>
+    <div class="icon" id="menu_display">
+        <img class="" id="gear" src="img/icons/roue-crantee.svg">
+        <span class="tooltiptext">Menu</span>
+    </div>
+    <div class="icon" id="userswitch">
+        <img id="pokeball" src="img/icons/masterball.svg"/>
+        <span class="tooltiptext">liste</span>
+    </div>
 </footer>
 
-<div class="menu-display menu-display-false" id="menu">
-      <div>
-            <span>Volume</span>
-            <input type="range" id="volrange" value="100">
-      </div>
-      <div>
-            <span>Langue</span>
-            <select id="lang">
-                  <option value="fr">Français</option>
-                  <option value="en">Anglais</option>
-                  <option value="es">Espagnol</option>
-                  <option value="de">Allemand</option>
-                  <option value="it">Italien</option>
-            </select>
-      </div>
-      <div>
-            <span>Thème</span>
-            <select id="theme">
-                  <option value="bibw">Bibw</option>
-                  <option value="cozy">Toumiwmiw</option>
-                  <option value="compact">Old school</option>
-                  <option value="console">Minitel</option>
-                  <option value="fat">Phat Katz</option>
-            </select>
-      </div>
-      <div>
-            <span>Couleur</span>
-            <select id="color">
-                  <option value="night">Nwuiw</option>
-                  <option value="day">Jouw</option>
-                  <option value="retro">Zenennw</option>
-                  <option value="retro_night">Noiw</option>
-                  <option value="blue">Emixam</option>
-            </select>
-      </div>
-      <div>
-            <span>Police</span>
-            <select id="font">
-                  <option value="sans">Turfu</option>
-                  <option value="comic">Bizaw</option>
-                  <option value="mono">Termiloult</option>
-            </select>
-      </div>
-      <div>
-            <span>Historique</span>
-            <select id="history">
-                  <option value="full">full</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                  <option value="250">250</option>
-                  <option value="500">500</option>
-                  <option value="1000">1000</option>
-                  <option value="2000">2000</option>
-                  <option value="5000">5000</option>
-                  <option value="10000">10000</option>
-            </select>
-      </div>
-      <div id="VideoImageSilence">
-            <div>
-                  <span>Vidéo/image</span>
-                  <!--span>Silence</span-->
-            </div>
-            <div>
-                  <input type="checkbox" id="embed">
-                  <!--input type="checkbox"-->
-            </div>
-            <div>
-                  <!--span>Automatique</span-->
-            </div>
-      </div>
-      <div id="menu-footer">
-            <a href="https://loult.family/magnacharta.html" target="_blank">Charte</a>
-            <a href="https://github.com/loult-elte-fwere/loult-ng" target="_blank">Github</a>
-            <a href="http://loult.wordpress.com" target="_blank"><img class="pokeball pokeballMenu" src="img/icons/pokeball.svg" /> Blog</a>
-      </div>
+<div class="menu-popover menu-display-false" id="loult-menu">
+    <div>
+        <span>Volume</span>
+        <input type="range" id="volrange" value="100">
+    </div>
+    <div>
+        <span>Langue</span>
+        <select id="lang">
+            <option value="fr">Français</option>
+            <option value="en">Anglais</option>
+            <option value="es">Espagnol</option>
+            <option value="de">Allemand</option>
+            <option value="it">Italien</option>
+        </select>
+    </div>
+    <div>
+        <span>Thème</span>
+        <select id="theme">
+            <option value="bibw">Bibw</option>
+            <option value="cozy">Toumiwmiw</option>
+            <option value="compact">Old school</option>
+            <option value="console">Minitel</option>
+            <option value="fat">Phat Katz</option>
+        </select>
+    </div>
+    <div>
+        <span>Couleur</span>
+        <select id="color">
+            <option value="night">Nwuiw</option>
+            <option value="day">Jouw</option>
+            <option value="retro">Zenennw</option>
+            <option value="retro_night">Noiw</option>
+            <option value="blue">Emixam</option>
+        </select>
+    </div>
+    <div>
+        <span>Police</span>
+        <select id="font">
+            <option value="sans">Turfu</option>
+            <option value="comic">Bizaw</option>
+            <option value="mono">Termiloult</option>
+        </select>
+    </div>
+    <div>
+        <span>Historique</span>
+        <select id="history">
+            <option value="full">full</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+            <option value="2000">2000</option>
+            <option value="5000">5000</option>
+            <option value="10000">10000</option>
+        </select>
+    </div>
+    <div id="cookie-set">
+        <button id="change-cookie">Changer le cookie</button>
+        <input id="cookie"/>
+    </div>
+    <div id="mediaembed">
+        <div>
+            <span>Vidéo/image</span>
+        </div>
+        <div>
+            <input type="checkbox" id="embed">
+        </div>
+    </div>
+    <div id="automute">
+        <div>
+            <span>Automute</span>
+        </div>
+        <div>
+            <input type="checkbox" id="am">
+        </div>
+    </div>
+    <div id="menu-footer">
+        <a href="https://loult.family/magnacharta.html" target="_blank">Charte</a>
+        <a href="https://github.com/loult-elte-fwere/loult-ng" target="_blank">Github</a>
+        <a href="http://loult.wordpress.com" target="_blank"><img class="pokeball pokeballMenu" src="img/icons/pokeball.svg" /> Blog</a>
+    </div>
 </div>
 
-<div id="overlay">
-  <div id="cover"></div>
-  <div id="window">
-    <div>Préférences<i class="material-icons" id="close">clear</i></div>
-    <div id="optionWrapper">
-      <div class="option">
-	<span>Volume :</span><input type="range" value="100" id="volrange">
-      </div>
-      <div class="option">
-	<span>Langue :</span><select id="lang">
-						<option value="fr">Français</option>
-						<option value="en">English</option>
-						<option value="es">Español</option>
-						<option value="de">Deutsch</option>
-						<option value="it">Italiano</option>
-					</select>
-      </div>
-      <div class="option">
-	<span>Thème :</span><select id="theme"><option value="bibw">Minimal Bibw</option><option value="cozy">Toumiwmiw</option><option value="compact">Old Skool</option><option value="console">Minitel</option><option value="fat">Phat Katz</option></select>
-      </div>
-      <div class="option">
-	<span>Couleur :</span><select id="color"><option value="night">Nwuiw</option><option value="day">Jouw</option><option value="retro">Zenennw</option><option value="retro_night">Nwoiw</option><option value="blue">Emixam</option></select>
-      </div>
-      <div class="option">
-	<span>Police :</span><select id="font"><option value="opensans">Open Kaniw</option><option value="sans">Turfu</option><option value="comic">Bizawe</option><option value="mono">Termiloult</option></select>
-      </div>
-      <div class="option">
-	<span>Historique :</span><select id="history"><option value='full'>Full</option><option value=50>50 messages</option><option value=100>100 messages</option><option value=250>250 messages</option><option value=500>500 messages</option></select>
-      </div>
-      <div class="option">
-	<span>Video/Image :</span><input type="checkbox" id="embed" checked>
-      </div>
-      <div class="option">
-	<span>Silence :</span><input type="checkbox" id="am"><label for="am">Automatique</label>
-      </div>
-      <div>
-	<a href="/magnacharta.html" target="_blank">Charte</a> &bull; <a href="https://github.com/loult-elte-fwere/loult-ng" target="_blank">GitHub</a> &bull; <a href="http://wiki.loult.family/" target="_blank">Wiki</a> &bull; <a href="http://underfoule.xyz/loult/dico-louspeak.html" target="_blank">Dico</a>
-      </div>
-      <div>
-	<img src="/img/pokemon/small/271.gif" title="Développement">
-	<img src="/img/pokemon/small/425.gif" title="Développement">
-	<img src="/img/pokemon/small/183.gif" title="Développement">
-	<img src="/img/pokemon/small/207.gif" title="Développement">
-	<img src="/img/pokemon/small/156.gif" title="Développement">
-	<img src="/img/pokemon/small/213.gif" title="Graphisme">
-	<img src="/img/pokemon/small/145.gif" title="Organisation">
-	<img src="/img/pokemon/small/120.gif" title="Financement">
-	<img src="/img/pokemon/small/001.gif" title="Financement">
-	<img src="/img/pokemon/small/007.gif" title="Cohésion">
-	<img src="/img/pokemon/small/352.gif" title="Graphisme">
-      </div>
-    </div>
-  </div>
-</div>
 </body>
 </html>
