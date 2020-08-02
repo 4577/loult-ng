@@ -610,16 +610,18 @@ document.addEventListener('DOMContentLoaded', function() {
 			chat.scrollTop = chat.scrollHeight;
 	};
 
+	// wheel turning
+	gear.onclick = function myFunction() {
+		var wheelTurning = document.getElementById("menu_display");
+		wheelTurning.classList.toggle("rotation");
+	} 
+
 	// Menu pop-over panel display
 	var menugear = document.getElementById('menu_display');
-
 	menugear.onclick = function openMenu() {
 		menuOpen = !menuOpen;
 		var element = document.getElementById("loult-menu");
 		element.classList.toggle("menu-display-false");
-
-		var element2 = document.getElementById("gear");
-		element2.classList.toggle("rotation");
 	}
 
 	// pokedex (wiki link/last updates)
@@ -636,7 +638,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	// WebSocket-related functions
 
 	var wsConnect = function() {
-		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+		//ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+		ws = new WebSocket('wss://loult.family/socket/toast');
 		ws.binaryType = 'arraybuffer';
 
 		var lastMuted = false;
