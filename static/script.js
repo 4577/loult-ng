@@ -452,7 +452,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	var cookieInput = document.getElementById("cookie"),
 		cookieSetButton = document.getElementById("change-cookie");
-	cookieInput.value = document.cookie.match(/id=(.*?);/)[1];
+
+	var updateCookieDisplay = function () {
+		try {
+			cookieInput.value = document.cookie.match(/id=(.*);?/)[1];
+		} catch (e) {
+			console.log("Invalid cookie format. Stick to 'id=yourcookie'")
+		}
+
+	}
+	if (document.cookie) {
+		updateCookieDisplay()
+
+	}
 
 	cookieSetButton.onclick = function () {
 		document.cookie = 'id=' + cookieInput.value + '; Path=/';
@@ -747,6 +759,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		ws.onopen = function() {
 			waitTime = 1000;
+			updateCookieDisplay();
 		};
 
 		ws.onmessage = function(msg) {
