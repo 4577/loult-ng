@@ -603,7 +603,86 @@ ul > li > div > div:last-child > i {
 	text-align: center
 }
 
-/***** MENU *****/
+/***** MENUS POKEDEX & PARAMETERS *****/
+
+.menu-popover>div, .wiki-popover #wiki-popover-head, .wiki-popover ul, #menu-footer a, #wiki-popover-footer {
+	margin: 0 15px;
+	border-bottom: 1px solid #9e9e9e;
+	font-size: .9em;
+	font-weight: 700;
+	/*padding: 10px 0 !important;*/
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	color: black;
+}
+
+/***** MENUS POKEDEX (Wiki last edits) *****/
+
+#wiki-last-edits {
+	position: absolute;
+	width: 480px;
+	background-color: #f2fbff;
+	border-radius: 18px;
+	bottom: 70px;
+	right: 68px;
+	z-index: 50;
+	color: #000;
+	grid-template-columns: 100%;
+	padding: 10px 0;
+}
+
+#wiki-popover-head, #wiki-popover-footer {
+	border: 0!important;
+}
+
+#wiki-popover-head {
+	padding-bottom: 10px;
+}
+
+#wiki-popover-footer {
+	padding-top: 20px;;
+}
+
+
+ul#articles-list {
+	background: inherit;
+	margin: 0;
+	padding: 0 15px 0 15px;
+	width: auto;
+	display: grid;
+	grid-template-columns: 100%;
+	overflow-y: auto;
+}
+
+ul#articles-list > li {
+	color: black; 
+	width: 100%;
+	border-bottom: 1px solid #bdbbbb;
+	font-size: .9em; 
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	justify-content: space-between;
+	margin: 0;
+	padding: 20px 0 25px 0;
+}
+
+
+ul#articles-list > li:nth-of-type(4),
+ul#articles-list > li:nth-of-type(5),
+ul#articles-list > li:nth-of-type(6) {
+	display: none;;
+}
+
+ul#articles-list > li > h3, ul#articles-list > li > p {
+	margin: 0;
+	padding: 0;
+}
+
+/***** MENU PARAMETERS *****/
 
 #menu_display {
 	overflow: hidden;
@@ -634,32 +713,33 @@ ul > li > div > div:last-child > i {
 	display: none;
 }
 
-.menu-popover>div {
-	margin: 0 15px !important;
-	border-bottom: 1px solid #9e9e9e;
-	font-size: .9em;
-	font-weight: 700;
-	/*padding: 10px 0 !important;*/
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
+.menu-popover>div:last-child, #wiki-popover-head,
+.wiki-popover ul, #wiki-last-edits ul > li > h3 > a {
+	border: none;
+	color: black
 }
 
-.menu-popover>div:last-child {
-	border-bottom: none;
+#menu-footer > a {
+	color: #06A;
+	text-decoration: none;
 }
 
-.menu-popover:after {
+.menu-popover:after, .wiki-popover::after {
 	content: " ";
 	position: absolute;
 	right: 35px;
 	top: 98%;
 	border: 20px solid transparent;
-	border-top-color: #d8e5ea;
 	z-index: 51;
 }
 
+.menu-popover:after {
+	border-top-color: #d8e5ea;
+}
+
+#wiki-last-edits::after {
+	border-top-color: #f2fbff;
+}
 
 input#volrange {
 	height: 1px;
@@ -713,6 +793,8 @@ input#volrange::-moz-range-thumb {
 #cookie {
 	border-radius: 0 15px 15px 0;
 	width: 55%;
+	font-size: .9em;
+	font-weight: 500!important;
 }
 #cookie:focus, #change-cookie:active {
 	border: 1px solid rgb(20, 121, 251);
@@ -754,22 +836,6 @@ button:focus, input:focus {
 	margin-right: 22px!important;
 	float: left;
 	right: 33px;
-}
-
-/***** POKEDEX (Wiki last edits) *****/
-
-#wiki-last-edits {
-	position: absolute;
-	height: 480px;
-	width: 480px;
-	background-color: #d8e5ea;
-	border-radius: 18px;
-	bottom: 70px;
-	right: 120px;
-	z-index: 50;
-	color: #000;
-	grid-template-columns: 100%;
-	padding: 10px 0 !important;
 }
 
 /***** RESPONSIVE *****/
@@ -1244,6 +1310,11 @@ body.bibw {
 .bibw > .menu-popover {
 	bottom: 90px;
 	right: 38px;
+}
+
+.bibw > #wiki-last-edits {
+	bottom: 90px;
+	right: 86px;
 }
 
 .bibw #chat {
