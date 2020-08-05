@@ -20,8 +20,6 @@
 	background-color: #DDD;
 }
 
-/* #chat::-webkit-scrollbar { width: 0 !important } */
-
 html, body, header, main, footer, div, i, ul, li, select, input {
 	transition: background-color 200ms linear;
 	box-sizing: border-box;
@@ -236,16 +234,16 @@ main {
 }
 
 #chat > div > div:first-child > img {
-	position: absolute;
+	/*position: absolute;*/
 	margin: auto;
 	display: none;
 }
 
 #chat > div > div:first-child > img:nth-child(1) {
-	top: auto;
+	/*top: auto;
 	left: 4px;
 	right: auto;
-	bottom: 6px;
+	bottom: 6px;*/
 }
 
 #chat > div > div:first-child > img:not(:first-child), ul > li > div > div:first-child > div > img {
@@ -691,7 +689,7 @@ input#volrange::-moz-range-thumb {
 	font-weight: inherit;
 }
 
-select#color, select#lang, select#font, select#theme, select#history {
+.menu-popover > div > select {
 	text-align: right;
 	font-size: 1em;
 	font-weight: 700;
@@ -766,8 +764,8 @@ button:focus, input:focus {
 	}
 
 	footer {
-		height: 100px;
-		max-height: 100px;
+		height: 80px;
+		max-height: 50px;
 	}
 
 	footer > div {
@@ -881,8 +879,21 @@ button:focus, input:focus {
 .mono {
 	font-family: monospace;
 }
+/*
+.compact #chat > div > div:first-child > img:nth-child(1),
+.cozy #chat > div > div:first-child > img:nth-child(2),
+.fat #chat > div > div:first-child > img:nth-child(3) {
+	display: block;
+}*/
 
-.compact #chat > div > div:first-child > img:nth-child(1), .cozy #chat > div > div:first-child > img:nth-child(2), .fat #chat > div > div:first-child > img:nth-child(3) {
+#chat > div > div:first-child > img:nth-child(1) {
+	transform: scale(2.5);
+	image-rendering: crisp-edges;
+}
+
+.mini #chat > div > div:first-child > img:nth-child(4),
+.small #chat > div > div:first-child > img:nth-child(1),
+.medium #chat > div > div:first-child > img:nth-child(2) {
 	display: block;
 }
 
@@ -1041,6 +1052,7 @@ button:focus, input:focus {
 
 .night #close, .night #chat > div > div:first-child, .night ul > li > div > div:first-child > div {
 	background-color: #505151;
+	display: flex;
 }
 
 .night footer > div > .icon:hover { background-color: #111; }
