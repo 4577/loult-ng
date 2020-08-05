@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	menugear.onclick = function openMenu() {
 		menuOpen = !menuOpen;
 		var element = document.getElementById("loult-menu");
-		element.classList.toggle("menu-display-false");
+		element.classList.toggle("popover-display-false");
 	}
 
 	// pokedex (wiki link/last updates)
@@ -642,12 +642,45 @@ document.addEventListener('DOMContentLoaded', function() {
 		pokedex.setAttribute('src', 'img/icons/pokedex.svg');
 	}
 
+	async function getLastEdits() {
+        let response = await fetch("http://wiki.loult.family/api/last_edits");
+		return await response.json();
+      }
+
+	pokedex.onclick = function () {
+		var wikiDisplay = document.getElementById('wiki-last-edits');
+		wikiDisplay.classList.toggle("popover-display-false")
+		getLastEdits().then(data => {
+			var articlesList = document.getElementById('articles-list');
+			// clearing former list
+			articlesList.innerHTML = '';
+			data.forEach(entry => {
+				var entryNode = document.createElement('li');
+				var title = document.createElement("h3")
+				var titleLink = document.createElement("a")
+				titleLink.innerHTML = entry.title;
+				titleLink.href = "http://wiki.loult.family/page/" + entry.name;
+				title.appendChild(titleLink)
+				var editor = document.createElement("span");
+				editor.style.color = entry.editor.color
+				editor.innerHTML = entry.editor.fullname
+				var editInfo = document.createElement("p");
+				var d = new Date(entry.time), date;
+				date = d.toISOString().split('T')[0]
+				editInfo.innerHTML = 'Modif par ' + editor.outerHTML + ' le ' + date;
+				entryNode.appendChild(title)
+				entryNode.appendChild(editInfo)
+				articlesList.appendChild(entryNode)
+			})
+		})
+	}
+
 
 	// WebSocket-related functions
 
 	var wsConnect = function() {
-		//ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		ws = new WebSocket('wss://loult.family/socket/toast');
+		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+		//ws = new WebSocket('wss://loult.family/socket/toast');
 		ws.binaryType = 'arraybuffer';
 
 		var lastMuted = false;

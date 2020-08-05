@@ -630,7 +630,7 @@ ul > li > div > div:last-child > i {
 	padding: 10px 0 !important;
 }
 
-.menu-display-false {
+.popover-display-false {
 	display: none;
 }
 
@@ -754,6 +754,22 @@ button:focus, input:focus {
 	margin-right: 22px!important;
 	float: left;
 	right: 33px;
+}
+
+/***** POKEDEX (Wiki last edits) *****/
+
+#wiki-last-edits {
+	position: absolute;
+	height: 480px;
+	width: 480px;
+	background-color: #d8e5ea;
+	border-radius: 18px;
+	bottom: 70px;
+	right: 120px;
+	z-index: 50;
+	color: #000;
+	grid-template-columns: 100%;
+	padding: 10px 0 !important;
 }
 
 /***** RESPONSIVE *****/
