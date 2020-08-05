@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		chest = document.getElementById('chest'),
 		inventory_display = document.getElementById('inventory_display'),
 		bank_display = document.getElementById('bank_display'),
-		theme = (localStorage.theme && localStorage.theme.split(' ').length > 2) ? localStorage.theme : 'cozy night sans',
+		theme = (localStorage.theme && localStorage.theme.split(' ').length > 2) ? localStorage.theme : 'bibw night sans mini',
 		waitTime = 1000,
 		banned = false,
 		users = {},
@@ -380,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		main = document.getElementById('main'),
 		foot = document.getElementById('foot'),
 		themes = document.getElementById('theme'),
+		poketype = document.getElementById('poketype'),
 		colors = document.getElementById('color'),
 		fonts = document.getElementById('font'),
 		settings = theme.split(' ');
@@ -404,6 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	applyTheme();
 	themes.value = settings[0];
+	poketype.value = settings[1];
 	colors.value = settings[1];
 	fonts.value = settings[2];
 
@@ -411,6 +413,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		settings[0] = this.value;
 		applyTheme();
 	};
+
+	poketype.onchange = function () {
+		settings[0] = this.value;
+		applyTheme();
+	};
+
 
 	colors.onchange = function() {
 		settings[1] = this.value;
