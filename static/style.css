@@ -622,7 +622,7 @@ ul > li > div > div:last-child > i {
 
 #wiki-last-edits {
 	position: absolute;
-	width: 480px;
+	width: 500px;
 	background-color: #f2fbff;
 	border-radius: 18px;
 	bottom: 70px;
@@ -680,6 +680,11 @@ ul#articles-list > li:nth-of-type(6) {
 ul#articles-list > li > h3, ul#articles-list > li > p {
 	margin: 0;
 	padding: 0;
+	line-height: 1.4em;
+}
+
+ul#articles-list > li > p:nth-of-type(2) {
+	text-align: :right;
 }
 
 /***** MENU PARAMETERS *****/
@@ -710,7 +715,7 @@ ul#articles-list > li > h3, ul#articles-list > li > p {
 }
 
 .popover-display-false {
-	display: none;
+	display: grid;
 }
 
 .menu-popover>div:last-child, #wiki-popover-head,
