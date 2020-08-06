@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	async function getLastEdits() {
-        let response = await fetch("http://wiki.loult.family/api/last_edits");
+        let response = await fetch("https://wiki.loult.family/api/last_edits");
 		return await response.json();
       }
 
@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				var titleLink = document.createElement("a")
 				titleLink.innerHTML = entry.title;
 				titleLink.target = "_blank";
-				titleLink.href = "http://wiki.loult.family/page/" + entry.name;
+				titleLink.href = "https://wiki.loult.family/page/" + entry.name;
 				title.appendChild(titleLink)
 				var editor = document.createElement("span");
 				editor.style.color = entry.editor.color
