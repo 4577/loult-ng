@@ -648,10 +648,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
 	pokedex.onclick = function () {
-		var wikiDisplay = document.getElementById('wiki-last-edits');
-		wikiDisplay.classList.toggle("popover-display-false")
 		getLastEdits().then(data => {
-			var articlesList = document.getElementById('articles-list');
+			var wikiDisplay = document.getElementById('wiki-last-edits'),
+				articlesList = document.getElementById('articles-list');
+			wikiDisplay.classList.toggle("popover-display-false")
 			// clearing former list
 			articlesList.innerHTML = '';
 			data.forEach(entry => {
