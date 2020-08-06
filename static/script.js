@@ -405,20 +405,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	applyTheme();
 	themes.value = settings[0];
-	poketype.value = settings[1];
 	colors.value = settings[1];
 	fonts.value = settings[2];
+	poketype.value = settings[3];
 
 	themes.onchange = function() {
 		settings[0] = this.value;
 		applyTheme();
 	};
-
-	poketype.onchange = function () {
-		settings[0] = this.value;
-		applyTheme();
-	};
-
 
 	colors.onchange = function() {
 		settings[1] = this.value;
@@ -429,6 +423,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		settings[2] = this.value;
 		applyTheme();
 	};
+
+	poketype.onchange = function () {
+		settings[3] = this.value;
+		applyTheme();
+	};
+
 
 	// Languages
 
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	var updateCookieDisplay = function () {
 		try {
-			cookieInput.value = document.cookie.match(/id=(.*);?/)[1];
+			cookieInput.value = document.cookie.match(/id=(.*?);/)[1];
 		} catch (e) {
 			console.log("Invalid cookie format. Stick to 'id=yourcookie'")
 		}
@@ -471,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 	if (document.cookie) {
 		updateCookieDisplay()
-
 	}
 
 	cookieSetButton.onclick = function () {
