@@ -971,10 +971,10 @@ button:focus, input:focus {
 .cozy #chat > div > div:first-child > img:nth-child(2),
 .fat #chat > div > div:first-child > img:nth-child(3) {
 	display: block;
-}*/
-
+}
+*/
 #chat > div > div:first-child > img:nth-child(1) {
-	transform: scale(2.5);
+	/*transform: scale(2.5);*/
 	image-rendering: crisp-edges;
 }
 
