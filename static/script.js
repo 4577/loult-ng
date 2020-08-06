@@ -659,6 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				var title = document.createElement("h3")
 				var titleLink = document.createElement("a")
 				titleLink.innerHTML = entry.title;
+				titleLink.target = "_blank";
 				titleLink.href = "http://wiki.loult.family/page/" + entry.name;
 				title.appendChild(titleLink)
 				var editor = document.createElement("span");
