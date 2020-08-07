@@ -384,22 +384,22 @@ ul > li > div > div:last-child > i {
 }
 
 .log, .log > div > div {
-	color: #3C3 !important;
+	color: #3C3;
 	border-color: #3C3;
 }
 
 .part, .part > div > div {
-	color: #1AC !important;
+	color: #1AC;
 	border-color: #1AC;
 }
 
 .kick, .kick > div > div {
-	color: #F33 !important;
+	color: #F33;
 	border-color: #F33;
 }
 
 .me > div > div {
-	color: inherit !important;
+	color: inherit;
 }
 
 .log, .part, .me, .kick {
@@ -661,6 +661,7 @@ ul#articles-list > li {
 	justify-content: space-between;
 	margin: 0;
 	padding: 20px 0 25px 0;
+	cursor: initial;
 }
 
 ul#articles-list > li > h3, ul#articles-list > li > p {
@@ -963,19 +964,16 @@ button:focus, input:focus {
 	font-family: monospace;
 }
 
-.mini #chat > div > div:first-child > img:nth-child(4),
 .small #chat > div > div:first-child > img:nth-child(1),
 .medium #chat > div > div:first-child > img:nth-child(2),
-.big #chat > div > div:first-child > img:nth-child(3) {
+.mini #chat > div > div:first-child > img:nth-child(4) {
 	display: block;
 }
 
 .small #chat > div > div:first-child > img:nth-child(1) {
     transform: scale(2);
-    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
-
-
 
 .compact #chat > div > :first-child {
 	width: 40px;
@@ -1281,7 +1279,7 @@ button:focus, input:focus {
     display: none;
 }
 
-body.bibw {
+body.bibw.night {
   background : -moz-linear-gradient(50% 102.96% 90deg,rgba(2, 58, 104, 1) 0%,rgba(6, 41, 74, 1) 8.72%,rgba(9, 28, 51, 1) 17.44%,rgba(10, 21, 38, 1) 25.72%,rgba(11, 18, 33, 1) 33.07%,rgba(11, 18, 33, 1) 100%);
   background : -webkit-linear-gradient(90deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgba(9, 28, 51, 1) 17.44%, rgba(10, 21, 38, 1) 25.72%, rgba(11, 18, 33, 1) 33.07%, rgba(11, 18, 33, 1) 100%);
   background : -webkit-gradient(linear,50% 102.96% ,50% 3.14% ,color-stop(0,rgba(2, 58, 104, 1) ),color-stop(0.0872,rgba(6, 41, 74, 1) ),color-stop(0.1744,rgba(9, 28, 51, 1) ),color-stop(0.2572,rgba(10, 21, 38, 1) ),color-stop(0.3307,rgba(11, 18, 33, 1) ),color-stop(1,rgba(11, 18, 33, 1) ));
@@ -1293,24 +1291,13 @@ body.bibw {
 }
 
 body.bibw.day {
-	background: -moz-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
-	background: -webkit-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
-	background: -o-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
-	background: -ms-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
-	background: linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);	
+	background: -moz-linear-gradient(top,  #dbe7ff 0%, #3375c3 19%, #001848 82%, #f0d9f1 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(top,  #dbe7ff 0%,#3375c3 19%,#001848 82%,#f0d9f1 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to bottom,  #dbe7ff 0%,#3375c3 19%,#001848 82%,#f0d9f1 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 }
-
 
 body.bibw.blue {
-	background: #00427b; 
-}
-
-.bibw.day #chat > .log > div > div:first-of-type {
-	color: #75e2ff!important;
-}
-
-.bibw.day header > div, .bibw.blue header > div {
-	background: none;
+	background: #FDFDFD; 
 }
 
 .bibw.blue header > div { 
@@ -1318,8 +1305,50 @@ body.bibw.blue {
 }
 
 .bibw.blue header > div > img {
-	mix-blend-mode: luminosity;
+	mix-blend-mode: none;
 }
+
+.bibw.blue > footer#foot > input, .bibw.day > footer#foot > input  {
+	background: linear-gradient(#acd8ff 0%, #0074d9 100%);
+	border-right: 0
+}
+
+.bibw.blue > footer#foot > input::placeholder {
+	color: #b5dbfd;
+}
+
+.bibw.blue #input, .bibw select {
+	color: white;
+}
+
+.bibw.blue #chat > div > :nth-child(2) > div:not(:first-child), .bibw ul > li > div > div {
+	color: black;
+}
+.bibw.blue #chat > .log > div > div:first-of-type, .bibw.blue > #main > #chat > .part > div > div {
+	text-shadow: none;
+	color: #0074d9;
+}
+
+.bibw.day ul > li > i, .bibw select, .bibw footer > div > i {
+	color: #CEEEFF;
+}
+.bibw.day > footer#foot > input {
+	color: black;
+	background: -moz-linear-gradient(top,  #ceeeff 0%, #9bdcff 100%);
+	background: -webkit-linear-gradient(top,  #ceeeff 0%,#9bdcff 100%);
+	background: linear-gradient(to bottom,  #ceeeff 0%,#9bdcff 100%); 
+}
+
+.bibw.day > #chat > .log > div > div:first-of-type {
+	color: #0074d9!important;
+	font-style: italic;
+}
+
+.bibw.day header > div, .bibw.blue header > div {
+	background: none;
+}
+
+
 
 .bibw > main {
 	font-size: 16px;
@@ -1444,7 +1473,7 @@ body.bibw.blue {
 
 @media screen and (-webkit-min-device-pixel-ratio:0) and (min-resolution:.001dpcm) {
     .item > a > img, .bibw #chat > div > div:first-child > img:nth-child(1) {
-		image-rendering: pixelated;
+		image-rendering: crisp-edges;
     }
 }
 
@@ -1503,7 +1532,7 @@ ul > li:hover .sword {
 }
 
 .bibw >  #main > #chat > .part > div > div {
-	color: #7baaad!important;
+	color: #7baaad;
 }
 
 .bibw #chat > .info > div > div {
@@ -1511,7 +1540,7 @@ ul > li:hover .sword {
 }
 
 .bibw #chat > .log > div > div {
-	color: #7baaad!important;
+	color: #7baaad;
 }
 
 .bibw #chat > .log > div > div:first-of-type {
