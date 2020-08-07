@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		chest = document.getElementById('chest'),
 		inventory_display = document.getElementById('inventory_display'),
 		bank_display = document.getElementById('bank_display'),
-		theme = (localStorage.theme && localStorage.theme.split(' ').length > 2) ? localStorage.theme : 'bibw night sans mini',
+		theme = (localStorage.theme && localStorage.theme.split(' ').length > 2) ? localStorage.theme : 'bibw night sans medium',
 		waitTime = 1000,
 		banned = false,
 		users = {},
@@ -679,8 +679,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	// WebSocket-related functions
 
 	var wsConnect = function() {
-		ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
-		//ws = new WebSocket('wss://loult.family/socket/toast');
+		//ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
+		ws = new WebSocket('wss://loult.family/socket/toast');
 		ws.binaryType = 'arraybuffer';
 
 		var lastMuted = false;

@@ -231,6 +231,7 @@ main {
 	height: 70px;
 	border-right: 2px solid rgba(0, 0, 0, 0.5);
 	border-bottom: 2px solid rgba(0, 0, 0, 0.5);	
+	display: flex;
 }
 
 #chat > div > div:first-child > img {
@@ -553,13 +554,6 @@ ul > li > div > div:last-child > i {
     font-size: 12px;
 }
 
-.item > a > img, .bibw #chat > div > div:first-child > img:nth-child(1) {
-	display: block;
-	width: 100%;
-	height: 100%;
-    image-rendering: crisp-edges;
-}
-
 .item > a > img {
 	width: 38px;
 	height: 38px;
@@ -610,7 +604,6 @@ ul > li > div > div:last-child > i {
 	border-bottom: 1px solid #9e9e9e;
 	font-size: .9em;
 	font-weight: 700;
-	/*padding: 10px 0 !important;*/
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -631,6 +624,7 @@ ul > li > div > div:last-child > i {
 	color: #000;
 	grid-template-columns: 100%;
 	padding: 10px 0;
+	border: 1px solid #a7a7a7;
 }
 
 #wiki-popover-head, #wiki-popover-footer {
@@ -644,7 +638,6 @@ ul > li > div > div:last-child > i {
 #wiki-popover-footer {
 	padding-top: 20px;;
 }
-
 
 ul#articles-list {
 	background: inherit;
@@ -669,7 +662,6 @@ ul#articles-list > li {
 	margin: 0;
 	padding: 20px 0 25px 0;
 }
-
 
 ul#articles-list > li > h3, ul#articles-list > li > p {
 	margin: 0;
@@ -698,7 +690,7 @@ ul#articles-list > li > p:nth-of-type(2) {
 	position: absolute;
 	height: 480px;
 	width: 255px;
-	background-color: #d8e5ea;
+	background-color: #f2fbff;
 	border-radius: 18px;
 	bottom: 70px;
 	right: 18px;
@@ -706,6 +698,7 @@ ul#articles-list > li > p:nth-of-type(2) {
 	color: #000;
 	grid-template-columns: 100%;
 	padding: 10px 0 !important;
+	border: 1px solid #a7a7a7;
 }
 
 .popover-display-false {
@@ -721,22 +714,31 @@ ul#articles-list > li > p:nth-of-type(2) {
 #menu-footer > a {
 	color: #06A;
 	text-decoration: none;
+	margin: 0;
+	border-bottom: none;
+}
+
+.menu-popover:before, .wiki-popover::before {
+    content: " ";
+    position: absolute;
+    right: 43px;
+    bottom: -12px;
+    border: 10px solid transparent;
+    z-index: 20;
+    border-width: 12px 12px 0;
+    border-color: #a7a7a7 transparent;
 }
 
 .menu-popover:after, .wiki-popover::after {
 	content: " ";
 	position: absolute;
 	right: 35px;
-	top: 98%;
+	bottom: -30px;
 	border: 20px solid transparent;
 	z-index: 51;
 }
 
-.menu-popover:after {
-	border-top-color: #d8e5ea;
-}
-
-#wiki-last-edits::after {
+.menu-popover:after, #wiki-last-edits::after {
 	border-top-color: #f2fbff;
 }
 
@@ -960,23 +962,20 @@ button:focus, input:focus {
 .mono {
 	font-family: monospace;
 }
-/*
-.compact #chat > div > div:first-child > img:nth-child(1),
-.cozy #chat > div > div:first-child > img:nth-child(2),
-.fat #chat > div > div:first-child > img:nth-child(3) {
-	display: block;
-}
-*/
-#chat > div > div:first-child > img:nth-child(1) {
-	/*transform: scale(2.5);*/
-	image-rendering: crisp-edges;
-}
 
 .mini #chat > div > div:first-child > img:nth-child(4),
 .small #chat > div > div:first-child > img:nth-child(1),
-.medium #chat > div > div:first-child > img:nth-child(2) {
+.medium #chat > div > div:first-child > img:nth-child(2),
+.big #chat > div > div:first-child > img:nth-child(3) {
 	display: block;
 }
+
+.small #chat > div > div:first-child > img:nth-child(1) {
+    transform: scale(2);
+    image-rendering: pixelated;
+}
+
+
 
 .compact #chat > div > :first-child {
 	width: 40px;
@@ -1020,9 +1019,8 @@ button:focus, input:focus {
 }
 
 .console #chat > div > i, .console #chat > div > div:first-child, .console #chat > div > div:first-child > img {
-	display: none;
+	display: none!important;
 }
-
 .console #chat > div > div:nth-child(2) {
 	text-align: left !important;
 	padding-left: 5px;
@@ -1245,11 +1243,7 @@ button:focus, input:focus {
 .icon:hover > img, #pokedex:hover, #roue:hover {
     transform: scale(1.3)!important;
 }
-/*
-.icon:hover > img, #pokedex:hover, #roue:hover {
-    transform: scale(1.3)!important;
-}				
-*/
+
 .tooltiptext {
   font-family: "PokemonGB";
   font-size: 10px;
@@ -1296,6 +1290,35 @@ body.bibw {
   -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr='#023A68', endColorstr='#0B1221' ,GradientType=0)";
   background : linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgba(9, 28, 51, 1) 17.44%, rgba(10, 21, 38, 1) 25.72%, rgba(11, 18, 33, 1) 33.07%, rgba(11, 18, 33, 1) 100%);
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0B1221',endColorstr='#023A68' , GradientType=0);
+}
+
+body.bibw.day {
+	background: -moz-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
+	background: -webkit-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
+	background: -o-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
+	background: -ms-linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);
+	background: linear-gradient(0deg, rgba(2, 58, 104, 1) 0%, rgba(6, 41, 74, 1) 8.72%, rgb(45 89 142) 17.44%, rgb(84 150 251) 25.72%, rgb(70 99 160) 33.07%, rgb(154 178 230) 100%);	
+}
+
+
+body.bibw.blue {
+	background: #00427b; 
+}
+
+.bibw.day #chat > .log > div > div:first-of-type {
+	color: #75e2ff!important;
+}
+
+.bibw.day header > div, .bibw.blue header > div {
+	background: none;
+}
+
+.bibw.blue header > div { 
+	background: #00427b;
+}
+
+.bibw.blue header > div > img {
+	mix-blend-mode: luminosity;
 }
 
 .bibw > main {
@@ -1492,7 +1515,7 @@ ul > li:hover .sword {
 }
 
 .bibw #chat > .log > div > div:first-of-type {
-	color: #52c1df!important;
+	color: #52c1df;
     text-shadow: #2cf1fb 1px 0px 10px;
 }
 
