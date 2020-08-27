@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
         //create IMG at the bottom of last Div
         let imgDiv = document.createElement('img');
         imgDiv.src = imgURL;
-        imgDiv.style = 'width:auto;height:30vh;maxWidth:60vw';
+        imgDiv.style = 'width:auto;height:30vh;max-width:60vw';
         lastRow.appendChild(imgDiv);
         callback();
     }
@@ -713,7 +713,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: "POST",
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (response.status !== 200) {
+                    throw Error
+                }
+                response.json()
+            })
             .then(callback)
             .catch((error) => {
                 addLine({name: 'info'}, 'Erreur à l\'envoi du fichier', (new Date), 'kick');
