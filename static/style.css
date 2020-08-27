@@ -258,16 +258,8 @@ main {
 }
 
 #chat > div > div:first-child > img {
-    /*position: absolute;*/
     margin: auto;
     display: none;
-}
-
-#chat > div > div:first-child > img:nth-child(1) {
-    /*top: auto;
-    left: 4px;
-    right: auto;
-    bottom: 6px;*/
 }
 
 #chat > div > div:first-child > img:not(:first-child), ul > li > div > div:first-child > div > img {
@@ -292,6 +284,12 @@ main {
 
 #chat > div > :nth-child(2) > div:not(:first-child) {
     color: #333;
+}
+
+#chat > div > div > img {
+    width: auto;
+    max-height: 30vh;
+    max-width: 100%;
 }
 
 #chat > .msg > :nth-child(3) {
@@ -1549,8 +1547,8 @@ body.bibw.blue {
     color: #7baaad;
 }
 
-.bibw  #upload {
-	right: 240px;
+.bibw #upload {
+    right: 240px;
 }
 
 .bibw #chat > div > div:last-child {
