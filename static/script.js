@@ -67,27 +67,25 @@ document.addEventListener('DOMContentLoaded', function () {
     var autoscroll = function () {
         //auto scroll page down, if scroll bar at the bottom
         if (Math.floor(chat.scrollTop) + chat.offsetHeight >= (chat.scrollHeight - chat.offsetHeight)) {
-
-            chat.scrollTop = chat.scrollHeight;
+            chat.scrollTop = chat.scrollHeight + 500;
         }
     }
-    var addEmbedYtb = function (ytbId, callback) {
+    var addEmbedYtb = function (ytbId) {
 
         //create iframe at the bottom of last Div
         let ifrm = document.createElement('iframe');
-        ifrm.setAttribute('src', 'https://www.youtube.com/embed/' + ytbId);
-        ifrm.setAttribute('frameborder', 0);
+        ifrm.src = 'https://www.youtube.com/embed/' + ytbId;
+        ifrm.frameborder = 0;
         lastRow.appendChild(ifrm);
-        callback();
+        autoscroll();
     }
-    var addImgEmbed = function (imgURL, callback) {
+    var addImgEmbed = function (imgURL) {
 
         //create IMG at the bottom of last Div
         let imgDiv = document.createElement('img');
+        imgDiv.onload = autoscroll;
         imgDiv.src = imgURL;
-        imgDiv.style = 'width:auto;height:30vh;max-width:60vw';
         lastRow.appendChild(imgDiv);
-        callback();
     }
     var addLine = function (pkmn, txt, datemsg, rowclass, uid) {
         var atBottom = (chat.scrollTop >= (chat.scrollHeight - chat.offsetHeight) - 50),
@@ -170,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let orderId = 0;
 
         for (let a in users) {
-            if (users[a].name == params.name) orderId++;
+            if (users[a].name === params.name) orderId++;
         }
         users[userid].orderId = orderId;
 
@@ -302,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var limitHistory = function () {
         var limit = localStorage.getItem('history');
 
-        if (limit == 'full' || typeof limit === 'undefined' || !limit) {
+        if (limit === 'full' || typeof limit === 'undefined' || !limit) {
             return;
         }
 
@@ -908,18 +906,18 @@ document.addEventListener('DOMContentLoaded', function () {
                                     ytbId = msg.msg.split(".be/")[1].substring(0, 11);
                                 else
                                     ytbId = msg.msg.split("v=")[1].substring(0, 11);
-                                addEmbedYtb(ytbId, autoscroll);
+                                addEmbedYtb(ytbId);
                             }
 
                             //if noelshack URL(just url) link
                             if (msg.msg.match('http://image.noelshack.com/') || msg.msg.match('https://image.noelshack.com/')) {
                                 var imgId = msg.msg.split("noelshack.com/")[1];
-                                addImgEmbed("https://image.noelshack.com/" + imgId, autoscroll);
+                                addImgEmbed("https://image.noelshack.com/" + imgId);
                             }
 
                             // if bnl URL (for img)
                             if (msg.msg.includes('https://bnl.loult.family/media/content/image/')) {
-                                addImgEmbed(msg.msg, autoscroll);
+                                addImgEmbed(msg.msg);
                             }
                         }
                         break;
