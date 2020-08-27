@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             {
                 test: msg => msg.includes('https://bnl.loult.family/media/content/audio/'),
-                run: msg => msg.replace(/<a href="(https:\/\/bnl.loult.family\/media\/content\/audio\/[a-z0-9]+)" target="_blank">.*<\/a>/g, '<audio controls><source src="$1" type="audio/ogg"></source></audio>$&')
+                run: msg => msg.replace(/<a href="(https:\/\/bnl.loult.family\/media\/content\/audio\/[a-z0-9]+)" target="_blank">.*<\/a>/g, '<audio controls><source src="$1" ></source></audio>$&')
             },
             {
                 test: msg => msg.includes('**'),
@@ -717,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (response.status !== 200) {
                     throw Error
                 }
-                response.json()
+                return response.json()
             })
             .then(callback)
             .catch((error) => {
