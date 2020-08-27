@@ -24,14 +24,21 @@
 </main>
 <footer id="foot">
     <div id="bank_display"></div>
+    <div class="icon" id="chest">
+        <img src="img/icons/coffre.svg" />
+        <div id="inventory_display"></div>
+    </div>
     <input autofocus placeholder="Message..." id="input" maxlength="300">
+    <div class="icon" id="upload">
+        <!-- TODO : http://jsfiddle.net/4cwpLvae/ styling for file upload label -->
+        <label for="file-upload">
+            <img id="upload-icon" src="img/icons/upload-grey.svg">
+        </label>
+        <input id="file-upload" type="file"/>
+    </div>
     <div class="icon" id="vol">
         <img src="img/icons/flute.svg"/>
         <span class="tooltiptext">son</span>
-    </div>
-    <div class="icon" id="chest" style="display: none;">
-        <img src="img/icons/coffre.svg" />
-        <div id="inventory_display"></div>
     </div>
     <div class="icon" id="wiki_display">
         <img id="pokedex" src="img/icons/pokedex.svg" />
@@ -117,16 +124,16 @@
         <input id="cookie"/>
     </div>
     <div>
-            <span id="mediaembed">Vidéo/image</span>
-            <input type="checkbox" id="embed">
-            <span id="automute">Automute</span>
-            <input type="checkbox" id="am">
+        <span id="mediaembed">Vidéo/image</span>
+        <input type="checkbox" id="embed">
+        <span id="automute">Automute</span>
+        <input type="checkbox" id="am">
     </div>
     <div id="menu-footer">
         <a href="https://loult.family/magnacharta.html" target="_blank">Charte</a>
         <a href="https://github.com/loult-elte-fwere/loult-ng" target="_blank">Github</a>
         <a href="http://loult.wordpress.com" target="_blank"><img class="pokeball pokeballMenu"
-                src="img/icons/pokeball.svg" /> Blog</a>
+                                                                  src="img/icons/pokeball.svg" /> Blog</a>
     </div>
 
 </div>
