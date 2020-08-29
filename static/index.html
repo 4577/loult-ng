@@ -29,8 +29,11 @@
         <div id="inventory_display"></div>
     </div>
     <input autofocus placeholder="Message..." id="input" maxlength="300">
+    <div class="icon" id="record">
+        <img id="microphone-icon" src="img/icons/micro.svg"/>
+        <span class="tooltiptext">enregistrer du son</span>
+    </div>
     <div class="icon" id="upload">
-        <!-- TODO : http://jsfiddle.net/4cwpLvae/ styling for file upload label -->
         <label for="file-upload">
             <img id="upload-icon" src="img/icons/upload-grey.svg">
         </label>
@@ -53,6 +56,15 @@
         <span class="tooltiptext">liste</span>
     </div>
 </footer>
+
+<div class="menu-popover popover-display-false" id="record-menu">
+    <div><i class="material-icons" id="send-button" disabled="">save_alt</i></div>
+    <div><i class="material-icons" id="play-button" disabled="">play_arrow</i></div>
+    <div><i class="material-icons hidden" id="pause-button" disabled="">pause</i></div>
+    <div><i class="material-icons" id="record-button">fiber_manual_record</i></div>
+    <div><i class="material-icons hidden" id="stop-button">stop</i></div>
+    <div><i class="material-icons hidden" id="restart-button">replay</i></div>
+</div>
 
 <div class="menu-popover popover-display-false" id="loult-menu">
     <div>
