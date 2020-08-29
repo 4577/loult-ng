@@ -600,14 +600,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function display_bank() {
         ws.send(JSON.stringify({type: 'channel_inventory'}));
         inventory_display.style.display = "none";
-        bank_display.style.display = bank_display.style.display == "flex" ? "none" : "flex";
+        bank_display.style.display = bank_display.style.display === "flex" ? "none" : "flex";
     }
 
     function display_inventory() {
         ws.send(JSON.stringify({type: 'inventory'}));
         chest.firstElementChild.src = 'img/icons/coffreouvert.svg';
         bank_display.style.display = "none";
-        inventory_display.style.display = inventory_display.style.display == "flex" ? "none" : "flex";
+        inventory_display.style.display = inventory_display.style.display === "flex" ? "none" : "flex";
     }
 
     // Users list display
@@ -723,6 +723,113 @@ document.addEventListener('DOMContentLoaded', function () {
             })
     }
 
+    // Audio recording functions
+
+    let microphoneButton = document.getElementById("record"),
+        recordingMenu = document.getElementById("record-menu"),
+        recordingMenuOpened = false;
+
+    microphoneButton.onclick = function () {
+        recordingMenu.classList.toggle("popover-display-false");
+        recordingMenuOpened = !recordingMenuOpened;
+
+        if (recordingMenuOpened && navigator.mediaDevices.getUserMedia) {
+            console.log('getUserMedia supported.');
+
+            const constraints = {audio: true};
+            let chunks = [];
+            let recordedAudioBlob = undefined;
+
+            let onSuccess = function (stream) {
+                const mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.onstop = function (e) {
+                    console.log("data available after MediaRecorder.stop() called.");
+                    recordedAudioBlob = new Blob(chunks, {'type': 'audio/ogg; codecs=opus'});
+                    chunks = [];
+                    console.log("recorder stopped");
+
+                }
+
+                mediaRecorder.ondataavailable = function (e) {
+                    chunks.push(e.data);
+                }
+
+                var microphoneIcon = document.getElementById("microphone-icon"),
+                    recordButton = document.getElementById("record-button"),
+                    stopButton = document.getElementById("stop-button"),
+                    restartButton = document.getElementById("restart-button"),
+                    playButton = document.getElementById("play-button"),
+                    pauseButton = document.getElementById("pause-button"),
+                    sendButton = document.getElementById("send-button");
+
+                recordButton.onclick = function () {
+                    mediaRecorder.start();
+                    console.log(mediaRecorder.state);
+                    console.log("recorder started");
+                    recordButton.classList.toggle("hidden");
+                    stopButton.classList.toggle("hidden");
+                    microphoneIcon.classList.toggle("recording-active");
+                }
+
+                stopButton.onclick = function () {
+                    mediaRecorder.stop();
+                    console.log(mediaRecorder.state);
+                    console.log("recorder stopped");
+                    stopButton.classList.toggle("hidden");
+                    restartButton.classList.toggle("hidden");
+                    microphoneIcon.classList.toggle("recording-active");
+                    playButton.removeAttribute('disabled');
+                    pauseButton.removeAttribute('disabled');
+                    sendButton.removeAttribute('disabled');
+                }
+
+                restartButton.onclick = function () {
+                    recordedAudioBlob = undefined;
+                    restartButton.classList.toggle("hidden");
+                    recordButton.classList.toggle("hidden");
+                    playButton.classList.remove("hidden");
+                    pauseButton.classList.add("hidden");
+                    playButton.setAttribute("disabled", "");
+                    pauseButton.setAttribute("disabled", "");
+                    sendButton.setAttribute("disabled", "");
+                }
+
+                playButton.onclick = function () {
+                    playButton.classList.toggle("hidden");
+                    pauseButton.classList.toggle("hidden");
+
+                }
+
+                pauseButton.onclick = function () {
+                    playButton.classList.toggle("hidden");
+                    pauseButton.classList.toggle("hidden");
+                }
+
+                sendButton.onclick = function () {
+                    if (recordedAudioBlob !== undefined) {
+                        storeBlob(recordedAudioBlob);
+                    }
+                }
+            }
+            let onError = function (err) {
+                console.log('The following error occured: ' + err);
+            }
+
+            navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
+
+        } else {
+            console.log('getUserMedia not supported on your browser!')
+        }
+    }
+
+    // TODO : a couple of links
+    //  maybe use events https://gomakethings.com/custom-events-with-vanilla-javascript/
+    //  using the MediaStream API (recording -> blob)
+    //  - https://developer.mozilla.org/en-US/docs/Web/API/MediaStream_Recording_API/Using_the_MediaStream_Recording_API
+    //  playing the audio blob (mostly the same as what is being done in the websocket, but a filereader is needed
+    //  to convert the blob to an arraybuffer than converted to an audiobuffer)
+    //  - https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
 
     // WebSocket-related functions
 

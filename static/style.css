@@ -181,7 +181,7 @@ main {
     flex: 1;
     height: 50px;
     font-size: 30px;
-    padding: 5px 45px 5px 10px;
+    padding: 5px 85px 5px 10px;
     outline: 0;
     border: 0;
     border-right: 2px solid rgba(0, 0, 0, 0.5);
@@ -189,6 +189,8 @@ main {
     min-width: 0;
     background: #f9f9f9;
 }
+
+/***** UPLOAD BUTTON *****/
 
 #file-upload {
     display: none;
@@ -202,6 +204,81 @@ main {
 #upload > label {
     cursor: pointer;
 }
+
+
+/****** RECORD BUTTON AND POPOVER MENU ******/
+
+#record {
+    position: absolute;
+    right: 240px;
+}
+
+#record > img {
+    cursor: pointer;
+}
+
+/* Make the microphone icon pulsate when recording is active */
+#record > img.recording-active {
+    animation: pulsate 1s ease-out infinite;
+}
+@-webkit-keyframes pulsate {
+    0%   { filter: drop-shadow(0px 0px 0px green); }
+    50%  { filter: drop-shadow(0px 0px 10px green); }
+    100% { filter: drop-shadow(0px 0px 0px green); }
+}
+
+#record-menu{
+    height: unset;
+    width: unset;
+    right: 235px;
+}
+
+#record-menu:after {
+    right: 7px;
+}
+
+#record-menu:before {
+    right: 15px;
+}
+
+#record-menu > div .hidden {
+    display: none;
+}
+
+#record-menu > div {
+    margin: 0 12px;
+    border-bottom: unset;
+}
+
+#record-menu > div > i {
+    font-size: 30px;
+    cursor: pointer;
+}
+
+#record-menu > div > i[disabled] {
+    opacity: 0.4;
+    color: lightgrey;
+    cursor: not-allowed;
+}
+
+#play-button {
+    color: limegreen;
+}
+
+#pause-button {
+    color: grey;
+}
+
+#stop-button, #record-button, #restart-button {
+    color: red;
+}
+
+#send-button {
+    color: blue;
+}
+
+
+/****** CHAT AREA ********/
 
 #chat {
     -webkit-box-flex: 1;
@@ -1297,12 +1374,12 @@ button:focus, input:focus {
     overflow: hidden;
 }
 
-.icon img {
+.icon img, #upload > label > img {
     margin: 3px;
     transition: 0.25s;
 }
 
-.icon:hover > img, #pokedex:hover, #roue:hover {
+.icon:hover > img, #pokedex:hover, #roue:hover, #upload:hover{
     transform: scale(1.3) !important;
 }
 
@@ -1539,7 +1616,7 @@ body.bibw.blue {
     font-size: 20px !important;
     line-height: 50px;
     margin-right: 10px;
-    padding: 10px 60px 15px 25px;
+    padding: 10px 100px 15px 25px;
 
 }
 
@@ -1549,6 +1626,10 @@ body.bibw.blue {
 
 .bibw #upload {
     right: 240px;
+}
+
+.bibw #record {
+    right: 280px;
 }
 
 .bibw #chat > div > div:last-child {
@@ -1646,6 +1727,10 @@ ul > li:hover .sword {
 
 .bibw #chat div {
     animation: fadein 400ms;
+}
+
+.bibw #record-menu {
+    right: 275px;
 }
 
 @keyframes fadein {
