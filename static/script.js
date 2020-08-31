@@ -736,16 +736,17 @@ document.addEventListener('DOMContentLoaded', function () {
             if (recordingMenuOpened && navigator.mediaDevices.getUserMedia) {
                 console.log('getUserMedia supported.');
 
-                const constraints = {audio: true};
+                const constraints = {audio: true, video: false},
+                    options = {mimeType: 'audio/webm;codecs=opus'};
                 let chunks = [];
                 let recordedAudioBlob = undefined, playbackSource = undefined;
 
                 let onSuccess = function (stream) {
-                    const mediaRecorder = new MediaRecorder(stream);
+                    const mediaRecorder = new MediaRecorder(stream, options);
 
                     mediaRecorder.onstop = function (e) {
                         console.log("data available after MediaRecorder.stop() called.");
-                        recordedAudioBlob = new Blob(chunks, {'type': 'audio/ogg; codecs=opus'});
+                        recordedAudioBlob = new Blob(chunks, {'type': options.mimeType});
                         chunks = [];
                         console.log("recorder stopped");
 
@@ -830,7 +831,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     pauseButton.onclick = function () {
-                        playbackSource.stop();
+                        try {
+                            playbackSource.stop();
+                        } catch (e) {
+                            // pass
+                        }
                         playButton.classList.toggle("hidden");
                         pauseButton.classList.toggle("hidden");
                     }
@@ -851,16 +856,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('getUserMedia not supported on your browser!')
             }
         }
-
-        // TODO : a couple of links
-        //  maybe use events https://gomakethings.com/custom-events-with-vanilla-javascript/
-        //  using the MediaStream API (recording -> blob)
-        //  - https://developer.mozilla.org/en-US/docs/Web/API/MediaStream_Recording_API/Using_the_MediaStream_Recording_API
-        //  playing the audio blob (mostly the same as what is being done in the websocket, but a filereader is needed
-        //  to convert the blob to an arraybuffer than converted to an audiobuffer)
-        //  - https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
-
-        // WebSocket-related functions
 
         var wsConnect = function () {
             ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket' + location.pathname);
