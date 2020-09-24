@@ -5,7 +5,7 @@ from colorsys import hsv_to_rgb
 from datetime import timedelta, datetime
 from re import compile as regex
 from struct import pack
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Type
 from os import path
 import json
 
@@ -13,8 +13,8 @@ from config import FLOOD_DETECTION_WINDOW, BANNED_WORDS, FLOOD_WARNING_TIMEOUT, 
     ATTACK_RESTING_TIME
 from tools import pokemons
 
-from tools.tools import AudioRenderer, SpoilerBipEffect, prepare_text_for_tts
-from .phonems import PhonemList
+from tools.tools import AudioRenderer, SpoilerBipEffect, prepare_text_for_tts, emojize
+from voxpopuli import PhonemeList
 
 DATA_FILES_FOLDER = path.join(path.dirname(path.realpath(__file__)), "data/")
 
@@ -30,18 +30,19 @@ with open(path.join(DATA_FILES_FOLDER, "villes.json")) as file:
 with open(path.join(DATA_FILES_FOLDER, "sexualite.txt")) as file:
     sexual_orient = file.read().splitlines()
 
+
 class VoiceParameters:
 
-    def __init__(self, speed : int, pitch : int, voice_id : int):
+    def __init__(self, speed: int, pitch: int, voice_id: int):
         self.speed = speed
         self.pitch = pitch
         self.voice_id = voice_id
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
-        return cls((cookie_hash[5] % 80) + 90, # speed
-                   cookie_hash[0] % 100, # pitch
-                   cookie_hash[1]) # voice_id
+        return cls((cookie_hash[5] % 80) + 90,  # speed
+                   cookie_hash[0] % 100,  # pitch
+                   cookie_hash[1])  # voice_id
 
 
 class PokeParameters:
@@ -51,11 +52,16 @@ class PokeParameters:
         self.poke_id = poke_id
         self.pokename = pokemons.pokemon[self.poke_id]
         self.poke_adj = adjectives[adj_id]
+        self.img_id = str(self.poke_id).zfill(3)
+
+    @property
+    def fullname(self):
+        return "%s %s" % (self.pokename, self.poke_adj)
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
         color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 0.8, 0.9)
-        return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(), # color
+        return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(),  # color
                    (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons.pokemon) + 1,
                    (cookie_hash[5] | (cookie_hash[6] << 13)) % len(adjectives) + 1)
 
@@ -77,30 +83,33 @@ class PokeProfile:
 
     @classmethod
     def from_cookie_hash(cls, cookie_hash):
-        return cls((cookie_hash[4] | (cookie_hash[2] << 7)) % len(jobs), # job
-                   (cookie_hash[3] | (cookie_hash[5] << 6)) % 62 + 18, # age
-                   ((cookie_hash[6] * cookie_hash[4] << 17)) % len(cities), # city
-                   (cookie_hash[2] | (cookie_hash[3] << 4)) % len(sexual_orient)) # sexual orientation
+        return cls((cookie_hash[4] | (cookie_hash[2] << 7)) % len(jobs),  # job
+                   (cookie_hash[3] | (cookie_hash[5] << 6)) % 62 + 18,  # age
+                   ((cookie_hash[6] * cookie_hash[4] << 17)) % len(cities),  # city
+                   (cookie_hash[2] | (cookie_hash[3] << 4)) % len(sexual_orient))  # sexual orientation
 
 
 class UserState:
-
     detection_window = timedelta(seconds=FLOOD_DETECTION_WINDOW)
 
     def __init__(self, banned_words=BANNED_WORDS):
-        from tools import AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
-            VoiceEffect
+        from tools.effects import AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
+            VoiceEffect, Effect
 
-        self.effects = {cls: [] for cls in
-                        (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)}
+        self.effects: Dict[Type[Effect], List[Effect]] = {
+            cls: [] for cls in
+            (AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, VoiceEffect)
+        }
         self.connection_time = datetime.now()
         self.last_attack = datetime.now()  # any user has to wait some time before attacking, after entering the chan
         self.last_message = datetime.now()
         self.timestamps = list()
-        self.has_been_warned = False # User has been warned he shouldn't flood
+        self.has_been_warned = False  # User has been warned he shouldn't flood
         self._banned_words = [regex(word) for word in banned_words]
-        self.is_shadowbanned = False # User has been shadowbanned
+        self.is_shadowbanned = False  #  User has been shadowbanned
 
+        from .objects.inventory import UserInventory
+        self.inventory = UserInventory()
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -115,7 +124,7 @@ class UserState:
         from .effects.effects import EffectGroup, AudioEffect, HiddenTextEffect, ExplicitTextEffect, PhonemicEffect, \
             VoiceEffect
 
-        if isinstance(effect, EffectGroup):  # if the effect is a meta-effect (a group of several tools)
+        if isinstance(effect, EffectGroup):  # if the effect is a meta-effect (a group of several effects)
             added_effects = effect.effects
         else:
             added_effects = [effect]
@@ -182,6 +191,12 @@ class User:
         self.state = UserState()
         self._info = None
 
+    def reload_params_from_cookie(self):
+        self._info = None
+        self.voice_params = VoiceParameters.from_cookie_hash(self.cookie_hash)
+        self.poke_params = PokeParameters.from_cookie_hash(self.cookie_hash)
+        self.poke_profile = PokeProfile.from_cookie_hash(self.cookie_hash)
+
     def __hash__(self):
         return self.user_id.__hash__()
 
@@ -192,6 +207,10 @@ class User:
         bonus = (datetime.now() - self.state.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
         return random.randint(1, 100), bonus
 
+    def disconnect_all_clients(self, code: int, reason: str):
+        for client in self.clients:
+            client.sendClose(code=code,reason=reason)
+
     @property
     def info(self):
         if self._info is None:
@@ -199,7 +218,7 @@ class User:
                 'userid': self.user_id,
                 'params': {
                     'name': self.poke_params.pokename,
-                    'img': str(self.poke_params.poke_id).zfill(3),
+                    'img': self.poke_params.img_id,
                     'color': self.poke_params.color,
                     'adjective': self.poke_params.poke_adj
                 },
@@ -211,7 +230,7 @@ class User:
     @staticmethod
     def apply_effects(input_obj, effect_list: List['Effect']):
         if effect_list:
-            for effect in effect_list:
+            for effect in list(effect_list):
                 if effect.is_expired():
                     effect_list.remove(effect)  # if the effect has expired, remove it
                 else:
@@ -226,7 +245,7 @@ class User:
     async def _vocode(self, text: str, lang: str) -> bytes:
         """Renders a text and a language to a wav bytes object using espeak + mbrola"""
         # if there are voice effects, apply them to the voice renderer's voice and give them to the renderer
-        from tools import VoiceEffect, PhonemicEffect
+        from tools.effects import VoiceEffect, PhonemicEffect
         if self.state.effects[VoiceEffect]:
             voice_params = self.apply_effects(self.voice_params, self.state.effects[VoiceEffect])
         else:
@@ -235,13 +254,13 @@ class User:
         # apply the beep effect for spoilers
         beeped = await SpoilerBipEffect(self.audio_renderer, voice_params).process(text, lang)
 
-        if isinstance(beeped, PhonemList) or self.state.effects[PhonemicEffect]:
+        if isinstance(beeped, PhonemeList) or self.state.effects[PhonemicEffect]:
 
             modified_phonems = None
-            if isinstance(beeped, PhonemList) and self.state.effects[PhonemicEffect]:
+            if isinstance(beeped, PhonemeList) and self.state.effects[PhonemicEffect]:
                 # if it's already a phonem list, we apply the effect diretcly
                 modified_phonems = self.apply_effects(beeped, self.state.effects[PhonemicEffect])
-            elif isinstance(beeped, PhonemList):
+            elif isinstance(beeped, PhonemeList):
                 # no effects, only the beeped phonem list
                 modified_phonems = beeped
             elif self.state.effects[PhonemicEffect]:
@@ -249,16 +268,18 @@ class User:
                 phonems = await self.audio_renderer.string_to_phonemes(text, lang, voice_params)
                 modified_phonems = self.apply_effects(phonems, self.state.effects[PhonemicEffect])
 
-            #rendering audio using the phonemlist
+            # rendering audio using the phonemlist
             return await self.audio_renderer.phonemes_to_audio(modified_phonems, lang, voice_params)
         else:
             # regular render
             return await self.audio_renderer.string_to_audio(text, lang, voice_params)
 
     async def render_message(self, text: str, lang: str):
-        from tools import ExplicitTextEffect, HiddenTextEffect, AudioEffect
+        from tools.effects import ExplicitTextEffect, HiddenTextEffect, AudioEffect
 
-        cleaned_text = text[:500]
+        cleaned_text = text[:600]
+        # subsituting emoji tags in the message
+        cleaned_text = emojize(cleaned_text)
         # applying "explicit" effects (visible to the users)
         displayed_text = self.apply_effects(cleaned_text, self.state.effects[ExplicitTextEffect])
         # applying "hidden" texts effects (invisible on the chat, only heard in the audio)
@@ -271,7 +292,7 @@ class User:
         # if there are effets in the audio_effect list, we run it
         if self.state.effects[AudioEffect]:
             # converting to f32 (more standard) and resampling to 16k if needed, and converting to a ndarray
-            rate , data = await self.audio_renderer.to_f32_16k(wav)
+            rate, data = await self.audio_renderer.to_f32_16k(wav)
             # applying the effects pipeline to the sound
             data = self.apply_effects(data, self.state.effects[AudioEffect])
             # converting the sound's ndarray back to bytes
