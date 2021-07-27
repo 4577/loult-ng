@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // automatically folding the userlist when the screen is too small
         const autofoldUserlist = function () {
-            if (window.screen.width < 680) {
+            if (window.innerWidth < 680) {
                 document.body.classList.add("userlist-folded");
             }
         }
