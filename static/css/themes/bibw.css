@@ -104,11 +104,13 @@ body.bibw.day {
     right: 30px;
 }
 
+
 .bibw.userlist-folded #right-panel {
     right: -12px;
     top: 50%;
     margin-top: -260px;
 }
+
 
 .userlist-folded.bibw #wiki-last-edits,
 .userlist-folded.bibw .menu-popover {
@@ -370,13 +372,6 @@ body.bibw.day {
         max-height: 60px !important;
     }
 
-    .bibw > #input {
-        position: relative;
-        height: 50px;
-        padding-bottom: 8px;
-        bottom: 5px;
-    }
-
 
     .bibw #chat > div > :first-child {
         width: 50px;
@@ -410,32 +405,6 @@ body.bibw.day {
         background-color: #023a68;
     }
 
-    .bibw > footer#foot > input {
-        padding-bottom: 8px;
-    }
-
-    .bibw > footer#foot > .footer-menu-icon {
-        width: 40px;
-        height: 40px;
-    }
-
-    .bibw footer > .footer-menu-icon > #inventory_display {
-        bottom: 70px;
-    }
-
-    .bibw footer > #bank_display {
-        bottom: 55px;
-    }
-
-
-    .bibw footer > div:last-of-type {
-        margin: 0;
-    }
-
-    .bibw > footer#foot > input {
-        margin-right: 0;
-    }
-
 
     .bibw > #wiki-last-edits {
         right: 44px;
@@ -443,15 +412,6 @@ body.bibw.day {
 
     .bibw > .menu-popover {
         right: 5px
-    }
-
-    .bibw footer > .footer-menu-icon > #inventory_display {
-        right: none
-    }
-
-    .bibw > input {
-        font-size: 18px !important;
-        padding: 10px 80px 15px 5px;
     }
     
     .bibw #left-panel, .bibw #right-panel {

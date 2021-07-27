@@ -8,10 +8,11 @@
 @import "css/themes/bibw.css";
 @import "css/themes/fat.css";
 @import "css/themes/console.css";
+@import "css/themes/mobilew.css";
 
 
 font-face {
-    font-family: "PokemonGB";
+    font-family: "PokemonGB", monospace;
     src: url("/fonts/PokemonGB.eot") format("eot");
     src: url("/fonts/PokemonGB.ttf") format("truetype"),
     url("/fonts/PokemonGB.woff") format("woff"),
@@ -176,7 +177,6 @@ main {
 
 #record > img {
     cursor: pointer;
-<<<<<<< HEAD
 }
 
 /* Make the microphone icon pulsate when recording is active */
@@ -948,99 +948,6 @@ button:focus, input:focus {
     margin-top: 0!important;
 }
 
-/***** RESPONSIVE *****/
-
-@media screen and (max-width: 680px) {
-    head {
-        padding-right: 0;
-    }
-
-    #input {
-        height: auto;
-        padding: 10px;
-        font-size: 40px;
-    }
-
-    ul {
-        z-index: 25;
-        position: absolute;
-        right: 0;
-        top: 50px;
-        bottom: 125px;
-        height: auto;
-        width: 0px;
-        border-top: 2px solid #BBB;
-        border-bottom: 2px solid #BBB;
-    }
-
-    #window {
-        max-height: none;
-        width: auto;
-        height: auto;
-        overflow: auto;
-        bottom: 125px;
-    }
-
-    #window > div:last-child {
-        top: 80px;
-    }
-
-    #window > div:last-child, select {
-        font-size: 16px;
-    }
-
-    #window > div:last-child > div {
-        padding: 10px;
-        margin: 0 auto;
-    }
-
-    #window > div:last-child span {
-        width: 115px;
-    }
-
-    #window > div:last-child label {
-        min-width: 60px;
-        width: 60px;
-    }
-
-    #underlay {
-        right: 0;
-    }
-
-    .tooltip {
-        display: none !important;
-        visibility: hidden !important;
-        color: black;
-    }
-
-    .tooltiptext {
-        visibility: hidden !important;
-    }
-
-    #inventory_display {
-        bottom: 120px;
-    }
-
-    #bank_display {
-        bottom: 100px;
-        left: 0;
-        margin-right: 0;
-        flex: 1;
-        align-items: center;
-        margin: 25px;
-    }
-
-    .item {
-        display: block;
-        flex: none;
-    }
-
-    .item > a > span {
-        padding-right: 5px;
-    }
-
-}
-
 /***** FONTS CONFIG *****/
 
 
@@ -1200,47 +1107,7 @@ main > #right-panel > #footer-menu > .footer-menu-icon:hover .tooltiptext {
 }
 
 
-@media screen and (max-width: 680px) {
 
-
-    #chat > div > :first-child {
-        margin: 0;
-    }
-
-    .footer-menu-icon img, #upload > label > img {
-        margin: 1px;
-    }
-
-
-    #wiki-last-edits {
-        width: 75%;
-    }
-
-    ul#articles-list {
-        height: auto;
-        position: relative;
-        border-radius: 20px;;
-        top: 0;
-    }
-
-    #wiki-popover-head > p:first-of-type {
-        text-align: right;
-    }
-
-    .menu-popover > div, .wiki-popover #wiki-popover-head, .wiki-popover ul, #popover-menu-footer a, #wiki-popover-footer {
-        font-size: .75em;
-    }
-
-    #articles-list > li {
-        background: none;
-    }
-
-
-    #wiki-popover-footer {
-        display: none;
-    }
-
-}
 
 /******* USERLIST FOLDING ******/
 
@@ -1250,10 +1117,6 @@ main > #right-panel > #footer-menu > .footer-menu-icon:hover .tooltiptext {
     right: 0;
     z-index: 1000;
     top: -2px;
-}
-
-.bibw + .userlist-folded #right-panel {
-    top: 100px!important;
 }
 
 .userlist-folded #userlist {
@@ -1329,4 +1192,8 @@ main > #right-panel > #footer-menu > .footer-menu-icon:hover .tooltiptext {
 
 .userlist-folded #inventory_display {
     right: 70px;
+}
+
+.userlist-folded #chat {
+    padding-right: 50px;
 }

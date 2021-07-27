@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inventory_display.innerHTML = "<span>...</span>";
         bank_display.innerHTML = "<span>...</span>";
 
+
         // DOM-related functions
 
         var parser = function (raw_msg) {
@@ -340,6 +341,12 @@ document.addEventListener('DOMContentLoaded', function () {
         var historyObserver = new MutationObserver(limitHistory);
         historyObserver.observe(chat, historycfg);
 
+        // automatically folding the userlist when the screen is too small
+        const autofoldUserlist = function () {
+            if (window.screen.width < 680) {
+                document.body.classList.add("userlist-folded");
+            }
+        }
 
         // Focus-related functions
 
@@ -354,8 +361,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.getElementsByTagName("main")[0].addEventListener('mouseup', refocus, false);
 
         window.addEventListener('resize', function (evt) {
+            // refocusing
             chat.scrollTop = chat.scrollHeight;
             refocus();
+            // folding userlist
+            autofoldUserlist();
         });
 
         window.onfocus = function (event) {
@@ -394,6 +404,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var applyTheme = function () {
             theme = localStorage.theme = settings.join(' ');
             document.body.className = theme.replace('_', ' ');
+            // Folding the userlist for mobile screen after applying theme
+            autofoldUserlist();
             chat.scrollTop = chat.scrollHeight;
         };
 

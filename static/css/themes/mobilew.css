@@ -1,0 +1,44 @@
+@media screen and (max-width: 680px) {
+
+    #chat > div > :first-child {
+        margin: 0;
+    }
+
+    .footer-menu-icon img, #upload > label > img {
+        margin: 1px;
+    }
+
+
+    #wiki-last-edits {
+        width: 75%;
+    }
+
+    ul#articles-list {
+        height: auto;
+        position: relative;
+        border-radius: 20px;;
+        top: 0;
+    }
+
+    #wiki-popover-head > p:first-of-type {
+        text-align: right;
+    }
+
+    .menu-popover > div,
+    .wiki-popover #wiki-popover-head,
+    .wiki-popover ul,
+    #popover-menu-footer a,
+    #wiki-popover-footer {
+        font-size: .75em;
+    }
+
+    #articles-list > li {
+        background: none;
+    }
+
+
+    #wiki-popover-footer {
+        display: none;
+    }
+
+}
