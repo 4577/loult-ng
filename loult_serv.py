@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import logging
 from asyncio import get_event_loop, ensure_future, gather, set_event_loop_policy, get_event_loop_policy
