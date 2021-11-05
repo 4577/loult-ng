@@ -146,6 +146,8 @@ class UserState:
     def check_flood(self, msg):
         self._add_timestamp()
         threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
+        if self.state.is_shadowbanned:
+            threshold *= 2
         return len(self.timestamps) > threshold or self.censor(msg)
 
     def _add_timestamp(self):
@@ -207,6 +209,9 @@ class User:
         return self.user_id == other.user_id
 
     def throw_dice(self, type="attack") -> Tuple[int, int]:
+        if self.state.is_shadowbanned:
+            return 0, 0
+
         bonus = (datetime.now() - self.state.last_attack).seconds // ATTACK_RESTING_TIME if type == "attack" else 0
         return random.randint(1, 100), bonus
 
