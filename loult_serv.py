@@ -1,12 +1,12 @@
+#!/usr/bin/env python3
 import argparse
 import logging
 from asyncio import get_event_loop, ensure_future, gather, set_event_loop_policy, get_event_loop_policy
 from itertools import chain
 
 from config import ENABLE_EFFECTS, ENABLE_OBJECTS, ENABLE_EVENTS
-from loult_serv.ban import Ban, BanFail
 from loult_serv.client import ClientRouter, LoultServerProtocol
-from loult_serv.client_handlers import (MessageHandler, BinaryHandler, TrashHandler, BanHandler, ShadowbanHandler,
+from loult_serv.client_handlers import (MessageHandler, BinaryHandler, TrashHandler, ShadowbanHandler,
                                         NoRenderMsgHandler, AttackHandler, PrivateMessageHandler, MoveHandler,
                                         InventoryListingHandler, ObjectGiveHandler, ObjectUseHandler,
                                         ObjectTrashHandler,
@@ -44,13 +44,6 @@ if __name__ == "__main__":
     loop = get_event_loop()
     loult_state = LoultServerState()
 
-    try:
-        loop.run_until_complete(Ban.test_ban())
-        loult_state.can_ban = True
-    except BanFail:
-        loult_state.can_ban = False
-        logger.warning("nft command doesn't work; bans are disabled.")
-
     # setting up routing table
     router = ClientRouter()
     router.set_binary_route(BinaryHandler)
@@ -74,8 +67,6 @@ if __name__ == "__main__":
     # moderation handlers
     router.add_route(field="mod", value="trash", handler_class=TrashHandler)
     router.add_route(field="mod", value="shadowban", handler_class=ShadowbanHandler)
-    for ban_type in Ban.ban_types:
-        router.add_route(field="mod", value=ban_type, handler_class=BanHandler)
     router.add_route(field="mod", value="arms", handler_class=WeaponsGrantHandler)
     router.add_route(field="mod", value="forensics", handler_class=ForensicsGrantHandler)
     router.add_route(field="mod", value="qurk", handler_class=QurkMasterHandler)

@@ -5,7 +5,6 @@ from typing import Dict, TYPE_CHECKING, Optional
 
 from config import ATTACK_RESTING_TIME, MOD_COOKIES, SOUND_BROADCASTER_COOKIES, TIME_BEFORE_TALK, \
     MAX_ITEMS_IN_INVENTORY, MILITIA_COOKIES
-from .ban import Ban, BanFail
 from .combat import CombatSimulator
 from .objects import LoultObject, ScrollOfQurk, AlcoholBottle
 from .objects.objects import BaseballBat
@@ -279,53 +278,6 @@ class MoveHandler(MsgBaseHandler):
                                    userid=self.user.user_id,
                                    x=float(msg_data['x']),
                                    y=float(msg_data['y']))
-
-
-class BanHandler(MsgBaseHandler):
-
-    @cookie_check(MOD_COOKIES)
-    async def handle(self, msg_data: Dict):
-        # TODO refactor into server-only ban (like shadow and trash)
-        user_id = msg_data['userid']
-        ban_type = msg_data['type']
-        action = msg_data['action']
-        timeout = msg_data.get('timeout', None)
-        info = {'type': ban_type, 'userid': user_id}
-
-        if not self.loult_state.can_ban:
-            info['state'] = 'ban_system_disabled'
-            return self.server.send_json(**info)
-
-        if "signal_client" in msg_data:
-            # before even running the ban, each clients of the concerned user is notified of the ban
-            for client in [client for client in self.channel_obj.clients if
-                           client.user and client.user.user_id == user_id]:
-                client.send_json(type="banned",
-                                 msg="ofwere")
-
-        if action == "apply" and ban_type == "ban":
-            # and everyone is notified of the ban as to instigate fear in the heart of others
-            self.channel_obj.broadcast(type='antiflood', event='banned',
-                                       flooder_id=user_id,
-                                       date=timestamp() * 1000)
-
-        connected_list = {client.ip for client in self.channel_obj.clients
-                          if client.user and client.user.user_id == user_id}
-        backlog_list = {ip for userid, ip in self.loult_state.ip_backlog
-                        if userid == user_id}
-        todo = connected_list | backlog_list
-
-        log_msg = '{type}:{ip}:{userid}:resulted in "{state}"'
-
-        try:
-            ban = Ban(ban_type, action, timeout)
-            info['state'] = await ban(todo)
-            self.server.logger.info(log_msg.format(**info, ip=todo))
-            self.server.send_json(**info)
-        except BanFail as err:
-            info['state'] = err.state
-            self.server.logger.info(log_msg.format(**info, ip=todo))
-            self.server.send_json(**info)
 
 
 class ShadowbanHandler(MsgBaseHandler):
