@@ -46,39 +46,12 @@ systemctl reload nginx
 * Un système d'antiflood automatique est intégré ; il exclut un utilisateur sur la base de son cookie
 s'il poste trop vite par deux fois.
 
-## Combat
-
 Les utilisateurs peuvent s'attaquer les uns les autres en lançant la commande `/attack Taupiqueur`.
 S'il y a plusieurs pokémons à ce nom dans le chat, on peut rajouter son numéro dans la liste,
 comme `/attack Taupiqueur 3`, ce qui attaquera le 3ème Taupiqueur dans la liste.
 
 Il y a un temps minimum entre chaque nouvelle attaque par un utilisateur. Cela peut être configuré.
 
-## Bans manuels
-
-Le système de ban utilise le pare-feu de Linux pour éviter de faire consommer
-des ressources au serveur python. Il faut cependant au préalable configurer
-ce pare-feu en y ajoutant quelques règles. Vous pouvez vous inspirer ou utiliser
-directement `nftables.conf.sample`. À noter qu'aucune interface ni outil n'est fourni
-pour placer ces bans manuels, vous devez lire `loult_server/ban.py` pour en implémenter un.
-
-Supposons que la table `filter` de type `inet` contienne une chaîne nommée
-`input` pour le hook `input` et une chaîne `output` pour le hook `output`.
-Les règles à rajouter sont alors :
-
-	nft add set inet input ban "{type ipv4_addr; flags timeout;}"
-	nft add set inet input slowban "{type ipv4_addr; flags timeout;}"
-	nft add rule inet filter input ip saddr @ban ct state new,established drop
-	nft add rule inet filter input ip saddr @slowban ct state new,established flow table slowban_in { ip saddr limit rate over 250 bytes/second } drop
-	nft add rule inet filter output ip daddr @slowban ct state new,established flow table slowban_out { ip daddr limit rate over 10 kbytes/second } drop
-
-
-Voici un moyen de faire marcher ce système entre chaque redémarrage du serveur :
-
-* installez `nftables` et assurez-vous que la commande `nft` puisse être
-  lancée par l'utilisateur lançant loult-ng sans entrer de mot de passe
-* copiez `nftables.sample.conf` sur `/etc/nftables.conf`
-* lancez `systemctl enable nftables` puis `systemctl restart nftables`
 
 # Développement tiers
 
