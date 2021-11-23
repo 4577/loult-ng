@@ -146,7 +146,7 @@ class UserState:
     def check_flood(self, msg):
         self._add_timestamp()
         threshold = FLOOD_DETECTION_MSG_PER_SEC * FLOOD_DETECTION_WINDOW
-        if self.state.is_shadowbanned:
+        if self.is_shadowbanned:
             threshold *= 2
         return len(self.timestamps) > threshold or self.censor(msg)
 
