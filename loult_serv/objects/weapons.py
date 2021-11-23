@@ -148,10 +148,9 @@ class ClientSidePunitiveObject(LoultObject):
     MSG = ""
 
     def use(self, obj_params):
-        for client in self.targeted_user.clients:
-            self.loult_state.apply_ban(ip=client.ip)
-        for client in self.server.user.clients:
-            client.send_json(type="notification", msg=self.MSG % self.targeted_user.poke_params.fullname)
+        msg = self.MSG.format(user_name=self.user.poke_params.fullname,
+                              target_name=self.targeted_user.poke_params.fullname)
+        self.channel.broadcast(type="notification", msg=msg)
         for client in self.targeted_user.clients:
             client.send_json(type="punish", event=self.EVENT)
 
@@ -161,7 +160,7 @@ class ClientSidePunitiveObject(LoultObject):
 class Civilisator(ClientSidePunitiveObject):
     NAME = "Civilizator"
     EVENT = "taser"
-    MSG = "Civilisation de %s"
+    MSG = "{user_name} a civilisé {target_name}."
 
 
 @for_militia
@@ -170,7 +169,7 @@ class Screamer(ClientSidePunitiveObject):
     NAME = "SCR34-MR"
     EVENT = "cactus"
     ICON = "cactus.gif"
-    MSG = "Redirection vers un site adapté pour %s"
+    MSG = "{user_name} a redirigé {target_name} vers du contenu cactusophile."
 
 
 @for_militia

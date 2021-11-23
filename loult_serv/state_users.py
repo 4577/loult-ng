@@ -53,7 +53,7 @@ class PokeParameters:
     def __init__(self, color, poke_id, adj_id):
         self.color = color
         self.poke_id = poke_id
-        self.pokename = pokemons_list_enum.pokemon[self.poke_id]
+        self.pokename = pokemons_list_enum.pokemons[self.poke_id]
         self.poke_adj = adjectives[adj_id]
         self.img_id = str(self.poke_id).zfill(3)
 
@@ -65,7 +65,7 @@ class PokeParameters:
     def from_cookie_hash(cls, cookie_hash):
         color_rgb = hsv_to_rgb(cookie_hash[4] / 255, 0.8, 0.9)
         return cls('#' + pack('3B', *(int(255 * i) for i in color_rgb)).hex(),  # color
-                   (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons_list_enum.pokemon) + 1,
+                   (cookie_hash[2] | (cookie_hash[3] << 8)) % len(pokemons_list_enum.pokemons) + 1,
                    (cookie_hash[5] | (cookie_hash[6] << 13)) % len(adjectives) + 1)
 
 
