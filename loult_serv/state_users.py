@@ -53,7 +53,7 @@ class PokeParameters:
     def __init__(self, color, poke_id, adj_id):
         self.color = color
         self.poke_id = poke_id
-        self.pokename = pokemons_list_enum.pokemons[self.poke_id + 1]
+        self.pokename = pokemons_list_enum.pokemons[self.poke_id - 1]
         self.poke_adj = adjectives[adj_id]
         self.img_id = str(self.poke_id).zfill(3)
 
