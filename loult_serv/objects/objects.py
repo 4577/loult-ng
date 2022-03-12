@@ -279,6 +279,7 @@ class PissBottle(LoultObject):
                     f"{self.user.poke_params.fullname} lance une {self.name} sur {self.targeted_user.poke_params.fullname}!",
                     binary_payload=self._load_byte(self.BOTTLE_FX))
                 self.targeted_user.poke_params.poke_adj = "pisseux"
+                self.targeted_user._info = None
                 self.channel.update_userlist()
                 self.should_be_destroyed = True
 
